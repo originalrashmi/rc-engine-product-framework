@@ -1,0 +1,13 @@
+{
+  "mcpServers": {
+    "rc-engine": {
+      "command": "node",
+      "args": ["dist/index.js"],
+      "cwd": "."
+    },
+    "context7": {
+      "command": "npx",
+      "args": ["-y", "@upstash/context7-mcp"]
+    }
+  }
+}

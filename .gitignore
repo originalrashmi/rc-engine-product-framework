@@ -1,0 +1,59 @@
+## Build
+node_modules/
+dist/
+web/dist-client/
+web/dist-server/
+*.tsbuildinfo
+
+## Runtime state (created per-project, never committed)
+## Directory structure preserved via .gitkeep
+.rc-engine/audit/*
+!.rc-engine/audit/.gitkeep
+.rc-engine/logs/*
+!.rc-engine/logs/.gitkeep
+.rc-engine/cache/*
+!.rc-engine/cache/.gitkeep
+.rc-engine/state.db
+.rc-engine/state.db-*
+.rc-engine/auth.db
+.rc-engine/auth.db-*
+.rc-engine/PIPELINE.md
+web/.rc-engine/
+/.rc-method/
+/rc-method/
+/pre-rc-research/
+/post-rc/
+/rc-traceability/
+
+## Generated reports and internal tooling (not source)
+GTM-REPORT.md
+generate-workshop-pptx.mjs
+
+## Pro knowledge files (proprietary -- lives in rc-engine-pro)
+## README.md is committed; actual knowledge files are not
+knowledge/pre-rc/
+knowledge/rc/
+knowledge/post-rc/
+knowledge-pro/
+
+## Secrets (NEVER commit)
+.env
+.env.local
+.env.*.local
+*.pem
+*.key
+credentials.json
+secrets/
+
+## Agent memory (machine-local, per-user)
+## Template MEMORY.md is committed; session files are not
+.claude/agent-memory/*
+!.claude/agent-memory/MEMORY.md
+.claude/agent-memory-local/
+
+## Claude settings (user-specific, not shared)
+.claude/settings.local.json
+
+## OS
+.DS_Store
+Thumbs.db

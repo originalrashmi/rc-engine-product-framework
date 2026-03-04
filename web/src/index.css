@@ -1,0 +1,32 @@
+@import 'tailwindcss';
+
+/* Toerana brand tokens */
+@theme {
+  --color-navy: #0d1b2a;
+  --color-navy-light: #1b2d44;
+  --color-navy-lighter: #243b55;
+  --color-gold: #c9a962;
+  --color-gold-light: #dcc88a;
+  --color-gold-dim: #8a7444;
+  --color-teal: #2d9cdb;
+  --color-teal-light: #5cb8e8;
+  --color-teal-dim: #1e6e9e;
+
+  --font-sans: 'Inter', system-ui, sans-serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, monospace;
+}
+
+/* Scrollbar styling */
+::-webkit-scrollbar {
+  width: 6px;
+}
+::-webkit-scrollbar-track {
+  background: var(--color-navy);
+}
+::-webkit-scrollbar-thumb {
+  background: var(--color-navy-lighter);
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--color-gold-dim);
+}

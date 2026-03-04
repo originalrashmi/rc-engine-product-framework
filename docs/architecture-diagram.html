@@ -1,0 +1,489 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>RC Engine -- System Architecture</title>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+      body {
+        font-family:
+          'Inter',
+          system-ui,
+          -apple-system,
+          sans-serif;
+        background: #0f172a;
+        color: #e2e8f0;
+        min-height: 100vh;
+        padding: 2rem;
+      }
+      h1 {
+        font-size: 1.75rem;
+        font-weight: 700;
+        color: #c9a962;
+        text-align: center;
+        margin-bottom: 0.5rem;
+      }
+      .subtitle {
+        text-align: center;
+        color: #94a3b8;
+        font-size: 0.875rem;
+        margin-bottom: 2rem;
+      }
+      .diagram-section {
+        background: #1e293b;
+        border: 1px solid #334155;
+        border-radius: 12px;
+        padding: 2rem;
+        margin-bottom: 2rem;
+        max-width: 1400px;
+        margin-left: auto;
+        margin-right: auto;
+        overflow-x: auto;
+      }
+      .diagram-section h2 {
+        color: #c9a962;
+        font-size: 1.1rem;
+        margin-bottom: 1rem;
+        border-bottom: 1px solid #334155;
+        padding-bottom: 0.5rem;
+      }
+      .mermaid {
+        text-align: center;
+      }
+      .mermaid svg {
+        max-width: 100%;
+        height: auto;
+      }
+      .stats {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 1rem;
+        max-width: 1400px;
+        margin: 0 auto 2rem;
+      }
+      .stat-card {
+        background: #1e293b;
+        border: 1px solid #334155;
+        border-radius: 8px;
+        padding: 1rem;
+        text-align: center;
+      }
+      .stat-card .number {
+        font-size: 2rem;
+        font-weight: 700;
+        color: #c9a962;
+      }
+      .stat-card .label {
+        font-size: 0.75rem;
+        color: #94a3b8;
+        margin-top: 0.25rem;
+      }
+      @media print {
+        body {
+          background: white;
+          color: #1e293b;
+          padding: 1cm;
+        }
+        h1 {
+          color: #333;
+        }
+        .diagram-section {
+          border: 1px solid #ddd;
+          background: #fafafa;
+        }
+        .stat-card {
+          border: 1px solid #ddd;
+          background: #fafafa;
+        }
+        .stat-card .number {
+          color: #333;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <h1>RC Engine -- System Architecture</h1>
+    <p class="subtitle">AI-native structured software development pipeline -- 32 MCP tools, 4 domains, 402 tests</p>
+
+    <div class="stats">
+      <div class="stat-card">
+        <div class="number">32</div>
+        <div class="label">MCP Tools</div>
+      </div>
+      <div class="stat-card">
+        <div class="number">4</div>
+        <div class="label">Domains</div>
+      </div>
+      <div class="stat-card">
+        <div class="number">20</div>
+        <div class="label">Research Personas</div>
+      </div>
+      <div class="stat-card">
+        <div class="number">9</div>
+        <div class="label">Wizard Steps</div>
+      </div>
+      <div class="stat-card">
+        <div class="number">402</div>
+        <div class="label">Tests Passing</div>
+      </div>
+      <div class="stat-card">
+        <div class="number">5</div>
+        <div class="label">LLM Providers</div>
+      </div>
+    </div>
+
+    <!-- 1. High-level pipeline -->
+    <div class="diagram-section">
+      <h2>1. Pipeline Overview</h2>
+      <pre class="mermaid">
+graph LR
+    A["User Idea"] --> B["Pre-RC Research"]
+    B --> C["Design Generation"]
+    C --> D["RC Method Build"]
+    D --> E["Post-RC Validation"]
+    E --> F["Ship"]
+
+    B --> |"6 stages, 3 gates"| B
+    D --> |"8 phases, 5+ gates"| D
+    E --> |"scan, fix, gate"| E
+
+    subgraph Research["Pre-RC (6 tools)"]
+        B
+    end
+
+    subgraph Design["Design (1 tool)"]
+        C
+    end
+
+    subgraph Build["RC Method (14 tools)"]
+        D
+    end
+
+    subgraph Validate["Post-RC (7 tools)"]
+        E
+    end
+
+    style Research fill:#1e3a5f,stroke:#2d9cdb,color:#fff
+    style Design fill:#3d2e1a,stroke:#c9a962,color:#fff
+    style Build fill:#1a3d2e,stroke:#10b981,color:#fff
+    style Validate fill:#3d1a2e,stroke:#f43f5e,color:#fff
+    </pre
+      >
+    </div>
+
+    <!-- 2. MCP Tool Architecture -->
+    <div class="diagram-section">
+      <h2>2. MCP Server Architecture</h2>
+      <pre class="mermaid">
+graph TD
+    subgraph Entry["Entry Point (src/index.ts)"]
+        MCP["MCP Server<br/>StdioServerTransport"]
+    end
+
+    subgraph PreRC["Pre-RC Domain (6 tools)"]
+        PRC1["prc_start"]
+        PRC2["prc_classify"]
+        PRC3["prc_gate"]
+        PRC4["prc_run_stage"]
+        PRC5["prc_status"]
+        PRC6["prc_synthesize"]
+    end
+
+    subgraph RC["RC Method Domain (14 tools)"]
+        RC1["rc_import_prerc"]
+        RC2["rc_start"]
+        RC3["rc_illuminate"]
+        RC4["rc_define"]
+        RC5["rc_architect"]
+        RC6["rc_sequence"]
+        RC7["rc_validate"]
+        RC8["rc_forge_task"]
+        RC9["rc_gate"]
+        RC10["rc_save"]
+        RC11["rc_status"]
+        UX1["ux_score"]
+        UX2["ux_audit"]
+        UX3["ux_generate"]
+        UX4["ux_design"]
+    end
+
+    subgraph PostRC["Post-RC Domain (7 tools)"]
+        POST1["postrc_scan"]
+        POST2["postrc_override"]
+        POST3["postrc_report"]
+        POST4["postrc_configure"]
+        POST5["postrc_gate"]
+        POST6["postrc_status"]
+        POST7["postrc_generate_observability_spec"]
+    end
+
+    subgraph Trace["Traceability Domain (3 tools)"]
+        TR1["trace_enhance_prd"]
+        TR2["trace_map_findings"]
+        TR3["trace_status"]
+    end
+
+    subgraph Pipeline["Pipeline (1 tool)"]
+        PL1["rc_pipeline_status"]
+    end
+
+    MCP --> PreRC
+    MCP --> RC
+    MCP --> PostRC
+    MCP --> Trace
+    MCP --> Pipeline
+
+    style Entry fill:#c9a962,stroke:#a88942,color:#0f172a
+    style PreRC fill:#1e3a5f,stroke:#2d9cdb,color:#fff
+    style RC fill:#1a3d2e,stroke:#10b981,color:#fff
+    style PostRC fill:#3d1a2e,stroke:#f43f5e,color:#fff
+    style Trace fill:#2e1a3d,stroke:#8b5cf6,color:#fff
+    style Pipeline fill:#1e293b,stroke:#64748b,color:#fff
+    </pre>
+    </div>
+
+    <!-- 3. Web UI Architecture -->
+    <div class="diagram-section">
+      <h2>3. Web UI Architecture</h2>
+      <pre class="mermaid">
+graph TD
+    subgraph Browser["Browser (React + TailwindCSS v4)"]
+        Wizard["Wizard.tsx<br/>(9-step guided flow)"]
+        Dashboard["Dashboard.tsx"]
+        Pipeline["Pipeline.tsx"]
+        ValueReport["ValueReport.tsx"]
+        Settings["Settings.tsx"]
+    end
+
+    subgraph Components["UI Components"]
+        DOC["DesignOptionCard"]
+        DP["DesignPreview"]
+        DT["DiagramTabs"]
+        VD["ValueDisplay"]
+        TMC["TeamMemberCard"]
+        GA["GateApproval"]
+    end
+
+    subgraph Server["Express Server (port 3100)"]
+        REST["REST API<br/>/api/tools/:name<br/>/api/project/*"]
+        WS["WebSocket<br/>/ws events"]
+        EXPORT["PDF Export<br/>/api/project/export"]
+        PLAYBOOK["Playbook<br/>/api/project/playbook"]
+        DIAGRAMS["Diagrams<br/>/api/project/diagrams"]
+        DESIGN["Design Select<br/>/api/project/design-select"]
+    end
+
+    subgraph Bridge["MCP Bridge"]
+        IMT["InMemoryTransport"]
+        CLIENT["MCP Client"]
+        MCPS["MCP Server<br/>(32 tools in-process)"]
+    end
+
+    Wizard --> DOC
+    Wizard --> DP
+    Wizard --> DT
+    Wizard --> VD
+    Wizard --> TMC
+    Wizard --> GA
+
+    Browser --> REST
+    Browser --> WS
+    REST --> IMT
+    IMT --> CLIENT
+    CLIENT --> MCPS
+
+    style Browser fill:#1e3a5f,stroke:#2d9cdb,color:#fff
+    style Components fill:#2e3a1f,stroke:#84cc16,color:#fff
+    style Server fill:#3d2e1a,stroke:#c9a962,color:#fff
+    style Bridge fill:#1a3d2e,stroke:#10b981,color:#fff
+    </pre>
+    </div>
+
+    <!-- 4. Wizard Step Flow -->
+    <div class="diagram-section">
+      <h2>4. Wizard 9-Step Flow</h2>
+      <pre class="mermaid">
+graph LR
+    S0["0: Your Idea"] --> S1["1: Your Team"]
+    S1 --> S2["2: Research"]
+    S2 --> S3["3: Results"]
+    S3 --> S4["4: Design"]
+    S4 --> S5["5: Architecture"]
+    S5 --> S6["6: Building"]
+    S6 --> S7["7: Security"]
+    S7 --> S8["8: Complete"]
+
+    S2 --> |"prc_start<br/>prc_classify<br/>prc_run_stage x6<br/>prc_synthesize"| S3
+    S4 --> |"ux_design<br/>design-select"| S5
+    S5 --> |"rc_import_prerc<br/>rc_architect<br/>rc_gate<br/>rc_sequence<br/>rc_validate<br/>rc_gate<br/>generateDiagrams"| S6
+    S6 --> |"rc_forge_task x N"| S7
+    S7 --> |"postrc_scan<br/>postrc_gate"| S8
+
+    style S0 fill:#334155,stroke:#94a3b8,color:#fff
+    style S1 fill:#334155,stroke:#94a3b8,color:#fff
+    style S2 fill:#1e3a5f,stroke:#2d9cdb,color:#fff
+    style S3 fill:#1e3a5f,stroke:#2d9cdb,color:#fff
+    style S4 fill:#3d2e1a,stroke:#c9a962,color:#fff
+    style S5 fill:#1a3d2e,stroke:#10b981,color:#fff
+    style S6 fill:#1a3d2e,stroke:#10b981,color:#fff
+    style S7 fill:#3d1a2e,stroke:#f43f5e,color:#fff
+    style S8 fill:#c9a962,stroke:#a88942,color:#0f172a
+    </pre>
+    </div>
+
+    <!-- 5. Design Generation Pipeline -->
+    <div class="diagram-section">
+      <h2>5. Design Generation Pipeline</h2>
+      <pre class="mermaid">
+graph TD
+    INPUT["User Input:<br/>option_count, inspiration"] --> LOAD["Load Context:<br/>PRD + ICP + Competitors"]
+    LOAD --> SPEC["LLM Call 1:<br/>Generate DesignSpec JSON"]
+    SPEC --> VALIDATE["Zod Validation:<br/>DesignSpecSchema"]
+    VALIDATE --> WF["LLM Call 2 (per option):<br/>Generate HTML Wireframes"]
+    WF --> PARSE["Parse Wireframes:<br/>===WIREFRAME: name|fidelity==="]
+    PARSE --> SAVE["Save Artifacts:<br/>rc-method/design/option-X/"]
+
+    SAVE --> CARDS["UI: DesignOptionCard<br/>Color swatches + ICP bar"]
+    SAVE --> PREVIEW["UI: DesignPreview<br/>Lo-fi / Hi-fi toggle"]
+    CARDS --> SELECT["User Selects Option"]
+    SELECT --> PERSIST["Save: selected-design.json"]
+    PERSIST --> ARCH["Architect Phase:<br/>Design tokens in context"]
+    PERSIST --> FORGE["Forge Phase:<br/>Design tokens in prompts"]
+
+    style INPUT fill:#334155,stroke:#94a3b8,color:#fff
+    style SPEC fill:#3d2e1a,stroke:#c9a962,color:#fff
+    style WF fill:#3d2e1a,stroke:#c9a962,color:#fff
+    style SAVE fill:#1a3d2e,stroke:#10b981,color:#fff
+    style SELECT fill:#c9a962,stroke:#a88942,color:#0f172a
+    style ARCH fill:#1a3d2e,stroke:#10b981,color:#fff
+    style FORGE fill:#1a3d2e,stroke:#10b981,color:#fff
+    </pre>
+    </div>
+
+    <!-- 6. Core Infrastructure -->
+    <div class="diagram-section">
+      <h2>6. Core Infrastructure (src/core/)</h2>
+      <pre class="mermaid">
+graph TD
+    subgraph LLM["LLM Layer"]
+        ROUTER["Model Router<br/>(task-based routing)"]
+        CLAUDE["Claude Client"]
+        OPENAI["OpenAI Client"]
+        GEMINI["Gemini Client"]
+        PPLX["Perplexity Client"]
+    end
+
+    subgraph State["State & Persistence"]
+        CKPT["Checkpoint Store<br/>(SQLite WAL)"]
+        LEARN["Learning Store<br/>(cross-project)"]
+    end
+
+    subgraph Safety["Safety & Budget"]
+        SANDBOX["Sandbox<br/>(path + input limits)"]
+        BUDGET["Cost Tracker<br/>+ Circuit Breaker"]
+        GUARD["Tool Guard<br/>(validation layer)"]
+    end
+
+    subgraph Infra["Infrastructure"]
+        GRAPH["Graph Runner<br/>(DAG execution)"]
+        EVENTS["Event Bus<br/>+ Tracer"]
+        PLUGINS["Plugin Registry"]
+    end
+
+    subgraph Output["Output Generation"]
+        DEPLOY["Deployment<br/>(CI + Readiness)"]
+        DOCS["Docs Generator<br/>(Changelog + API)"]
+        BENCH["Benchmark Suite"]
+        VALUE["Value Calculator<br/>(role registry)"]
+    end
+
+    ROUTER --> CLAUDE
+    ROUTER --> OPENAI
+    ROUTER --> GEMINI
+    ROUTER --> PPLX
+
+    GUARD --> SANDBOX
+    GUARD --> BUDGET
+
+    style LLM fill:#3d2e1a,stroke:#c9a962,color:#fff
+    style State fill:#1e3a5f,stroke:#2d9cdb,color:#fff
+    style Safety fill:#3d1a2e,stroke:#f43f5e,color:#fff
+    style Infra fill:#1a3d2e,stroke:#10b981,color:#fff
+    style Output fill:#2e1a3d,stroke:#8b5cf6,color:#fff
+    </pre>
+    </div>
+
+    <!-- 7. Data Flow -->
+    <div class="diagram-section">
+      <h2>7. File System Output Structure</h2>
+      <pre class="mermaid">
+graph TD
+    subgraph Project["Project Directory"]
+        subgraph PreRCDir["pre-rc-research/"]
+            PRD1["PRD-*.md"]
+            DECK["consulting-deck.html"]
+            TASKS1["task-breakdown.md"]
+            INDEX["research-index.md"]
+        end
+
+        subgraph RCDir["rc-method/"]
+            PRDS["prds/ (11-section PRDs)"]
+            TASKS2["tasks/ (TASKS-*.md)"]
+            DESIGN["design/<br/>design-spec-*.json<br/>option-a/ (lo-fi + hi-fi HTML)<br/>option-b/<br/>option-c/<br/>selected-design.json"]
+            FORGE["forge/ (generated code)"]
+            DIAGRAMS["diagrams/<br/>dependency-graph.html<br/>build-timeline.html<br/>architecture-layers.html"]
+            PLAYBOOK["playbook.md"]
+        end
+
+        subgraph PostRCDir["post-rc/"]
+            REPORTS["reports/ (scan results)"]
+            POLICY["policy.json"]
+        end
+
+        subgraph TraceDir["rc-traceability/"]
+            ENHANCED["enhanced-prd.md"]
+            MATRIX["coverage-matrix.md"]
+        end
+
+        subgraph Runtime[".rc-engine/"]
+            AUDIT["audit/ (gate decisions)"]
+            CACHE["cache/"]
+            LOGS["logs/"]
+        end
+    end
+
+    style PreRCDir fill:#1e3a5f,stroke:#2d9cdb,color:#fff
+    style RCDir fill:#1a3d2e,stroke:#10b981,color:#fff
+    style PostRCDir fill:#3d1a2e,stroke:#f43f5e,color:#fff
+    style TraceDir fill:#2e1a3d,stroke:#8b5cf6,color:#fff
+    style Runtime fill:#334155,stroke:#64748b,color:#fff
+    </pre>
+    </div>
+
+    <script type="module">
+      import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs';
+      mermaid.initialize({
+        startOnLoad: true,
+        theme: 'dark',
+        themeVariables: {
+          primaryColor: '#c9a962',
+          primaryTextColor: '#0f172a',
+          primaryBorderColor: '#a88942',
+          lineColor: '#94a3b8',
+          secondaryColor: '#1e293b',
+          tertiaryColor: '#334155',
+          fontFamily: 'Inter, system-ui, sans-serif',
+        },
+        flowchart: {
+          curve: 'basis',
+          padding: 15,
+        },
+      });
+    </script>
+  </body>
+</html>

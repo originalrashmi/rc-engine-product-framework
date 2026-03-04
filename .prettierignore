@@ -1,0 +1,8 @@
+dist/
+web/dist-client/
+web/dist-server/
+node_modules/
+*.pdf
+*.xlsx
+*.docx
+.rc-engine/

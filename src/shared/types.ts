@@ -1,0 +1,45 @@
+// ============================================================================
+// SHARED ENUMS - used across all domains
+// ============================================================================
+
+export enum LLMProvider {
+  Claude = 'claude',
+  OpenAI = 'openai',
+  Gemini = 'gemini',
+  Perplexity = 'perplexity',
+}
+
+export enum GateStatus {
+  Pending = 'pending',
+  Approved = 'approved',
+  Rejected = 'rejected',
+}
+
+// ============================================================================
+// SHARED LLM TYPES - the unified interface all domains use
+// ============================================================================
+
+export interface LLMMessage {
+  role: 'system' | 'user' | 'assistant';
+  content: string;
+}
+
+export interface LLMSearchOptions {
+  returnCitations?: boolean;
+  recencyFilter?: 'month' | 'week' | 'day' | 'hour';
+  searchDomains?: string[];
+}
+
+export interface LLMRequest {
+  systemPrompt?: string;
+  messages: LLMMessage[];
+  temperature?: number;
+  maxTokens?: number;
+  searchOptions?: LLMSearchOptions;
+}
+
+export interface LLMResponse {
+  content: string;
+  tokensUsed: number;
+  provider: LLMProvider;
+}
