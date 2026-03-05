@@ -162,7 +162,12 @@ export class Orchestrator {
   }
 
   /** Start a new RC Method project (Phase 1: Illuminate) */
-  async start(projectPath: string, projectName: string, description: string, techStack?: TechStack): Promise<AgentResult> {
+  async start(
+    projectPath: string,
+    projectName: string,
+    description: string,
+    techStack?: TechStack,
+  ): Promise<AgentResult> {
     if (this.stateManager.exists(projectPath)) {
       const state = this.stateManager.load(projectPath);
       return {

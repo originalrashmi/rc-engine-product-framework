@@ -40,11 +40,7 @@ export function logActivity(projectPath: string, event: Omit<ActivityEvent, 'tim
       ...event,
     };
 
-    fs.appendFileSync(
-      path.join(auditDir, 'activity.jsonl'),
-      JSON.stringify(entry) + '\n',
-      'utf-8',
-    );
+    fs.appendFileSync(path.join(auditDir, 'activity.jsonl'), JSON.stringify(entry) + '\n', 'utf-8');
   } catch {
     // Silent -- audit logging must never break tool execution
   }

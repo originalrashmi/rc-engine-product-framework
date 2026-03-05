@@ -53,7 +53,8 @@ describe('parseLlmLegalFindings', () => {
   });
 
   it('handles JSON wrapped in markdown code fences', () => {
-    const raw = '```json\n[{"title":"Test","severity":"high","description":"Desc","remediation":"Fix","category":"claims"}]\n```';
+    const raw =
+      '```json\n[{"title":"Test","severity":"high","description":"Desc","remediation":"Fix","category":"claims"}]\n```';
     const findings = parseLlmLegalFindings(raw, ValidationModule.LegalClaims, 'LGL');
     expect(findings).toHaveLength(1);
     expect(findings[0].severity).toBe(Severity.High);

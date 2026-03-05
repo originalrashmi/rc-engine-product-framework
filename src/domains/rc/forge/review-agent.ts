@@ -34,11 +34,7 @@ export class ReviewAgent {
   /**
    * Review a completed build task.
    */
-  async review(
-    task: BuildTask,
-    buildResult: TaskBuildResult,
-    state: ForgeState,
-  ): Promise<ReviewResult> {
+  async review(task: BuildTask, buildResult: TaskBuildResult, _state: ForgeState): Promise<ReviewResult> {
     if (!buildResult.success) {
       return {
         taskId: task.taskId,

@@ -20,6 +20,13 @@ export function registerRcUxTools(server: McpServer): void {
       inputSchema: {
         feature_list: z.string().describe('List of features/screens to score for UX complexity'),
       },
+      annotations: {
+        title: 'UX Complexity Score',
+        readOnlyHint: true,
+        destructiveHint: false,
+        idempotentHint: true,
+        openWorldHint: true,
+      },
     },
     async ({ feature_list }) => {
       try {
@@ -48,6 +55,13 @@ export function registerRcUxTools(server: McpServer): void {
             'Type of UI task for specialist routing: form, dashboard, onboarding, admin, payment, component_library, content, navigation, or audit (loads all)',
           ),
       },
+      annotations: {
+        title: 'UX Audit',
+        readOnlyHint: true,
+        destructiveHint: false,
+        idempotentHint: true,
+        openWorldHint: true,
+      },
     },
     async ({ code_or_description, task_type }) => {
       try {
@@ -72,6 +86,13 @@ export function registerRcUxTools(server: McpServer): void {
         project_path: z.string().describe('Absolute path to the project directory'),
         screens_description: z.string().describe('Description of the screens and flows that need UX specification'),
       },
+      annotations: {
+        title: 'Generate UX PRD',
+        readOnlyHint: false,
+        destructiveHint: false,
+        idempotentHint: true,
+        openWorldHint: true,
+      },
     },
     async ({ project_path, screens_description }) => {
       try {
@@ -91,7 +112,7 @@ export function registerRcUxTools(server: McpServer): void {
     'ux_design',
     {
       description:
-        'Generate visual design options with HTML wireframes. Call after PRD is created (Phase 2+). Produces 1 or 3 design options based on ICP, competitor gaps, and design trends. Each option includes a design spec (colors, typography, layout) and self-contained HTML wireframes (lo-fi + hi-fi). Saves to rc-method/design/. Pass option_count=1 for budget-conscious, option_count=3 for full comparison.',
+        '[Starter+] Generate visual design options with HTML wireframes. Call after PRD is created (Phase 2+). Produces 1 or 3 design options based on ICP, competitor gaps, and design trends. Each option includes a design spec (colors, typography, layout) and self-contained HTML wireframes (lo-fi + hi-fi). Saves to rc-method/design/. Pass option_count=1 for budget-conscious, option_count=3 for full comparison.',
       inputSchema: {
         project_path: z.string().describe('Absolute path to the project directory'),
         option_count: z.number().min(1).max(3).describe('Number of design options to generate (1 or 3)'),
@@ -99,6 +120,13 @@ export function registerRcUxTools(server: McpServer): void {
           .string()
           .optional()
           .describe('Optional user-provided design references, style preferences, or URLs for inspiration'),
+      },
+      annotations: {
+        title: 'Generate Design Options',
+        readOnlyHint: false,
+        destructiveHint: false,
+        idempotentHint: false,
+        openWorldHint: true,
       },
     },
     async ({ project_path, option_count, inspiration }) => {

@@ -52,11 +52,7 @@ function getTestCommand(stack: TechStack): string {
  * @param testDir - Optional subdirectory containing tests
  * @returns Test run results
  */
-export function runTests(
-  projectPath: string,
-  stack: TechStack,
-  testDir?: string,
-): TestRunResult {
+export function runTests(projectPath: string, stack: TechStack, testDir?: string): TestRunResult {
   const startMs = Date.now();
   const command = getTestCommand(stack);
   const cwd = testDir ? path.join(projectPath, testDir) : projectPath;

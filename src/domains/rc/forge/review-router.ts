@@ -25,11 +25,7 @@ export class ReviewRouter {
    * [UI] tasks get both a code review AND a design review.
    * All other tasks get a code review only.
    */
-  async reviewTask(
-    task: BuildTask,
-    buildResult: TaskBuildResult,
-    state: ForgeState,
-  ): Promise<ReviewResult[]> {
+  async reviewTask(task: BuildTask, buildResult: TaskBuildResult, state: ForgeState): Promise<ReviewResult[]> {
     const reviews: ReviewResult[] = [];
 
     // All tasks get a code review

@@ -1,0 +1,36 @@
+{
+  "name": "rc-engine",
+  "version": "1.1.0",
+  "description": "AI-native product development pipeline — research, build, validate, and ship with 33 orchestrated tools across 4 domains.",
+  "author": {
+    "name": "Toerana",
+    "url": "https://toerana.com"
+  },
+  "repository": "https://github.com/originalrashmi/rc-engine-product-framework",
+  "license": "MIT",
+  "keywords": [
+    "mcp",
+    "product-development",
+    "ai-agent",
+    "prd",
+    "security",
+    "traceability",
+    "ux",
+    "research"
+  ],
+  "mcpServers": {
+    "rc-engine": {
+      "command": "npx",
+      "args": ["-y", "rc-engine"]
+    }
+  },
+  "categories": ["developer-tools", "productivity"],
+  "pricing": {
+    "free_tier": true,
+    "paid_tiers": ["Starter ($29/mo)", "Pro ($79/mo)"]
+  },
+  "support": {
+    "issues": "https://github.com/originalrashmi/rc-engine-product-framework/issues",
+    "privacy": "https://github.com/originalrashmi/rc-engine-product-framework/blob/main/PRIVACY.md"
+  }
+}

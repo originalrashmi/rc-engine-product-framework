@@ -72,7 +72,9 @@ export function guardedTool(handler: ToolHandler, toolName?: string): ToolHandle
       // 1c. Tools that require a paid tier but have no project_path cannot
       // be tier-checked -- block them to prevent bypass.
       return {
-        content: [{ type: 'text', text: `[Tier Restriction] Tool "${toolName}" requires project_path for tier verification.` }],
+        content: [
+          { type: 'text', text: `[Tier Restriction] Tool "${toolName}" requires project_path for tier verification.` },
+        ],
         isError: true,
       };
     }

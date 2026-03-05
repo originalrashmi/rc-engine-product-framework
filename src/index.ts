@@ -61,7 +61,7 @@ server.registerTool = ((...toolArgs: unknown[]) => {
 }) as typeof server.registerTool;
 
 // Register all tools across domains (lazy-load orchestrators on first call)
-registerInitTool(server);      // 1 tool: rc_init (unified entry point — start here)
+registerInitTool(server); // 1 tool: rc_init (unified entry point — start here)
 registerPreRcTools(server); // 7 tools: prc_*
 registerRcPhaseTools(server); // 8 tools: rc_start, rc_illuminate, rc_define, rc_import_prerc, rc_architect, rc_sequence, rc_validate, rc_forge_task
 registerRcGateTools(server); // 3 tools: rc_gate, rc_save, rc_status
@@ -74,6 +74,7 @@ server.tool(
   'rc_pipeline_status',
   'High-level overview of the entire pipeline. Read-only, safe to call anytime. Shows token usage totals and registered domain summary. Call this FIRST when starting a new session to orient yourself, or when the user asks for a big-picture status. For detailed per-domain progress, follow up with the domain-specific status tools: prc_status, rc_status, postrc_status, trace_status.',
   { project_path: z.string().describe('Absolute path to the project directory') },
+  { title: 'Pipeline Status', readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: false },
   async (args) => {
     try {
       const projectPath = (args as { project_path: string }).project_path;

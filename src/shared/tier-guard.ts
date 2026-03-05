@@ -59,7 +59,10 @@ export function checkMcpTierAccess(toolName: string, projectPath: string): strin
   if (hasFeature(tierId, requiredFeature)) return null;
 
   const tierDef = getTier(tierId);
-  const featureLabel = requiredFeature.replace(/([A-Z])/g, ' $1').toLowerCase().trim();
+  const featureLabel = requiredFeature
+    .replace(/([A-Z])/g, ' $1')
+    .toLowerCase()
+    .trim();
   return (
     `[Tier Restriction] Your ${tierDef.name} plan does not include ${featureLabel}. ` +
     `This tool requires a paid tier. ` +

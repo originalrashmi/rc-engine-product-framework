@@ -71,7 +71,7 @@ export async function traceMapFindings(args: MapFindingsInput): Promise<string> 
 ===============================================
 
   Project: ${matrix.projectName}
-  Mode: ${hasApiKey ? 'AUTONOMOUS' : 'PASSTHROUGH'}
+  Mode: ${hasApiKey ? 'Automatic' : 'Manual'}
 
   DATA SOURCES:
     Post-RC Findings: ${hasScanData ? findings.length + ' findings loaded' : 'NO SCAN DATA'}

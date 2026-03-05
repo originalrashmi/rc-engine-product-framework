@@ -89,7 +89,8 @@ export async function postrcConfigure(args: ConfigureInput): Promise<string> {
       };
     }
     if (edge_case_enabled !== undefined) state.config.edgeCasePolicy.enabled = edge_case_enabled;
-    if (edge_case_block_on_critical !== undefined) state.config.edgeCasePolicy.blockOnCritical = edge_case_block_on_critical;
+    if (edge_case_block_on_critical !== undefined)
+      state.config.edgeCasePolicy.blockOnCritical = edge_case_block_on_critical;
     if (edge_case_categories !== undefined) state.config.edgeCasePolicy.categories = edge_case_categories;
   }
 

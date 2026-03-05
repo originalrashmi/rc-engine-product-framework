@@ -610,9 +610,7 @@ export class LearningStore {
    */
   getCommonFindings(): string[] {
     const rows = this.db
-      .prepare(
-        `SELECT patterns_json FROM build_retrospectives ORDER BY created_at DESC LIMIT 20`,
-      )
+      .prepare(`SELECT patterns_json FROM build_retrospectives ORDER BY created_at DESC LIMIT 20`)
       .all() as Array<{ patterns_json: string }>;
 
     const patternCount: Record<string, number> = {};

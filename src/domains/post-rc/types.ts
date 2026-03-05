@@ -236,10 +236,7 @@ export const PostRCConfigureInputSchema = z.object({
   check_accessibility: z.boolean().optional().describe('Check accessibility compliance (ADA/WCAG)'),
   // Edge case policy configuration (Pro tier)
   edge_case_enabled: z.boolean().optional().describe('Enable edge case analysis module (Pro tier)'),
-  edge_case_block_on_critical: z
-    .boolean()
-    .optional()
-    .describe('Block ship gate on critical edge case findings'),
+  edge_case_block_on_critical: z.boolean().optional().describe('Block ship gate on critical edge case findings'),
   edge_case_categories: z
     .array(
       z.enum([

@@ -1,0 +1,13 @@
+# Smithery.io configuration for RC Engine
+# https://smithery.ai
+
+startCommand:
+  type: stdio
+  configSchema:
+    type: object
+    properties: {}
+  commandFunction: |-
+    (config) => ({
+      command: "npx",
+      args: ["-y", "rc-engine"]
+    })

@@ -36,8 +36,14 @@ The project is "${state.projectName}".`;
 
     // Plain-language step names (vocabulary: "Step" not "Phase")
     const STEP_LABELS: Record<number, string> = {
-      1: 'Discovery', 2: 'Requirements', 3: 'Architecture', 4: 'Task Planning',
-      5: 'Quality Checks', 6: 'Building', 7: 'Integration', 8: 'Production Hardening',
+      1: 'Discovery',
+      2: 'Requirements',
+      3: 'Architecture',
+      4: 'Task Planning',
+      5: 'Quality Checks',
+      6: 'Building',
+      7: 'Integration',
+      8: 'Production Hardening',
     };
     const stepLabel = STEP_LABELS[phase] || phaseName;
 

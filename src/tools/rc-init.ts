@@ -22,8 +22,8 @@ const PHASE_TOOLS: Record<Phase, string> = {
   4: 'rc_sequence',
   5: 'rc_validate',
   6: 'rc_forge_task',
-  7: 'rc_gate',   // Connect phase — gate check
-  8: 'rc_gate',   // Compound phase — gate check
+  7: 'rc_gate', // Connect phase — gate check
+  8: 'rc_gate', // Compound phase — gate check
 };
 
 export function registerInitTool(server: McpServer): void {
@@ -33,10 +33,25 @@ export function registerInitTool(server: McpServer): void {
     {
       project_path: z.string().describe('Absolute path to the project directory'),
       brief: z.string().optional().describe('Product idea or description (for new projects)'),
-      skip_research: z.boolean().optional().default(false).describe('Set true to bypass Pre-RC and go straight to rc_start (not recommended)'),
+      skip_research: z
+        .boolean()
+        .optional()
+        .default(false)
+        .describe('Set true to bypass Pre-RC and go straight to rc_start (not recommended)'),
+    },
+    {
+      title: 'RC Engine Gateway',
+      readOnlyHint: true,
+      destructiveHint: false,
+      idempotentHint: true,
+      openWorldHint: false,
     },
     async (args) => {
-      const { project_path: projectPath, brief, skip_research: skipResearch } = args as {
+      const {
+        project_path: projectPath,
+        brief,
+        skip_research: skipResearch,
+      } = args as {
         project_path: string;
         brief?: string;
         skip_research?: boolean;
@@ -177,7 +192,7 @@ async function detectAndRoute(projectPath: string, brief?: string, skipResearch:
       summary: 'Bypassing Pre-RC research. Going directly to RC Method build phase.',
       nextTool: 'rc_start',
       nextAction: `Call rc_start with:\n  project_path: "${projectPath}"\n  brief: "${truncate(brief, 100)}"`,
-      tip: '⚠️  Skipping Pre-RC means no AI persona research, no market analysis, no competitive landscape. Consider using prc_start instead.',
+      tip: 'Skipping Pre-RC means no AI research specialists, no market analysis, no competitive landscape. Consider using prc_start instead.',
     });
   }
 

@@ -5,7 +5,7 @@
  * recommendations for improving future builds.
  */
 
-import type { ForgeState, ForgeMetrics, ReviewResult } from './types.js';
+import type { ForgeState, ForgeMetrics } from './types.js';
 import { hasApiKey } from '../../../shared/config.js';
 import { routeRequest } from '../../../shared/model-router.js';
 import { tokenTracker } from '../../../shared/token-tracker.js';
@@ -40,7 +40,9 @@ export class RetroAgent {
     // Analyze task results
     for (const [taskId, result] of Object.entries(state.taskResults)) {
       if (result.success) {
-        successes.push(`${taskId} (${result.agentName}): completed in ${(result.durationMs / 1000).toFixed(1)}s, ${result.generatedFiles.length} files`);
+        successes.push(
+          `${taskId} (${result.agentName}): completed in ${(result.durationMs / 1000).toFixed(1)}s, ${result.generatedFiles.length} files`,
+        );
       } else {
         failures.push(`${taskId} (${result.agentName}): FAILED — ${result.error}`);
       }
@@ -71,8 +73,8 @@ export class RetroAgent {
     }
 
     // Generate recommendations via LLM (if available)
-    let recommendations: string[] = [];
-    let summary = '';
+    let recommendations: string[];
+    let summary: string;
 
     if (hasApiKey && (failures.length > 0 || patterns.length > 0)) {
       const retroAnalysis = await this.generateRetroAnalysis(state, metrics, successes, failures, patterns);
@@ -176,9 +178,7 @@ Output JSON:
     failures: string[],
     patterns: string[],
   ): string {
-    const passRate = metrics.totalTasks > 0
-      ? ((metrics.completedTasks / metrics.totalTasks) * 100).toFixed(0)
-      : '0';
+    const passRate = metrics.totalTasks > 0 ? ((metrics.completedTasks / metrics.totalTasks) * 100).toFixed(0) : '0';
     return `Build completed: ${metrics.completedTasks}/${metrics.totalTasks} tasks (${passRate}% success rate), ${failures.length} failures, ${patterns.length} recurring patterns detected. Review pass rate: ${(metrics.reviewPassRate * 100).toFixed(0)}%.`;
   }
 

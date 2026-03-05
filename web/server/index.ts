@@ -555,7 +555,10 @@ async function main() {
   app.get('/api/project/export', requireAuth, (req, res) => {
     if (!isAuthBypassed()) {
       const tierError = checkFeatureAccess(req.user?.tier || 'free', 'pdfExport', 'PDF export');
-      if (tierError) { res.status(403).json({ error: tierError }); return; }
+      if (tierError) {
+        res.status(403).json({ error: tierError });
+        return;
+      }
     }
 
     const projectPath = req.query.path as string;
@@ -591,7 +594,10 @@ async function main() {
   app.get('/api/project/playbook', requireAuth, (req, res) => {
     if (!isAuthBypassed()) {
       const tierError = checkFeatureAccess(req.user?.tier || 'free', 'playbook', 'playbook export');
-      if (tierError) { res.status(403).json({ error: tierError }); return; }
+      if (tierError) {
+        res.status(403).json({ error: tierError });
+        return;
+      }
     }
 
     const projectPath = req.query.path as string;
@@ -629,7 +635,10 @@ async function main() {
   app.get('/api/project/diagrams', requireAuth, async (req, res) => {
     if (!isAuthBypassed()) {
       const tierError = checkFeatureAccess(req.user?.tier || 'free', 'diagrams', 'architecture diagrams');
-      if (tierError) { res.status(403).json({ error: tierError }); return; }
+      if (tierError) {
+        res.status(403).json({ error: tierError });
+        return;
+      }
     }
 
     const projectPath = req.query.path as string;
@@ -658,7 +667,10 @@ async function main() {
   app.post('/api/project/design-select', requireAuth, async (req, res) => {
     if (!isAuthBypassed()) {
       const tierError = checkFeatureAccess(req.user?.tier || 'free', 'designOptions', 'design options');
-      if (tierError) { res.status(403).json({ error: tierError }); return; }
+      if (tierError) {
+        res.status(403).json({ error: tierError });
+        return;
+      }
     }
     const { projectPath, optionId, specPath } = req.body as {
       projectPath?: string;
@@ -733,7 +745,10 @@ async function main() {
   app.get('/api/project/value', requireAuth, async (req, res) => {
     if (!isAuthBypassed()) {
       const tierError = checkFeatureAccess(req.user?.tier || 'free', 'fullPipeline', 'value report');
-      if (tierError) { res.status(403).json({ error: tierError }); return; }
+      if (tierError) {
+        res.status(403).json({ error: tierError });
+        return;
+      }
     }
 
     const projectPath = req.query.path as string;

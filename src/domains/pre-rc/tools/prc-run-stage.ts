@@ -47,11 +47,15 @@ export async function prcRunStage(deps: PreRcDependencies, projectPath: string, 
 
   // Check prerequisites
   if (!state.classification) {
-    throw new Error('Complexity classification is required first. Analyze the project complexity before running research.');
+    throw new Error(
+      'Complexity classification is required first. Analyze the project complexity before running research.',
+    );
   }
 
   if (!state.personaSelection) {
-    throw new Error('Research specialist selection is required first. Analyze the project complexity before running research.');
+    throw new Error(
+      'Research specialist selection is required first. Analyze the project complexity before running research.',
+    );
   }
 
   // Check gate requirements
@@ -109,9 +113,7 @@ export async function prcRunStage(deps: PreRcDependencies, projectPath: string, 
   const failedCount = expectedCount - succeededCount;
 
   // Format specialist results in plain language
-  const specialistResults = newArtifacts.map(
-    (a: ResearchArtifact) => `- ${a.personaName} -- completed`,
-  );
+  const specialistResults = newArtifacts.map((a: ResearchArtifact) => `- ${a.personaName} -- completed`);
 
   const failureWarning =
     failedCount > 0

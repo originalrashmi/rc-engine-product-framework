@@ -96,13 +96,7 @@ export function groupByLayer(tasks: BuildTask[]): Map<BuildLayer, BuildTask[]> {
  * Get layers in execution order.
  */
 export function getLayerOrder(): BuildLayer[] {
-  return [
-    BuildLayer.Foundation,
-    BuildLayer.Backend,
-    BuildLayer.Frontend,
-    BuildLayer.Integration,
-    BuildLayer.QA,
-  ];
+  return [BuildLayer.Foundation, BuildLayer.Backend, BuildLayer.Frontend, BuildLayer.Integration, BuildLayer.QA];
 }
 
 // ── Helpers ─────────────────────────────────────────────────────────────────
@@ -112,11 +106,17 @@ function normalizeTag(raw: string): TaskTag {
   if (VALID_TAGS.includes(upper as TaskTag)) return upper as TaskTag;
   // Common aliases
   const aliases: Record<string, TaskTag> = {
-    DATABASE: 'DATA', DB: 'DATA', SCHEMA: 'DATA',
-    FRONTEND: 'UI', COMPONENT: 'UI',
-    BACKEND: 'API', ENDPOINT: 'API',
-    INFRA: 'SETUP', DEPLOY: 'SETUP',
-    MONITORING: 'OBS', LOGGING: 'OBS',
+    DATABASE: 'DATA',
+    DB: 'DATA',
+    SCHEMA: 'DATA',
+    FRONTEND: 'UI',
+    COMPONENT: 'UI',
+    BACKEND: 'API',
+    ENDPOINT: 'API',
+    INFRA: 'SETUP',
+    DEPLOY: 'SETUP',
+    MONITORING: 'OBS',
+    LOGGING: 'OBS',
   };
   return aliases[upper] ?? 'INTEGRATION';
 }

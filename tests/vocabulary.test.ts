@@ -33,7 +33,13 @@ const USER_FACING_DIRS = [
 ];
 
 // Additional individual files with user-facing content
-const USER_FACING_FILES = ['src/index.ts', 'src/domains/rc/orchestrator.ts'];
+const USER_FACING_FILES = [
+  'src/index.ts',
+  'src/domains/rc/orchestrator.ts',
+  'src/tools/rc-init.ts',
+  'src/domains/pre-rc/tools.ts',
+  'src/domains/post-rc/tools.ts',
+];
 
 const ROOT = join(import.meta.dirname, '..');
 

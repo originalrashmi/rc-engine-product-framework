@@ -22,11 +22,7 @@ export class DesignReviewAgent {
   /**
    * Review a [UI] task for design quality.
    */
-  async review(
-    task: BuildTask,
-    buildResult: TaskBuildResult,
-    state: ForgeState,
-  ): Promise<ReviewResult> {
+  async review(task: BuildTask, buildResult: TaskBuildResult, _state: ForgeState): Promise<ReviewResult> {
     if (!buildResult.success || task.tag !== 'UI') {
       return {
         taskId: task.taskId,
@@ -122,14 +118,20 @@ Return ONLY valid JSON.`;
     try {
       const jsonMatch = content.match(/\{[\s\S]*\}/);
       if (!jsonMatch) {
-        return { taskId, reviewerName: 'DesignReviewAgent', findings: [], verdict: 'pass', summary: content.substring(0, 500) };
+        return {
+          taskId,
+          reviewerName: 'DesignReviewAgent',
+          findings: [],
+          verdict: 'pass',
+          summary: content.substring(0, 500),
+        };
       }
       const parsed = JSON.parse(jsonMatch[0]);
       const verdict = parsed.verdict?.toLowerCase().includes('critical')
-        ? 'critical' as const
+        ? ('critical' as const)
         : parsed.verdict?.toLowerCase().includes('rework')
-          ? 'needs_rework' as const
-          : 'pass' as const;
+          ? ('needs_rework' as const)
+          : ('pass' as const);
       return {
         taskId,
         reviewerName: 'DesignReviewAgent',
@@ -138,7 +140,13 @@ Return ONLY valid JSON.`;
         summary: parsed.summary ?? 'Design review completed.',
       };
     } catch {
-      return { taskId, reviewerName: 'DesignReviewAgent', findings: [], verdict: 'pass', summary: content.substring(0, 500) };
+      return {
+        taskId,
+        reviewerName: 'DesignReviewAgent',
+        findings: [],
+        verdict: 'pass',
+        summary: content.substring(0, 500),
+      };
     }
   }
 }

@@ -775,7 +775,6 @@ Return ONLY the JSON object. No explanation, no markdown fences.`;
   }
 
   // Generate HTML task list deck (optional)
-  let taskDeckPath = '';
   if (includeTaskDeck && taskContent) {
     try {
       console.error('[prc_synthesize] Generating HTML task list deck...');
@@ -838,8 +837,6 @@ Return ONLY the JSON object. No explanation, no markdown fences.`;
       const taskHtmlContent = generateHtmlTaskList(state, taskSections);
       const taskHtmlPath = `tasks-${projectSlug}.html`;
       await persistence.writeArtifact(projectPath, taskHtmlPath, taskHtmlContent);
-      taskDeckPath = taskHtmlPath;
-
       console.error(`[prc_synthesize] HTML task list deck generated: ${taskHtmlPath}`);
     } catch (taskHtmlErr) {
       const errMsg = taskHtmlErr instanceof Error ? taskHtmlErr.message : String(taskHtmlErr);
@@ -848,12 +845,11 @@ Return ONLY the JSON object. No explanation, no markdown fences.`;
   }
 
   // Generate McKinsey-format Word document from PRD
-  let docxPath = '';
   if (prdContent) {
     try {
       console.error('[prc_synthesize] Generating McKinsey-format docx from PRD...');
       const docxFilename = `${state.projectName.replace(/[^a-zA-Z0-9]+/g, '_')}_PRD.docx`;
-      docxPath = `${projectPath}/pre-rc-research/${docxFilename}`;
+      const docxOutputPath = `${projectPath}/pre-rc-research/${docxFilename}`;
 
       await generatePrdDocx(
         {
@@ -866,13 +862,12 @@ Return ONLY the JSON object. No explanation, no markdown fences.`;
           cynefinDomain: state.classification?.domain,
           productClass: state.classification?.productClass,
         },
-        docxPath,
+        docxOutputPath,
       );
-      console.error(`[prc_synthesize] Docx generated: ${docxPath}`);
+      console.error(`[prc_synthesize] Docx generated: ${docxOutputPath}`);
     } catch (docxErr) {
       const msg = docxErr instanceof Error ? docxErr.message : String(docxErr);
       console.error(`[prc_synthesize] Docx generation failed (non-fatal): ${msg}`);
-      docxPath = '';
     }
   }
 

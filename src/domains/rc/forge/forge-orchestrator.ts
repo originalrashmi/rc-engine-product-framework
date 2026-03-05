@@ -11,20 +11,11 @@ import type { ContextLoader } from '../context-loader.js';
 import { parseTasks, groupByLayer, getLayerOrder } from './task-parser.js';
 import { RetroAgent } from './retro-agent.js';
 import type { RetroReport } from './retro-agent.js';
-import type {
-  BuildTask,
-  TaskBuildResult,
-  ReviewResult,
-  ForgeState,
-  ForgeContracts,
-  ForgeMetrics,
-  TaskTag,
-} from './types.js';
+import type { BuildTask, TaskBuildResult, ForgeState, ForgeMetrics, TaskTag } from './types.js';
 import { BuildLayer } from './types.js';
 import { DatabaseArchitect } from './agents/database-architect.js';
 import { BackendEngineer } from './agents/backend-engineer.js';
 import { FrontendEngineer } from './agents/frontend-engineer.js';
-import { UxDesigner } from './agents/ux-designer.js';
 import { IntegrationEngineer } from './agents/integration-engineer.js';
 import { PlatformEngineer } from './agents/platform-engineer.js';
 import { QAEngineer } from './agents/qa-engineer.js';
@@ -41,7 +32,6 @@ function createAgentRegistry(contextLoader: ContextLoader): AgentRegistry {
   const db = new DatabaseArchitect(contextLoader);
   const be = new BackendEngineer(contextLoader);
   const fe = new FrontendEngineer(contextLoader);
-  const ux = new UxDesigner(contextLoader);
   const ie = new IntegrationEngineer(contextLoader);
   const pe = new PlatformEngineer(contextLoader);
   const qa = new QAEngineer(contextLoader);
@@ -86,7 +76,7 @@ export class ForgeOrchestrator {
     projectName: string,
     projectPath: string,
     techStack: TechStack,
-    prdContent?: string,
+    _prdContent?: string,
   ): Promise<{ metrics: ForgeMetrics; results: TaskBuildResult[]; state: ForgeState; retro?: RetroReport }> {
     const totalStartMs = Date.now();
 
@@ -128,9 +118,7 @@ export class ForgeOrchestrator {
       const layerStartMs = Date.now();
 
       // Dispatch all tasks in this layer in parallel
-      const results = await Promise.allSettled(
-        layerTasks.map((task) => this.buildTask(task, forgeState)),
-      );
+      const results = await Promise.allSettled(layerTasks.map((task) => this.buildTask(task, forgeState)));
 
       // Collect results
       for (const result of results) {
@@ -191,9 +179,7 @@ export class ForgeOrchestrator {
       if (reworkTasks.length > 0) {
         reworkCount += reworkTasks.length;
 
-        const reworkResults = await Promise.allSettled(
-          reworkTasks.map((task) => this.reworkTask(task, forgeState)),
-        );
+        const reworkResults = await Promise.allSettled(reworkTasks.map((task) => this.reworkTask(task, forgeState)));
 
         for (const result of reworkResults) {
           if (result.status === 'fulfilled') {
@@ -299,9 +285,7 @@ export class ForgeOrchestrator {
   private async reworkTask(task: BuildTask, state: ForgeState): Promise<TaskBuildResult> {
     const review = state.reviews[task.taskId];
     const findings = review?.findings ?? [];
-    const feedbackSummary = findings
-      .map((f) => `[${f.severity}] ${f.category}: ${f.description}`)
-      .join('\n');
+    const feedbackSummary = findings.map((f) => `[${f.severity}] ${f.category}: ${f.description}`).join('\n');
 
     // Create a modified task with review feedback appended to the spec
     const reworkTask: BuildTask = {
@@ -327,11 +311,7 @@ export class ForgeOrchestrator {
    * Extract contracts from layer output and update ForgeState.
    * This is how later layers know what earlier layers produced.
    */
-  private updateContracts(
-    state: ForgeState,
-    layer: BuildLayer,
-    results: TaskBuildResult[],
-  ): void {
+  private updateContracts(state: ForgeState, layer: BuildLayer, results: TaskBuildResult[]): void {
     const layerResults = results.filter((r) => r.success);
 
     switch (layer) {
@@ -385,9 +365,7 @@ export class ForgeOrchestrator {
       const content = match[2];
 
       // Include files that contain contract-relevant content
-      const isContractFile = keywords.some(
-        (kw) => filePath.includes(kw) || filePath.endsWith('.d.ts'),
-      );
+      const isContractFile = keywords.some((kw) => filePath.includes(kw) || filePath.endsWith('.d.ts'));
 
       if (isContractFile) {
         contractParts.push(`// From: ${match[1].trim()}\n${content}`);

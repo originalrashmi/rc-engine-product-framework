@@ -57,11 +57,18 @@ export function registerRcPhaseTools(server: McpServer): void {
     'rc_import_prerc',
     {
       description:
-        'BRIDGE from Pre-RC to RC Method. Call after prc_synthesize completes and user wants to continue building. Converts the 19-section Pre-RC PRD to 11-section RC format, auto-approves Phases 1-2, and advances to Phase 3 (Architect). Prerequisites: pre-rc-research/ directory must exist with Gate 3 approved. After success: call rc_architect to begin technical design. Skips rc_start/rc_illuminate/rc_define since Pre-RC already covered discovery and requirements.',
+        '[Starter+] BRIDGE from Pre-RC to RC Method. Call after prc_synthesize completes and user wants to continue building. Converts the 19-section Pre-RC PRD to 11-section RC format, auto-approves Phases 1-2, and advances to Phase 3 (Architect). Prerequisites: pre-rc-research/ directory must exist with Gate 3 approved. After success: call rc_architect to begin technical design. Skips rc_start/rc_illuminate/rc_define since Pre-RC already covered discovery and requirements.',
       inputSchema: {
         project_path: z
           .string()
           .describe('Absolute path to the project directory (must contain pre-rc-research/ subdirectory)'),
+      },
+      annotations: {
+        title: 'Import Pre-RC Research',
+        readOnlyHint: false,
+        destructiveHint: false,
+        idempotentHint: true,
+        openWorldHint: true,
       },
     },
     async ({ project_path }) => {
@@ -83,7 +90,7 @@ export function registerRcPhaseTools(server: McpServer): void {
     'rc_start',
     {
       description:
-        'Start RC Method WITHOUT Pre-RC research. Use when user wants to go straight to building without the 20-persona research phase. Creates rc-method/ directory and project state, begins Phase 1 (Illuminate) with discovery questions. Returns discovery questions — present these to the user and collect their answers. After success: call rc_illuminate with user answers. Do NOT use this if Pre-RC was run — use rc_import_prerc instead.',
+        '[Starter+] Start RC Method WITHOUT Pre-RC research. Use when user wants to go straight to building without the 20-persona research phase. Creates rc-method/ directory and project state, begins Phase 1 (Illuminate) with discovery questions. Returns discovery questions — present these to the user and collect their answers. After success: call rc_illuminate with user answers. Do NOT use this if Pre-RC was run — use rc_import_prerc instead.',
       inputSchema: {
         project_path: z.string().describe('Absolute path to the project directory'),
         project_name: z.string().describe('Name of the project'),
@@ -97,7 +104,16 @@ export function registerRcPhaseTools(server: McpServer): void {
             orm: z.string().optional().describe('ORM (e.g. prisma, sqlalchemy, activerecord, gorm)'),
           })
           .optional()
-          .describe('Tech stack for generated code. Defaults to typescript/nextjs/react/postgresql/prisma if not specified.'),
+          .describe(
+            'Tech stack for generated code. Defaults to typescript/nextjs/react/postgresql/prisma if not specified.',
+          ),
+      },
+      annotations: {
+        title: 'Start RC Project',
+        readOnlyHint: false,
+        destructiveHint: false,
+        idempotentHint: false,
+        openWorldHint: true,
       },
     },
     async ({ project_path, project_name, description, tech_stack }) => {
@@ -127,10 +143,17 @@ export function registerRcPhaseTools(server: McpServer): void {
     'rc_illuminate',
     {
       description:
-        "Phase 1 (Illuminate). Call after rc_start, passing the user's answers to discovery questions. Generates an Illuminate Report summarizing the problem space, users, and constraints. Returns report + gate prompt. Present the report to the user and ask for approval via rc_gate. Prerequisites: must be in Phase 1. After gate approval: moves to Phase 2 (Define).",
+        "[Starter+] Phase 1 (Illuminate). Call after rc_start, passing the user's answers to discovery questions. Generates an Illuminate Report summarizing the problem space, users, and constraints. Returns report + gate prompt. Present the report to the user and ask for approval via rc_gate. Prerequisites: must be in Phase 1. After gate approval: moves to Phase 2 (Define).",
       inputSchema: {
         project_path: z.string().describe('Absolute path to the project directory'),
         discovery_answers: z.string().describe("The operator's answers to the discovery questions from rc_start"),
+      },
+      annotations: {
+        title: 'Step 1: Discovery',
+        readOnlyHint: false,
+        destructiveHint: false,
+        idempotentHint: true,
+        openWorldHint: true,
       },
     },
     async ({ project_path, discovery_answers }) => {
@@ -151,10 +174,17 @@ export function registerRcPhaseTools(server: McpServer): void {
     'rc_define',
     {
       description:
-        'Phase 2 (Define). Generates a Product Requirements Document from user-provided feature descriptions, user stories, and requirements. Produces an 11-section PRD saved to rc-method/prds/. Returns PRD content + gate prompt. Present the PRD to the user for review. Prerequisites: Phase 1 gate approved. After gate approval: moves to Phase 3 (Architect). Consider running ux_score on the feature list and ux_generate for UX-heavy products.',
+        '[Starter+] Phase 2 (Define). Generates a Product Requirements Document from user-provided feature descriptions, user stories, and requirements. Produces an 11-section PRD saved to rc-method/prds/. Returns PRD content + gate prompt. Present the PRD to the user for review. Prerequisites: Phase 1 gate approved. After gate approval: moves to Phase 3 (Architect). Consider running ux_score on the feature list and ux_generate for UX-heavy products.',
       inputSchema: {
         project_path: z.string().describe('Absolute path to the project directory'),
         operator_inputs: z.string().describe('Feature descriptions, user stories, and requirements from the operator'),
+      },
+      annotations: {
+        title: 'Phase 2: Define PRD',
+        readOnlyHint: false,
+        destructiveHint: false,
+        idempotentHint: true,
+        openWorldHint: true,
       },
     },
     async ({ project_path, operator_inputs }) => {
@@ -175,12 +205,19 @@ export function registerRcPhaseTools(server: McpServer): void {
     'rc_architect',
     {
       description:
-        'Phase 3 (Architect). Defines technical architecture: tech stack, data models, API design, integrations, and infrastructure. Pass the user\'s technical preferences or constraints in architecture_notes (e.g., "use Next.js and Supabase", "must integrate with Stripe"). Returns architecture document + gate prompt. Prerequisites: Phase 2 gate approved (or Phase 1-2 auto-approved via rc_import_prerc). After gate approval: moves to Phase 4 (Sequence).',
+        '[Starter+] Phase 3 (Architect). Defines technical architecture: tech stack, data models, API design, integrations, and infrastructure. Pass the user\'s technical preferences or constraints in architecture_notes (e.g., "use Next.js and Supabase", "must integrate with Stripe"). Returns architecture document + gate prompt. Prerequisites: Phase 2 gate approved (or Phase 1-2 auto-approved via rc_import_prerc). After gate approval: moves to Phase 4 (Sequence).',
       inputSchema: {
         project_path: z.string().describe('Absolute path to the project directory'),
         architecture_notes: z
           .string()
           .describe('Technical preferences, constraints, or existing infrastructure notes from the operator'),
+      },
+      annotations: {
+        title: 'Phase 3: Architect',
+        readOnlyHint: false,
+        destructiveHint: false,
+        idempotentHint: true,
+        openWorldHint: true,
       },
     },
     async ({ project_path, architecture_notes }) => {
@@ -201,9 +238,16 @@ export function registerRcPhaseTools(server: McpServer): void {
     'rc_sequence',
     {
       description:
-        'Phase 4 (Sequence). Auto-generates a sequenced, dependency-ordered task list from the approved PRD and architecture. Each task gets an ID (TASK-001, TASK-002...) with estimated effort and dependencies. Saved to rc-method/tasks/. No user input needed — reads PRD artifacts automatically. Present the task list to user for approval. Prerequisites: Phase 3 gate approved. After gate approval: moves to Phase 5 (Validate).',
+        '[Starter+] Phase 4 (Sequence). Auto-generates a sequenced, dependency-ordered task list from the approved PRD and architecture. Each task gets an ID (TASK-001, TASK-002...) with estimated effort and dependencies. Saved to rc-method/tasks/. No user input needed — reads PRD artifacts automatically. Present the task list to user for approval. Prerequisites: Phase 3 gate approved. After gate approval: moves to Phase 5 (Validate).',
       inputSchema: {
         project_path: z.string().describe('Absolute path to the project directory'),
+      },
+      annotations: {
+        title: 'Phase 4: Sequence Tasks',
+        readOnlyHint: false,
+        destructiveHint: false,
+        idempotentHint: true,
+        openWorldHint: true,
       },
     },
     async ({ project_path }) => {
@@ -224,9 +268,16 @@ export function registerRcPhaseTools(server: McpServer): void {
     'rc_validate',
     {
       description:
-        'Phase 5 (Validate). QUALITY GATE before building. Runs 4 automated checks: anti-pattern scan, token budget audit, scope drift detection, and UX quality assessment. This catches problems BEFORE code is written — saving significant rework. No user input needed. Present findings to user with severity ratings. Prerequisites: Phase 4 gate approved. After gate approval: moves to Phase 6 (Forge) — begin building with rc_forge_task.',
+        '[Starter+] Phase 5 (Validate). QUALITY GATE before building. Runs 4 automated checks: anti-pattern scan, token budget audit, scope drift detection, and UX quality assessment. This catches problems BEFORE code is written — saving significant rework. No user input needed. Present findings to user with severity ratings. Prerequisites: Phase 4 gate approved. After gate approval: moves to Phase 6 (Forge) — begin building with rc_forge_task.',
       inputSchema: {
         project_path: z.string().describe('Absolute path to the project directory'),
+      },
+      annotations: {
+        title: 'Phase 5: Validate',
+        readOnlyHint: false,
+        destructiveHint: false,
+        idempotentHint: true,
+        openWorldHint: true,
       },
     },
     async ({ project_path }) => {
@@ -247,10 +298,17 @@ export function registerRcPhaseTools(server: McpServer): void {
     'rc_forge_task',
     {
       description:
-        'Phase 6 (Forge). Call once per task from the approved task list. Loads the PRD, architecture, and task context, then generates implementation guidance for the specified task_id (e.g., "TASK-001"). Call this for EACH task in sequence, respecting dependency order. Prerequisites: Phase 5 gate approved, valid task_id from the task list. After ALL tasks complete: proceed to Phase 7 (Connect) via rc_gate, then run postrc_scan for security validation. Present each task result to user before moving to the next.',
+        '[Starter+] Phase 6 (Forge). Call once per task from the approved task list. Loads the PRD, architecture, and task context, then generates implementation guidance for the specified task_id (e.g., "TASK-001"). Call this for EACH task in sequence, respecting dependency order. Prerequisites: Phase 5 gate approved, valid task_id from the task list. After ALL tasks complete: proceed to Phase 7 (Connect) via rc_gate, then run postrc_scan for security validation. Present each task result to user before moving to the next.',
       inputSchema: {
         project_path: z.string().describe('Absolute path to the project directory'),
         task_id: z.string().describe('The task ID to execute (e.g., TASK-001)'),
+      },
+      annotations: {
+        title: 'Step 6: Build Task',
+        readOnlyHint: false,
+        destructiveHint: false,
+        idempotentHint: true,
+        openWorldHint: true,
       },
     },
     async ({ project_path, task_id }) => {
@@ -271,9 +329,16 @@ export function registerRcPhaseTools(server: McpServer): void {
     'rc_connect',
     {
       description:
-        'Phase 7 (Connect). Verifies that all built components integrate correctly. Reviews forge outputs for API wiring, authentication flows, data model alignment, and cross-component dependencies. Generates an integration report with gaps and recommended integration tests. No user input needed -- reads forge artifacts automatically. Prerequisites: Phase 6 gate approved. After gate approval: moves to Phase 8 (Compound).',
+        '[Starter+] Phase 7 (Connect). Verifies that all built components integrate correctly. Reviews forge outputs for API wiring, authentication flows, data model alignment, and cross-component dependencies. Generates an integration report with gaps and recommended integration tests. No user input needed -- reads forge artifacts automatically. Prerequisites: Phase 6 gate approved. After gate approval: moves to Phase 8 (Compound).',
       inputSchema: {
         project_path: z.string().describe('Absolute path to the project directory'),
+      },
+      annotations: {
+        title: 'Phase 7: Connect',
+        readOnlyHint: false,
+        destructiveHint: false,
+        idempotentHint: true,
+        openWorldHint: true,
       },
     },
     async ({ project_path }) => {
@@ -294,13 +359,20 @@ export function registerRcPhaseTools(server: McpServer): void {
     'rc_compound',
     {
       description:
-        'Phase 8 (Compound). Final phase before ship. Assesses production readiness: NFR compliance, error handling, observability, performance, security hardening, and deployment configuration. Cross-references integration report from Phase 7. Produces a ship checklist and go/no-go assessment. Prerequisites: Phase 7 gate approved. After gate approval: pipeline complete, proceed to postrc_scan for security validation.',
+        '[Starter+] Phase 8 (Compound). Final phase before ship. Assesses production readiness: NFR compliance, error handling, observability, performance, security hardening, and deployment configuration. Cross-references integration report from Phase 7. Produces a ship checklist and go/no-go assessment. Prerequisites: Phase 7 gate approved. After gate approval: pipeline complete, proceed to postrc_scan for security validation.',
       inputSchema: {
         project_path: z.string().describe('Absolute path to the project directory'),
         code_context: z
           .string()
           .optional()
           .describe('Optional code or file content to include in the hardening assessment'),
+      },
+      annotations: {
+        title: 'Phase 8: Compound',
+        readOnlyHint: false,
+        destructiveHint: false,
+        idempotentHint: true,
+        openWorldHint: true,
       },
     },
     async ({ project_path, code_context }) => {
@@ -321,9 +393,16 @@ export function registerRcPhaseTools(server: McpServer): void {
     'rc_forge_all',
     {
       description:
-        'Phase 6 v2 (Parallel Forge). Executes ALL forge tasks in parallel using specialized agents — DatabaseArchitect for [DATA], BackendEngineer for [API], FrontendEngineer for [UI], IntegrationEngineer for [INTEGRATION], PlatformEngineer for [SETUP]/[CONFIG]/[OBS], QAEngineer for [TEST]. Tasks run in 5 layers: Foundation → Backend → Frontend → Integration → QA. Each layer runs in parallel, with contracts passed between layers. Prerequisites: Phase 5 gate approved. After completion: review results and proceed to Phase 7 (Connect).',
+        '[Starter+] Phase 6 v2 (Parallel Forge). Executes ALL forge tasks in parallel using specialized agents — DatabaseArchitect for [DATA], BackendEngineer for [API], FrontendEngineer for [UI], IntegrationEngineer for [INTEGRATION], PlatformEngineer for [SETUP]/[CONFIG]/[OBS], QAEngineer for [TEST]. Tasks run in 5 layers: Foundation → Backend → Frontend → Integration → QA. Each layer runs in parallel, with contracts passed between layers. Prerequisites: Phase 5 gate approved. After completion: review results and proceed to Phase 7 (Connect).',
       inputSchema: {
         project_path: z.string().describe('Absolute path to the project directory'),
+      },
+      annotations: {
+        title: 'Parallel Forge All',
+        readOnlyHint: false,
+        destructiveHint: false,
+        idempotentHint: false,
+        openWorldHint: true,
       },
     },
     async ({ project_path }) => {
@@ -419,7 +498,15 @@ export function registerRcPhaseTools(server: McpServer): void {
 ### Results
 ${results.map((r) => `- ${r.taskId} (${r.agentName}): ${r.success ? 'OK' : 'FAILED'} — ${r.generatedFiles.length} files`).join('\n')}
 
-${metrics.failedTasks > 0 ? '\n### Failed Tasks\n' + results.filter((r) => !r.success).map((r) => `- ${r.taskId}: ${r.error}`).join('\n') : ''}
+${
+  metrics.failedTasks > 0
+    ? '\n### Failed Tasks\n' +
+      results
+        .filter((r) => !r.success)
+        .map((r) => `- ${r.taskId}: ${r.error}`)
+        .join('\n')
+    : ''
+}
 ${retro ? `\n### Retrospective\n${retro.summary}\n\n#### Recommendations\n${retro.recommendations.map((r) => `- ${r}`).join('\n')}` : ''}`;
 
         return { content: [{ type: 'text' as const, text: summary }] };
@@ -437,7 +524,7 @@ ${retro ? `\n### Retrospective\n${retro.summary}\n\n#### Recommendations\n${retr
     'rc_autopilot',
     {
       description:
-        'AUTONOMOUS PIPELINE: Single prompt → production-ready app. Runs Pre-RC → RC (all 8 phases) → Post-RC with auto-gate-approval when confidence exceeds threshold. Sets a budget cap to prevent runaway costs. This is the moonshot tool — use it when the user wants a fully automated build from a single description. Prerequisites: none (creates everything from scratch). Note: This is a v1 skeleton that chains phases sequentially with auto-gate-approval.',
+        '[Starter+] AUTONOMOUS PIPELINE: Single prompt → production-ready app. Runs Pre-RC → RC (all 8 phases) → Post-RC with auto-gate-approval when confidence exceeds threshold. Sets a budget cap to prevent runaway costs. This is the moonshot tool — use it when the user wants a fully automated build from a single description. Prerequisites: none (creates everything from scratch). Note: This is a v1 skeleton that chains phases sequentially with auto-gate-approval.',
       inputSchema: {
         project_path: z.string().describe('Absolute path to the project directory'),
         description: z.string().describe('Full project description — the single prompt that drives everything'),
@@ -461,6 +548,13 @@ ${retro ? `\n### Retrospective\n${retro.summary}\n\n#### Recommendations\n${retr
           .number()
           .default(15)
           .describe('Maximum budget in USD. Pipeline halts if exceeded. Default: $15'),
+      },
+      annotations: {
+        title: 'Autopilot Pipeline',
+        readOnlyHint: false,
+        destructiveHint: false,
+        idempotentHint: false,
+        openWorldHint: true,
       },
     },
     async ({ project_path, description, tech_stack, auto_approve_threshold, budget_cap_usd }) => {
@@ -497,10 +591,10 @@ ${retro ? `\n### Retrospective\n${retro.summary}\n\n#### Recommendations\n${retr
         addLog('Phase 0: Project initialized');
 
         // Phase 1: Illuminate
-        addLog('Phase 1: Illuminate...');
+        addLog('Step 1: Discovery...');
         await orchestrator.illuminate(project_path, description);
         await orchestrator.gate(project_path, 'approve', `Auto-approved by autopilot (threshold: ${threshold})`);
-        addLog('Phase 1: Illuminate complete + gate approved');
+        addLog('Step 1: Discovery complete + checkpoint approved');
 
         // Phase 2: Define
         addLog('Phase 2: Define...');
@@ -527,7 +621,7 @@ ${retro ? `\n### Retrospective\n${retro.summary}\n\n#### Recommendations\n${retr
         addLog('Phase 5: Validate complete + gate approved');
 
         // Phase 6: Forge (parallel multi-agent build)
-        addLog('Phase 6: Forge All (parallel multi-agent build)...');
+        addLog('Step 6: Build All (parallel multi-agent build)...');
         const state = _stateManager.load(project_path);
         const taskArtifact = state.artifacts.find((a: string) => a.includes('/tasks/'));
         let taskContent = '';
@@ -571,7 +665,7 @@ ${retro ? `\n### Retrospective\n${retro.summary}\n\n#### Recommendations\n${retr
 
           forgeMetricsSummary = `${metrics.completedTasks}/${metrics.totalTasks} tasks, ${metrics.failedTasks} failed, $${metrics.totalCostUsd.toFixed(4)}, ${metrics.reworkCount} reworks`;
         }
-        addLog(`Phase 6: Forge complete — ${forgeMetricsSummary}`);
+        addLog(`Step 6: Build complete — ${forgeMetricsSummary}`);
 
         // Phase 6 has no gate (developer-controlled), advance state manually
         state.currentPhase = 7;

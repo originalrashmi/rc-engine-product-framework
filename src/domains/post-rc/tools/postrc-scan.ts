@@ -196,7 +196,12 @@ function computeGateDecision(
 
 // ── Output Formatting ────────────────────────────────────────────────────────
 
-function formatScanOutput(scan: ScanResult, activeOverrides: number, remediationPath: string | null = null, tier: string = 'free'): string {
+function formatScanOutput(
+  scan: ScanResult,
+  activeOverrides: number,
+  remediationPath: string | null = null,
+  tier: string = 'free',
+): string {
   const isProOrHigher = tier === 'pro' || tier === 'enterprise';
   const gateIcon =
     scan.gateDecision === GateDecision.Pass ? 'PASS' : scan.gateDecision === GateDecision.Warn ? 'WARN' : 'BLOCK';
@@ -276,9 +281,7 @@ function formatScanOutput(scan: ScanResult, activeOverrides: number, remediation
   }
 
   // Legal findings disclaimer
-  const hasLegalFindings = scan.findings.some(
-    (f) => f.module === 'legal-claims' || f.module === 'legal-product',
-  );
+  const hasLegalFindings = scan.findings.some((f) => f.module === 'legal-claims' || f.module === 'legal-product');
   if (hasLegalFindings) {
     output += `
   LEGAL DISCLAIMER:

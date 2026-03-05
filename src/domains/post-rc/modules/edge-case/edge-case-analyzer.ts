@@ -21,9 +21,21 @@ import { recordCost } from '../../../../shared/cost-tracker.js';
 
 // Source file extensions to scan (same as security scanner)
 const CODE_EXTENSIONS = new Set([
-  '.ts', '.tsx', '.js', '.jsx', '.mjs', '.cjs',
-  '.py', '.rb', '.go', '.rs', '.java', '.kt',
-  '.vue', '.svelte', '.astro',
+  '.ts',
+  '.tsx',
+  '.js',
+  '.jsx',
+  '.mjs',
+  '.cjs',
+  '.py',
+  '.rb',
+  '.go',
+  '.rs',
+  '.java',
+  '.kt',
+  '.vue',
+  '.svelte',
+  '.astro',
   '.sql',
 ]);
 
@@ -198,9 +210,7 @@ export async function runEdgeCaseModule(
 
     // De-duplicate against static findings
     for (const lf of llmFindings) {
-      const isDuplicate = allFindings.some(
-        (af) => af.category === lf.category && af.title === lf.title,
-      );
+      const isDuplicate = allFindings.some((af) => af.category === lf.category && af.title === lf.title);
       if (!isDuplicate) {
         allFindings.push(lf);
       }
@@ -221,7 +231,8 @@ export async function runEdgeCaseModule(
       module: ValidationModule.EdgeCase,
       severity: Severity.Info,
       title: 'LLM edge case matrix skipped -- no API key',
-      description: 'Static pattern scan ran, but LLM edge case matrix was skipped. Configure ANTHROPIC_API_KEY for full analysis.',
+      description:
+        'Static pattern scan ran, but LLM edge case matrix was skipped. Configure ANTHROPIC_API_KEY for full analysis.',
       remediation: 'Set ANTHROPIC_API_KEY in .env for full edge case analysis.',
       category: 'passthrough',
     });
@@ -299,7 +310,8 @@ async function runStructuralAnalysis(projectPath: string, activeCategories: Edge
         module: ValidationModule.EdgeCase,
         severity: Severity.Medium,
         title: 'PRD references async operations but no error handling tasks',
-        description: 'The PRD mentions async/concurrent operations but the task list has no explicit error handling, retry, or fallback tasks.',
+        description:
+          'The PRD mentions async/concurrent operations but the task list has no explicit error handling, retry, or fallback tasks.',
         remediation: 'Add tasks for error handling, retry logic, and fallback behavior for async operations.',
         category: 'error-state',
       });
@@ -316,8 +328,10 @@ async function runStructuralAnalysis(projectPath: string, activeCategories: Edge
         module: ValidationModule.EdgeCase,
         severity: Severity.Medium,
         title: 'Integration requirements without retry/resilience tasks',
-        description: 'PRD references external integrations but task list lacks retry, timeout, or circuit breaker tasks.',
-        remediation: 'Add tasks for retry with exponential backoff, timeout configuration, and circuit breaker patterns.',
+        description:
+          'PRD references external integrations but task list lacks retry, timeout, or circuit breaker tasks.',
+        remediation:
+          'Add tasks for retry with exponential backoff, timeout configuration, and circuit breaker patterns.',
         category: 'integration',
       });
     }
@@ -333,7 +347,8 @@ async function runStructuralAnalysis(projectPath: string, activeCategories: Edge
         module: ValidationModule.EdgeCase,
         severity: Severity.Medium,
         title: 'Database operations without transaction safety tasks',
-        description: 'PRD references database operations but task list lacks transaction, rollback, or data consistency tasks.',
+        description:
+          'PRD references database operations but task list lacks transaction, rollback, or data consistency tasks.',
         remediation: 'Add tasks for transaction boundaries, rollback handling, and data consistency checks.',
         category: 'data-integrity',
       });
@@ -462,21 +477,24 @@ function parseEdgeCaseFindings(text: string): Finding[] {
 
 function mapSeverity(s: string): Severity {
   switch (s.toLowerCase()) {
-    case 'critical': return Severity.Critical;
-    case 'high': return Severity.High;
-    case 'medium': case 'moderate': return Severity.Medium;
-    case 'low': return Severity.Low;
-    default: return Severity.Medium;
+    case 'critical':
+      return Severity.Critical;
+    case 'high':
+      return Severity.High;
+    case 'medium':
+    case 'moderate':
+      return Severity.Medium;
+    case 'low':
+      return Severity.Low;
+    default:
+      return Severity.Medium;
   }
 }
 
 // ── File Loading Utilities ────────────────────────────────────────────────
 
 async function loadPrdContent(projectPath: string): Promise<string | null> {
-  const prdDirs = [
-    join(projectPath, 'rc-method', 'prds'),
-    join(projectPath, 'pre-rc-research'),
-  ];
+  const prdDirs = [join(projectPath, 'rc-method', 'prds'), join(projectPath, 'pre-rc-research')];
 
   for (const dir of prdDirs) {
     if (!existsSync(dir)) continue;

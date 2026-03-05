@@ -269,7 +269,7 @@ export async function traceEnhancePrd(args: EnhancePrdInput): Promise<string> {
 ===============================================
 
   Source PRD: ${filename}
-  Mode: ${hasApiKey ? 'AUTONOMOUS' : 'PASSTHROUGH'}
+  Mode: ${hasApiKey ? 'Automatic' : 'Manual'}
 
   REQUIREMENTS EXTRACTED: ${requirements.length}
 
@@ -290,7 +290,7 @@ export async function traceEnhancePrd(args: EnhancePrdInput): Promise<string> {
 
   if (!hasApiKey) {
     output += `
-  PASSTHROUGH MODE:
+  MANUAL MODE:
     Acceptance criteria were NOT generated (no API key).
     To generate Given/When/Then criteria:
     1. Set ANTHROPIC_API_KEY and re-run, OR
