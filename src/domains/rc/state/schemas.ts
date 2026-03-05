@@ -47,6 +47,14 @@ const DesignSelectionSchema = z.object({
   selectedAt: z.string(),
 });
 
+const TechStackSchema = z.object({
+  language: z.enum(['typescript', 'python', 'ruby', 'go', 'java']),
+  framework: z.string(),
+  uiFramework: z.string().optional(),
+  database: z.string(),
+  orm: z.string().optional(),
+});
+
 export const ProjectStateSchema = z.object({
   projectName: z.string(),
   projectPath: z.string(),
@@ -58,6 +66,7 @@ export const ProjectStateSchema = z.object({
   preRcSource: PreRcSourceSchema.optional(),
   forgeTasks: z.record(z.string(), ForgeTaskRecordSchema).optional(),
   selectedDesign: DesignSelectionSchema.optional(),
+  techStack: TechStackSchema.optional(),
   // Transient fields -- used for inter-node communication within a graph run.
   // Optional so existing persisted state without them still validates.
   _pendingInput: z.string().optional(),

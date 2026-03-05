@@ -70,6 +70,24 @@ export interface BudgetEvent {
 
 export type BudgetListener = (event: BudgetEvent) => void;
 
+/**
+ * Thrown when a pipeline exceeds its budget.
+ * Callers should catch this and surface it as a gate interrupt, not a silent crash.
+ */
+export class BudgetExceededError extends Error {
+  public readonly pipelineId: string;
+  public readonly currentCostUsd: number;
+  public readonly budgetUsd: number;
+
+  constructor(event: BudgetEvent) {
+    super(event.message);
+    this.name = 'BudgetExceededError';
+    this.pipelineId = event.pipelineId;
+    this.currentCostUsd = event.currentCostUsd;
+    this.budgetUsd = event.budgetUsd;
+  }
+}
+
 // ── Cost Rates ──────────────────────────────────────────────────────────────
 
 /**
@@ -274,14 +292,16 @@ export class CostTracker {
     const warnThreshold = budget.warnThreshold ?? 0.8;
 
     if (percentUsed >= 1.0) {
-      this.emit({
+      const event: BudgetEvent = {
         type: 'exceeded',
         pipelineId,
         currentCostUsd: spent,
         budgetUsd: budget.maxCostUsd,
         percentUsed,
         message: `Pipeline "${pipelineId}" exceeded budget: $${spent.toFixed(4)} / $${budget.maxCostUsd.toFixed(2)}`,
-      });
+      };
+      this.emit(event);
+      throw new BudgetExceededError(event);
     } else if (percentUsed >= warnThreshold && !this.warnedPipelines.has(pipelineId)) {
       this.warnedPipelines.add(pipelineId);
       this.emit({

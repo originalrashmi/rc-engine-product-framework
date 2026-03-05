@@ -5,7 +5,7 @@
  * Wires budget events to the shared EventBus.
  */
 
-import { CostTracker } from '../core/budget/cost-tracker.js';
+import { CostTracker, BudgetExceededError } from '../core/budget/cost-tracker.js';
 import type { CostSummary } from '../core/budget/cost-tracker.js';
 
 let _tracker: CostTracker | null = null;
@@ -17,7 +17,11 @@ export function getCostTracker(): CostTracker {
   return _tracker;
 }
 
-/** Record a cost entry alongside the existing tokenTracker. Never throws. */
+/**
+ * Record a cost entry alongside the existing tokenTracker.
+ * Re-throws BudgetExceededError so callers can halt execution.
+ * Swallows all other errors silently.
+ */
 export function recordCost(params: {
   pipelineId: string;
   domain: string;
@@ -29,10 +33,13 @@ export function recordCost(params: {
 }): number {
   try {
     return getCostTracker().record(params);
-  } catch {
+  } catch (err) {
+    if (err instanceof BudgetExceededError) throw err;
     return 0;
   }
 }
+
+export { BudgetExceededError };
 
 /** Get cost summary for status display. Returns null on error. */
 export function getCostSummary(pipelineId?: string): CostSummary | null {

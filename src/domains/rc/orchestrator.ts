@@ -16,12 +16,12 @@ import { tokenTracker } from '../../shared/token-tracker.js';
 import { hasApiKey } from '../../shared/config.js';
 import { audit, formatRecentActivity } from '../../shared/audit.js';
 import { routeRequest } from '../../shared/model-router.js';
-import { recordCost } from '../../shared/cost-tracker.js';
+import { recordCost, getCostSummary } from '../../shared/cost-tracker.js';
 import { recordGateOutcome, recordModelPerformance, getLearningSummary } from '../../shared/learning.js';
 import { recordProjectUsage } from '../../shared/usage-meter.js';
 import { formatCostSummary } from '../../shared/cost-tracker.js';
 import { recordPipelineTimings } from '../../shared/benchmark.js';
-import type { AgentResult, ProjectState, Phase } from './types.js';
+import type { AgentResult, ProjectState, Phase, TechStack } from './types.js';
 import type { DesignInput } from './design-types.js';
 import { GateStatus, PHASE_NAMES, GATED_PHASES } from './types.js';
 import fs from 'node:fs';
@@ -87,8 +87,8 @@ export class Orchestrator {
         tool: 'Orchestrator',
         provider: response.provider,
         model: client.getModel(),
-        inputTokens: 0,
-        outputTokens: response.tokensUsed,
+        inputTokens: response.inputTokens ?? 0,
+        outputTokens: response.outputTokens ?? response.tokensUsed,
       });
       recordModelPerformance({
         provider: response.provider,
@@ -124,11 +124,18 @@ export class Orchestrator {
     phaseOutput: string,
     artifacts?: string[],
   ): Promise<AgentResult> {
-    // Record phase timing for benchmarks
+    // Record phase timing for benchmarks (with token count and cost data)
     const durationMs = this.phaseStartMs > 0 ? Date.now() - this.phaseStartMs : 0;
     if (durationMs > 0) {
+      const costSnapshot = getCostSummary('rc-session');
       recordPipelineTimings(`rc-${state.projectName}`, [
-        { domain: 'rc', phase: PHASE_NAMES[state.currentPhase], durationMs },
+        {
+          domain: 'rc',
+          phase: PHASE_NAMES[state.currentPhase],
+          durationMs,
+          tokenCount: costSnapshot ? costSnapshot.totalInputTokens + costSnapshot.totalOutputTokens : undefined,
+          estimatedCostUsd: costSnapshot?.totalCostUsd,
+        },
       ]);
     }
 
@@ -155,7 +162,7 @@ export class Orchestrator {
   }
 
   /** Start a new RC Method project (Phase 1: Illuminate) */
-  async start(projectPath: string, projectName: string, description: string): Promise<AgentResult> {
+  async start(projectPath: string, projectName: string, description: string, techStack?: TechStack): Promise<AgentResult> {
     if (this.stateManager.exists(projectPath)) {
       const state = this.stateManager.load(projectPath);
       return {
@@ -164,6 +171,15 @@ export class Orchestrator {
     }
 
     const state = this.stateManager.create(projectPath, projectName);
+
+    // Store tech stack selection (defaults applied if not specified)
+    state.techStack = techStack ?? {
+      language: 'typescript',
+      framework: 'nextjs',
+      uiFramework: 'react',
+      database: 'postgresql',
+      orm: 'prisma',
+    };
 
     const masterKnowledge = this.contextLoader.loadFile('skills/rc-master.md');
 
@@ -342,12 +358,18 @@ ${result.text.substring(0, 500)}...`;
       }
     }
 
-    const instructions = `You are the RC Method orchestrator in Phase 3: Architect. Define how the project gets built - tech stack, data model, architecture.\n\nRules:\n- Recommend tech stack with business justification\n- Define data model and key integrations\n${hasUi ? '- Include UX architecture: design token strategy, component library approach, theme system' : ''}${designContext ? '\n- Use the selected design spec for colors, typography, spacing, and layout decisions' : ''}\n- Write in plain business language\n- The project is "${state.projectName}"`;
+    // Build tech stack context for the architect
+    const stack = state.techStack;
+    const stackContext = stack
+      ? `\n\nSelected Tech Stack:\n- Language: ${stack.language}\n- Framework: ${stack.framework}${stack.uiFramework ? `\n- UI Framework: ${stack.uiFramework}` : ''}\n- Database: ${stack.database}${stack.orm ? `\n- ORM: ${stack.orm}` : ''}`
+      : '';
+
+    const instructions = `You are the RC Method orchestrator in Phase 3: Architect. Define how the project gets built - tech stack, data model, architecture.\n\nRules:\n${stack ? `- Use the selected tech stack (${stack.language}/${stack.framework}) — do NOT override with a different stack` : '- Recommend tech stack with business justification'}\n- Define data model and key integrations\n${hasUi ? '- Include UX architecture: design token strategy, component library approach, theme system' : ''}${designContext ? '\n- Use the selected design spec for colors, typography, spacing, and layout decisions' : ''}\n- Write in plain business language\n- The project is "${state.projectName}"`;
 
     const text = await this.execute(
       masterKnowledge,
       instructions,
-      `Architecture inputs from the operator:\n\n${architectureNotes}\n\nExisting PRDs:\n${prdContext}${designContext}\n\nDefine the architecture.`,
+      `Architecture inputs from the operator:\n\n${architectureNotes}${stackContext}\n\nExisting PRDs:\n${prdContext}${designContext}\n\nDefine the architecture.`,
     );
 
     return this.finalizePhase(projectPath, state, text);
@@ -417,9 +439,21 @@ ${result.text.substring(0, 500)}...`;
     };
     this.stateManager.save(projectPath, state);
 
-    // Load active PRD and task list for context
+    // Load only relevant context: PRDs + task lists + type/interface files from forge
+    // This avoids O(N²) growth where task N loads all N-1 previous forge outputs
     let context = '';
     for (const artifact of state.artifacts) {
+      const isForgeArtifact = artifact.includes('/forge/');
+      if (isForgeArtifact) {
+        // Only load type definitions, interfaces, and schema files from other forge tasks
+        const isContractFile =
+          artifact.endsWith('.d.ts') ||
+          artifact.includes('/types') ||
+          artifact.includes('/schema') ||
+          artifact.includes('/interfaces') ||
+          artifact.includes('/contracts');
+        if (!isContractFile) continue;
+      }
       try {
         const content = this.contextLoader.loadProjectFile(projectPath, artifact);
         context += `\n\n--- ${artifact} ---\n\n${content}`;
@@ -442,6 +476,21 @@ ${result.text.substring(0, 500)}...`;
     const masterKnowledge = this.contextLoader.loadFile('skills/rc-master.md');
     const testScriptKnowledge = this.contextLoader.loadFile('skills/rc-test-scripts.md');
 
+    // Load stack-specific knowledge if available
+    const stack = state.techStack;
+    let stackKnowledge = '';
+    if (stack) {
+      try {
+        stackKnowledge = this.contextLoader.loadFile(`skills/stacks/stack-${stack.language}-${stack.framework}.md`);
+      } catch {
+        // Stack knowledge file not yet created — forge will rely on architecture doc
+      }
+    }
+
+    const stackInstructions = stack
+      ? `\n- Generate code in ${stack.language} using the ${stack.framework} framework${stack.uiFramework ? ` with ${stack.uiFramework} for UI` : ''}${stack.orm ? `\n- Use ${stack.orm} for database access (${stack.database})` : `\n- Use ${stack.database} for the database`}`
+      : '';
+
     const instructions = `You are the RC Method orchestrator in Step 6: Build. You generate ACTUAL implementation code for the requested task.
 
 OUTPUT FORMAT: For each file you generate, use this exact format:
@@ -459,13 +508,13 @@ Rules:
 - Follow the approved task list exactly
 - Reference the active PRD for context and requirements
 - Generate complete, runnable code -- not pseudocode or guidance
-- Use the tech stack and patterns from the architecture document
+- Use the tech stack and patterns from the architecture document${stackInstructions}
 - If the task is a [UI] task, apply rc-ux-core.md core rules${designTokens ? '\n- For UI tasks, use the design tokens (colors, typography, spacing) from the selected design spec below' : ''}
 - If the task is a [UI], [API], or [INTEGRATION] task, generate a test file with the implementation
 - If scope questions arise, STOP and flag them -- do NOT guess
 - Every generated file must be self-contained and importable
 - The project is "${state.projectName}"
-
+${stackKnowledge ? `\nStack-Specific Patterns:\n${stackKnowledge}` : ''}
 Test Script Knowledge:
 ${testScriptKnowledge}`;
 
@@ -609,7 +658,8 @@ PRDs: ${state.artifacts.filter((a) => a.includes('/prds/')).length}
 Tasks: ${state.artifacts.filter((a) => a.includes('/tasks/')).length} list(s)
 Gates Passed: ${approvedCount} of ${GATED_PHASES.length}
 UX Score: ${state.uxScore ?? 'not scored'}
-UX Mode: ${state.uxMode ?? 'not set'}${forgeSection}
+UX Mode: ${state.uxMode ?? 'not set'}
+Tech Stack: ${state.techStack ? `${state.techStack.language}/${state.techStack.framework}` : 'not set'}${forgeSection}
 ${tokenTracker.getDomainSummary('rc')}${formatCostSummary()}${getLearningSummary()}${formatRecentActivity(projectPath)}
 ===================================================`;
 

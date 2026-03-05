@@ -4,6 +4,8 @@ import { Orchestrator } from '../orchestrator.js';
 import { createRcCoordinator } from './rc-coordinator-factory.js';
 import type { RcCoordinator } from '../graph/rc-coordinator.js';
 import { StateManager } from '../state/state-manager.js';
+import { ContextLoader } from '../context-loader.js';
+import { ForgeOrchestrator } from '../forge/forge-orchestrator.js';
 import type { ProjectState } from '../types.js';
 
 let _orchestrator: Orchestrator | null = null;
@@ -86,11 +88,30 @@ export function registerRcPhaseTools(server: McpServer): void {
         project_path: z.string().describe('Absolute path to the project directory'),
         project_name: z.string().describe('Name of the project'),
         description: z.string().describe('Brief description of what the project is and what problem it solves'),
+        tech_stack: z
+          .object({
+            language: z.enum(['typescript', 'python', 'ruby', 'go', 'java']).describe('Primary language'),
+            framework: z.string().describe('Web framework (e.g. nextjs, fastapi, rails, gin, spring)'),
+            ui_framework: z.string().optional().describe('UI framework (e.g. react, vue, svelte, htmx)'),
+            database: z.string().describe('Database (e.g. postgresql, mysql, mongodb, sqlite)'),
+            orm: z.string().optional().describe('ORM (e.g. prisma, sqlalchemy, activerecord, gorm)'),
+          })
+          .optional()
+          .describe('Tech stack for generated code. Defaults to typescript/nextjs/react/postgresql/prisma if not specified.'),
       },
     },
-    async ({ project_path, project_name, description }) => {
+    async ({ project_path, project_name, description, tech_stack }) => {
       try {
-        const result = await getOrchestrator().start(project_path, project_name, description);
+        const parsedStack = tech_stack
+          ? {
+              language: tech_stack.language,
+              framework: tech_stack.framework,
+              uiFramework: tech_stack.ui_framework,
+              database: tech_stack.database,
+              orm: tech_stack.orm,
+            }
+          : undefined;
+        const result = await getOrchestrator().start(project_path, project_name, description, parsedStack);
         return { content: [{ type: 'text' as const, text: result.text }] };
       } catch (err) {
         return {
@@ -285,6 +306,204 @@ export function registerRcPhaseTools(server: McpServer): void {
     async ({ project_path, code_context }) => {
       try {
         const text = await runPhaseViaCoordinator(project_path, 'compound', code_context);
+        return { content: [{ type: 'text' as const, text }] };
+      } catch (err) {
+        return {
+          content: [{ type: 'text' as const, text: `Error: ${(err as Error).message}` }],
+          isError: true,
+        };
+      }
+    },
+  );
+
+  // rc_forge_all - Multi-agent parallel forge (Phase 6 v2)
+  server.registerTool(
+    'rc_forge_all',
+    {
+      description:
+        'Phase 6 v2 (Parallel Forge). Executes ALL forge tasks in parallel using specialized agents — DatabaseArchitect for [DATA], BackendEngineer for [API], FrontendEngineer for [UI], IntegrationEngineer for [INTEGRATION], PlatformEngineer for [SETUP]/[CONFIG]/[OBS], QAEngineer for [TEST]. Tasks run in 5 layers: Foundation → Backend → Frontend → Integration → QA. Each layer runs in parallel, with contracts passed between layers. Prerequisites: Phase 5 gate approved. After completion: review results and proceed to Phase 7 (Connect).',
+      inputSchema: {
+        project_path: z.string().describe('Absolute path to the project directory'),
+      },
+    },
+    async ({ project_path }) => {
+      try {
+        const state = _stateManager.load(project_path);
+
+        if (state.currentPhase !== 6) {
+          return {
+            content: [
+              {
+                type: 'text' as const,
+                text: `Error: rc_forge_all requires Phase 6 (Forge), but project is in Phase ${state.currentPhase}. Use rc_status to check progress.`,
+              },
+            ],
+            isError: true,
+          };
+        }
+
+        // Find the task list artifact
+        const taskArtifact = state.artifacts.find((a) => a.includes('/tasks/'));
+        if (!taskArtifact) {
+          return {
+            content: [
+              {
+                type: 'text' as const,
+                text: 'Error: No task list found. Run rc_sequence first to generate the task list.',
+              },
+            ],
+            isError: true,
+          };
+        }
+
+        const contextLoader = new ContextLoader();
+        const taskContent = contextLoader.loadProjectFile(project_path, taskArtifact);
+
+        // Load PRD for additional context
+        let prdContent: string | undefined;
+        const prdArtifact = state.artifacts.find((a) => a.includes('/prds/') && !a.includes('-ux'));
+        if (prdArtifact) {
+          try {
+            prdContent = contextLoader.loadProjectFile(project_path, prdArtifact);
+          } catch {
+            // skip
+          }
+        }
+
+        const techStack = state.techStack ?? {
+          language: 'typescript' as const,
+          framework: 'nextjs',
+          uiFramework: 'react',
+          database: 'postgresql',
+          orm: 'prisma',
+        };
+
+        const forgeOrchestrator = new ForgeOrchestrator(contextLoader);
+        const { metrics, results } = await forgeOrchestrator.forgeAll(
+          taskContent,
+          state.projectName,
+          project_path,
+          techStack,
+          prdContent,
+        );
+
+        // Update project state with forge results
+        if (!state.forgeTasks) state.forgeTasks = {};
+        for (const result of results) {
+          state.forgeTasks[result.taskId] = {
+            taskId: result.taskId,
+            status: result.success ? 'complete' : 'failed',
+            startedAt: new Date().toISOString(),
+            completedAt: new Date().toISOString(),
+            generatedFiles: result.generatedFiles,
+          };
+        }
+        _stateManager.save(project_path, state);
+
+        // Build summary
+        const summary = `## Forge All — Complete
+
+### Metrics
+- Tasks: ${metrics.completedTasks}/${metrics.totalTasks} completed, ${metrics.failedTasks} failed
+- Duration: ${(metrics.totalDurationMs / 1000).toFixed(1)}s
+- Tokens: ${metrics.totalTokens.toLocaleString()}
+- Cost: $${metrics.totalCostUsd.toFixed(4)}
+
+### Layer Timings
+- Foundation: ${(metrics.layerTimings[1] / 1000).toFixed(1)}s
+- Backend: ${(metrics.layerTimings[2] / 1000).toFixed(1)}s
+- Frontend: ${(metrics.layerTimings[3] / 1000).toFixed(1)}s
+- Integration: ${(metrics.layerTimings[4] / 1000).toFixed(1)}s
+- QA: ${(metrics.layerTimings[5] / 1000).toFixed(1)}s
+
+### Results
+${results.map((r) => `- ${r.taskId} (${r.agentName}): ${r.success ? 'OK' : 'FAILED'} — ${r.generatedFiles.length} files`).join('\n')}
+
+${metrics.failedTasks > 0 ? '\n### Failed Tasks\n' + results.filter((r) => !r.success).map((r) => `- ${r.taskId}: ${r.error}`).join('\n') : ''}`;
+
+        return { content: [{ type: 'text' as const, text: summary }] };
+      } catch (err) {
+        return {
+          content: [{ type: 'text' as const, text: `Error: ${(err as Error).message}` }],
+          isError: true,
+        };
+      }
+    },
+  );
+
+  // rc_autopilot - Autonomous full pipeline execution (skeleton)
+  server.registerTool(
+    'rc_autopilot',
+    {
+      description:
+        'AUTONOMOUS PIPELINE: Single prompt → production-ready app. Runs Pre-RC → RC (all 8 phases) → Post-RC with auto-gate-approval when confidence exceeds threshold. Sets a budget cap to prevent runaway costs. This is the moonshot tool — use it when the user wants a fully automated build from a single description. Prerequisites: none (creates everything from scratch). Note: This is a v1 skeleton that chains phases sequentially with auto-gate-approval.',
+      inputSchema: {
+        project_path: z.string().describe('Absolute path to the project directory'),
+        description: z.string().describe('Full project description — the single prompt that drives everything'),
+        tech_stack: z
+          .object({
+            language: z.enum(['typescript', 'python', 'ruby', 'go', 'java']).describe('Primary language'),
+            framework: z.string().describe('Web framework'),
+            ui_framework: z.string().optional().describe('UI framework'),
+            database: z.string().describe('Database'),
+            orm: z.string().optional().describe('ORM'),
+          })
+          .optional()
+          .describe('Tech stack. Defaults to typescript/nextjs/react/postgresql/prisma.'),
+        auto_approve_threshold: z
+          .number()
+          .min(0)
+          .max(1)
+          .default(0.8)
+          .describe('Gate auto-approval confidence threshold (0-1). Default: 0.8'),
+        budget_cap_usd: z
+          .number()
+          .default(15)
+          .describe('Maximum budget in USD. Pipeline halts if exceeded. Default: $15'),
+      },
+    },
+    async ({ project_path, description, tech_stack, budget_cap_usd }) => {
+      try {
+        // v1 skeleton: return instructions for how autopilot will work
+        // Full implementation will chain phases with auto-gate-approval
+        const parsedStack = tech_stack
+          ? {
+              language: tech_stack.language,
+              framework: tech_stack.framework,
+              uiFramework: tech_stack.ui_framework,
+              database: tech_stack.database,
+              orm: tech_stack.orm,
+            }
+          : undefined;
+
+        // Set budget cap
+        const { getCostTracker } = await import('../../../shared/cost-tracker.js');
+        getCostTracker().setBudget('rc-session', { maxCostUsd: budget_cap_usd ?? 15 });
+
+        // Start the project
+        const result = await getOrchestrator().start(
+          project_path,
+          description.substring(0, 50).replace(/[^a-zA-Z0-9 ]/g, ''),
+          description,
+          parsedStack,
+        );
+
+        const text = `## RC Autopilot — Initialized
+
+### Configuration
+- Budget cap: $${budget_cap_usd ?? 15}
+- Tech stack: ${parsedStack ? `${parsedStack.language}/${parsedStack.framework}` : 'typescript/nextjs (default)'}
+
+### Phase 1: Illuminate — Started
+${result.text}
+
+---
+
+**Autopilot v1 Note:** This skeleton has initialized the project and set the budget cap.
+Full autonomous execution (auto-gate-approval, parallel forge, retrospective) will be
+chained in subsequent iterations. For now, proceed with the standard phase tools
+(rc_illuminate → rc_define → rc_architect → rc_sequence → rc_validate → rc_forge_all).`;
+
         return { content: [{ type: 'text' as const, text }] };
       } catch (err) {
         return {

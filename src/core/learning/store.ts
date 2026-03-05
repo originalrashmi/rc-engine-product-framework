@@ -116,13 +116,36 @@ const SCHEMA_DDL = `
     updated_at TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%f', 'now'))
   );
 
+  CREATE TABLE IF NOT EXISTS build_retrospectives (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    project_id TEXT NOT NULL,
+    project_name TEXT NOT NULL,
+    total_tasks INTEGER NOT NULL DEFAULT 0,
+    completed_tasks INTEGER NOT NULL DEFAULT 0,
+    failed_tasks INTEGER NOT NULL DEFAULT 0,
+    review_pass_rate REAL DEFAULT 0,
+    rework_count INTEGER NOT NULL DEFAULT 0,
+    total_duration_ms INTEGER NOT NULL DEFAULT 0,
+    total_cost_usd REAL NOT NULL DEFAULT 0,
+    total_tokens INTEGER NOT NULL DEFAULT 0,
+    successes_json TEXT,
+    failures_json TEXT,
+    patterns_json TEXT,
+    recommendations_json TEXT,
+    summary TEXT,
+    created_at TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%f', 'now'))
+  );
+
+  CREATE INDEX IF NOT EXISTS idx_retro_project
+    ON build_retrospectives(project_id);
+
   CREATE TABLE IF NOT EXISTS learning_meta (
     key TEXT PRIMARY KEY,
     value TEXT NOT NULL
   );
 `;
 
-const SCHEMA_VERSION = 1;
+const SCHEMA_VERSION = 2;
 
 // ── Store ───────────────────────────────────────────────────────────────────
 
@@ -499,6 +522,111 @@ export class LearningStore {
         avgQuality: Math.round(m.avg_quality * 10) / 10,
       })),
     };
+  }
+
+  /**
+   * Record a build retrospective.
+   */
+  recordRetrospective(params: {
+    projectId: string;
+    projectName: string;
+    totalTasks: number;
+    completedTasks: number;
+    failedTasks: number;
+    reviewPassRate: number;
+    reworkCount: number;
+    totalDurationMs: number;
+    totalCostUsd: number;
+    totalTokens: number;
+    successes: string[];
+    failures: string[];
+    patterns: string[];
+    recommendations: string[];
+    summary: string;
+  }): void {
+    this.db
+      .prepare(
+        `INSERT INTO build_retrospectives
+         (project_id, project_name, total_tasks, completed_tasks, failed_tasks,
+          review_pass_rate, rework_count, total_duration_ms, total_cost_usd, total_tokens,
+          successes_json, failures_json, patterns_json, recommendations_json, summary)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      )
+      .run(
+        params.projectId,
+        params.projectName,
+        params.totalTasks,
+        params.completedTasks,
+        params.failedTasks,
+        params.reviewPassRate,
+        params.reworkCount,
+        params.totalDurationMs,
+        params.totalCostUsd,
+        params.totalTokens,
+        JSON.stringify(params.successes),
+        JSON.stringify(params.failures),
+        JSON.stringify(params.patterns),
+        JSON.stringify(params.recommendations),
+        params.summary,
+      );
+  }
+
+  /**
+   * Get recent retrospectives for loading into agent prompts.
+   */
+  getRecentRetros(limit: number = 5): Array<{
+    projectName: string;
+    summary: string;
+    recommendations: string[];
+    reviewPassRate: number;
+    createdAt: string;
+  }> {
+    const rows = this.db
+      .prepare(
+        `SELECT project_name, summary, recommendations_json, review_pass_rate, created_at
+         FROM build_retrospectives
+         ORDER BY created_at DESC
+         LIMIT ?`,
+      )
+      .all(limit) as Array<{
+      project_name: string;
+      summary: string;
+      recommendations_json: string;
+      review_pass_rate: number;
+      created_at: string;
+    }>;
+
+    return rows.map((r) => ({
+      projectName: r.project_name,
+      summary: r.summary,
+      recommendations: JSON.parse(r.recommendations_json ?? '[]') as string[],
+      reviewPassRate: r.review_pass_rate,
+      createdAt: r.created_at,
+    }));
+  }
+
+  /**
+   * Get common findings across all retrospectives.
+   */
+  getCommonFindings(): string[] {
+    const rows = this.db
+      .prepare(
+        `SELECT patterns_json FROM build_retrospectives ORDER BY created_at DESC LIMIT 20`,
+      )
+      .all() as Array<{ patterns_json: string }>;
+
+    const patternCount: Record<string, number> = {};
+    for (const row of rows) {
+      const patterns = JSON.parse(row.patterns_json ?? '[]') as string[];
+      for (const pattern of patterns) {
+        patternCount[pattern] = (patternCount[pattern] ?? 0) + 1;
+      }
+    }
+
+    return Object.entries(patternCount)
+      .filter(([, count]) => count >= 2)
+      .sort((a, b) => b[1] - a[1])
+      .map(([pattern, count]) => `${pattern} (${count} occurrences)`);
   }
 
   /** Close the database connection. */

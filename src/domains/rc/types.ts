@@ -52,6 +52,18 @@ export interface DesignSelection {
   selectedAt: string;
 }
 
+/**
+ * Tech stack selection for generated code.
+ * RC Engine itself stays TypeScript — this controls what it GENERATES.
+ */
+export interface TechStack {
+  language: 'typescript' | 'python' | 'ruby' | 'go' | 'java';
+  framework: string; // e.g. 'nextjs', 'fastapi', 'rails', 'gin', 'spring'
+  uiFramework?: string; // e.g. 'react', 'vue', 'svelte', 'htmx'
+  database: string; // e.g. 'postgresql', 'mysql', 'mongodb', 'sqlite'
+  orm?: string; // e.g. 'prisma', 'sqlalchemy', 'activerecord', 'gorm'
+}
+
 export interface ProjectState {
   projectName: string;
   projectPath: string;
@@ -63,6 +75,8 @@ export interface ProjectState {
   preRcSource?: PreRcSource;
   forgeTasks?: Record<string, ForgeTaskRecord>;
   selectedDesign?: DesignSelection;
+  /** Tech stack for generated code. Set at rc_start, used by architect + forge. */
+  techStack?: TechStack;
   /** Transient: operator input for the current phase handler. Not persisted. */
   _pendingInput?: string;
   /** Transient: output text from the last phase handler. Not persisted. */

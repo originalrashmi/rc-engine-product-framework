@@ -41,5 +41,9 @@ export interface LLMRequest {
 export interface LLMResponse {
   content: string;
   tokensUsed: number;
+  /** Input tokens consumed. Available when the provider reports them separately. */
+  inputTokens?: number;
+  /** Output tokens generated. Available when the provider reports them separately. */
+  outputTokens?: number;
   provider: LLMProvider;
 }

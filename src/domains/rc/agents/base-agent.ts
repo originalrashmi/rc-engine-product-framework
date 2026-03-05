@@ -1,10 +1,10 @@
 import type { ContextLoader } from '../context-loader.js';
 import type { LLMFactory } from '../../../shared/llm/factory.js';
-import { LLMProvider } from '../../../shared/types.js';
 import { tokenTracker } from '../../../shared/token-tracker.js';
 import { hasApiKey } from '../../../shared/config.js';
 import { recordCost } from '../../../shared/cost-tracker.js';
 import { recordModelPerformance } from '../../../shared/learning.js';
+import { routeRequest } from '../../../shared/model-router.js';
 import type { AgentResult } from '../types.js';
 
 export abstract class BaseAgent {
@@ -39,8 +39,12 @@ export abstract class BaseAgent {
       : userMessage;
 
     if (hasApiKey) {
-      // Autonomous mode: call LLM via shared factory with token tracking
-      const client = this.llmFactory.getClient(LLMProvider.Claude);
+      // Autonomous mode: route to best LLM via ModelRouter with token tracking
+      const { client } = routeRequest({
+        taskType: `rc-agent-${this.constructor.name}`,
+        domain: 'rc',
+        pipelineId: 'rc-session',
+      });
       const response = await client.chatWithRetry({
         systemPrompt,
         messages: [{ role: 'user', content: userContent }],
@@ -53,8 +57,8 @@ export abstract class BaseAgent {
         tool: this.constructor.name,
         provider: response.provider,
         model: client.getModel(),
-        inputTokens: 0,
-        outputTokens: response.tokensUsed,
+        inputTokens: response.inputTokens ?? 0,
+        outputTokens: response.outputTokens ?? response.tokensUsed,
       });
       recordModelPerformance({
         provider: response.provider,
