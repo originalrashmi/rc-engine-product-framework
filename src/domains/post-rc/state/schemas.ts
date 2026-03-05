@@ -86,6 +86,26 @@ const LegalPolicySchema = z.object({
   checkAccessibility: z.boolean(),
 });
 
+const EdgeCasePolicySchema = z.object({
+  enabled: z.boolean(),
+  categories: z
+    .array(
+      z.enum([
+        'input-boundary',
+        'error-state',
+        'concurrency',
+        'data-integrity',
+        'integration',
+        'state-transition',
+        'performance-edge',
+      ]),
+    )
+    .optional(),
+  minSeverity: z.nativeEnum(Severity).optional(),
+  suppressedFindings: z.array(z.string()),
+  blockOnCritical: z.boolean(),
+});
+
 const ProjectConfigSchema = z.object({
   projectPath: z.string(),
   projectName: z.string(),
@@ -93,6 +113,7 @@ const ProjectConfigSchema = z.object({
   securityPolicy: SecurityPolicySchema,
   monitoringPolicy: MonitoringPolicySchema,
   legalPolicy: LegalPolicySchema.optional(),
+  edgeCasePolicy: EdgeCasePolicySchema.optional(),
 });
 
 const GateHistoryEntrySchema = z.object({

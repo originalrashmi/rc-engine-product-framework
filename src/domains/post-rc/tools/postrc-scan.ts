@@ -14,6 +14,8 @@ import { runSecurityModule } from '../modules/security/security-scanner.js';
 import { runMonitoringModule } from '../modules/monitoring/monitoring-checker.js';
 import { runClaimsAuditModule } from '../modules/legal/claims-auditor.js';
 import { runProductLegalModule } from '../modules/legal/product-legal-auditor.js';
+import { runEdgeCaseModule } from '../modules/edge-case/edge-case-analyzer.js';
+import { readTier } from '../../../shared/tier-guard.js';
 import { PostRcCoordinator } from '../graph/postrc-coordinator.js';
 import type { PostRcNodeHandlers } from '../graph/postrc-graph.js';
 import { writeFile, mkdir } from 'fs/promises';
@@ -52,6 +54,11 @@ function createScanHandlers(codeContext: string | undefined, state: PostRCState)
         return { state: s };
       }
       const findings = await runProductLegalModule(s.projectPath, codeContext, state.config.legalPolicy);
+      return { state: { ...s, _pendingFindings: findings } };
+    },
+    scanEdgeCase: async (s) => {
+      if (!state.config.edgeCasePolicy?.enabled) return { state: s };
+      const findings = await runEdgeCaseModule(s.projectPath, codeContext, state.config.edgeCasePolicy);
       return { state: { ...s, _pendingFindings: findings } };
     },
     mergeScans: (states, original) => {
@@ -135,14 +142,16 @@ export async function postrcScan(args: ScanInput): Promise<string> {
     remediationPath = await generateRemediationTasks(project_path, lastScan.id, lastScan.findings);
   }
 
-  // Format output (same interface as before)
+  // Format output with tier-aware redaction for edge case findings
   if (!lastScan) {
     return 'Scan completed but no results were produced.';
   }
+  const tier = readTier(project_path);
   return formatScanOutput(
     lastScan,
     result.state.overrides.filter((o) => o.status === 'active').length,
     remediationPath,
+    tier,
   );
 }
 
@@ -187,7 +196,8 @@ function computeGateDecision(
 
 // ── Output Formatting ────────────────────────────────────────────────────────
 
-function formatScanOutput(scan: ScanResult, activeOverrides: number, remediationPath: string | null = null): string {
+function formatScanOutput(scan: ScanResult, activeOverrides: number, remediationPath: string | null = null, tier: string = 'free'): string {
+  const isProOrHigher = tier === 'pro' || tier === 'enterprise';
   const gateIcon =
     scan.gateDecision === GateDecision.Pass ? 'PASS' : scan.gateDecision === GateDecision.Warn ? 'WARN' : 'BLOCK';
 
@@ -220,9 +230,27 @@ function formatScanOutput(scan: ScanResult, activeOverrides: number, remediation
   GATE DECISION: ${gateIcon}
 `;
 
+  // Edge case teaser for non-Pro tiers
+  const ecxFindings = scan.findings.filter((f) => f.module === 'edge-case');
+  if (ecxFindings.length > 0 && !isProOrHigher) {
+    const ecxCategories = new Set(ecxFindings.map((f) => f.category));
+    output += `
+  EDGE CASE ANALYSIS (Pro feature):
+    ${ecxFindings.length} edge case(s) found across ${ecxCategories.size} category(s).
+    Upgrade to Pro to see the full matrix with remediation details.
+`;
+  }
+
   if (scan.findings.length > 0) {
     output += '\n  FINDINGS:\n';
     for (const finding of scan.findings) {
+      // Redact edge case finding details for non-Pro tiers
+      if (finding.module === 'edge-case' && !isProOrHigher) {
+        output += `\n    [${finding.severity.toUpperCase()}] ${finding.id}: ${finding.title}`;
+        output += `\n      [Pro feature] Upgrade to Pro for details and remediation.\n`;
+        continue;
+      }
+
       const sevIcon =
         finding.severity === Severity.Critical
           ? 'CRITICAL'
@@ -319,6 +347,7 @@ async function generateRemediationTasks(projectPath: string, scanId: string, fin
         monitoring: '[OBSERVABILITY]',
         'legal-claims': '[LEGAL-CLAIMS]',
         'legal-product': '[LEGAL]',
+        'edge-case': '[EDGE-CASE]',
       };
       const tag = tagMap[module] || `[${module.toUpperCase()}]`;
       const priority =

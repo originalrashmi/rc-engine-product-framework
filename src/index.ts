@@ -3,10 +3,11 @@
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
 import { z } from 'zod';
-import { logStartupDiagnostics, hasAnyApiKey } from './shared/config.js';
+import { logStartupDiagnostics, hasAnyApiKey, version } from './shared/config.js';
 import { logKnowledgeStatus, getKnowledgeManifest } from './shared/knowledge-loader.js';
 import { tokenTracker } from './shared/token-tracker.js';
 import { guardedTool } from './shared/tool-guard.js';
+import { registerInitTool } from './tools/rc-init.js';
 import { registerPreRcTools } from './domains/pre-rc/tools.js';
 import { registerRcPhaseTools } from './domains/rc/tools/phase-tools.js';
 import { registerRcGateTools } from './domains/rc/tools/gate-tools.js';
@@ -25,21 +26,25 @@ import { getChangelog, getProjectDocs } from './shared/docs.js';
 import { recordToolCall } from './shared/usage-meter.js';
 import { calculateValue, formatValueSummary } from './shared/value.js';
 import { getTraceProgress } from './shared/tracer.js';
+import { checkForUpdate } from './shared/version-check.js';
+import { initTelemetry } from './shared/telemetry.js';
 
 // Create the RC Engine MCP server
 const server = new McpServer({
   name: 'rc-engine',
-  version: '1.0.0',
+  version,
 });
 
 // Patch both server.tool() and server.registerTool() to wrap every handler with
-// path validation + input size checks. This protects all tools regardless of which
-// registration method is used. server.tool() is deprecated; server.registerTool()
-// is the current API -- both must be guarded.
+// path validation, tier enforcement, and input size checks. This protects all tools
+// regardless of which registration method is used. server.tool() is deprecated;
+// server.registerTool() is the current API -- both must be guarded.
 function wrapLastArgWithGuard(toolArgs: unknown[]): void {
   const handler = toolArgs[toolArgs.length - 1];
+  // Extract tool name (first arg for server.tool()) for tier enforcement
+  const toolName = typeof toolArgs[0] === 'string' ? toolArgs[0] : undefined;
   if (typeof handler === 'function') {
-    toolArgs[toolArgs.length - 1] = guardedTool(handler as Parameters<typeof guardedTool>[0]);
+    toolArgs[toolArgs.length - 1] = guardedTool(handler as Parameters<typeof guardedTool>[0], toolName);
   }
 }
 
@@ -56,6 +61,7 @@ server.registerTool = ((...toolArgs: unknown[]) => {
 }) as typeof server.registerTool;
 
 // Register all tools across domains (lazy-load orchestrators on first call)
+registerInitTool(server);      // 1 tool: rc_init (unified entry point — start here)
 registerPreRcTools(server); // 7 tools: prc_*
 registerRcPhaseTools(server); // 8 tools: rc_start, rc_illuminate, rc_define, rc_import_prerc, rc_architect, rc_sequence, rc_validate, rc_forge_task
 registerRcGateTools(server); // 3 tools: rc_gate, rc_save, rc_status
@@ -145,12 +151,13 @@ server.tool(
 ${summary}
 
   REGISTERED DOMAINS:
+    Gateway ........ 1 tool  (rc_init — start here)
     Pre-RC ......... 7 tools (prc_*)
     RC ............. 14 tools (rc_*, ux_*)
     Post-RC ........ 7 tools (postrc_*)
     Traceability ... 3 tools (trace_*)
     Pipeline ....... 1 tool  (rc_pipeline_status)
-    Total: 32 tools
+    Total: 33 tools
 
   PIPELINE FLOW:
     prc_start → prc_classify → prc_run_stage (x6)
@@ -178,6 +185,8 @@ ${costSection}${circuitSection}${learnSection}${pluginSection}${benchSection}${d
 async function main() {
   logStartupDiagnostics();
   logKnowledgeStatus();
+  initTelemetry();
+  checkForUpdate();
 
   const manifest = getKnowledgeManifest();
   const transport = new StdioServerTransport();
@@ -185,7 +194,7 @@ async function main() {
 
   const knowledgeMode = manifest.mode === 'pro' ? 'pro' : 'community';
   const execMode = hasAnyApiKey ? 'autonomous' : 'passthrough';
-  console.error(`[rc-engine] Connected - 31 tools - knowledge: ${knowledgeMode} - execution: ${execMode}`);
+  console.error(`[rc-engine] Connected v${version} - 33 tools - knowledge: ${knowledgeMode} - execution: ${execMode}`);
 }
 
 main().catch((err) => {

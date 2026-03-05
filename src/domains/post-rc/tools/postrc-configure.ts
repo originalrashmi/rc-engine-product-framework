@@ -22,6 +22,9 @@ export async function postrcConfigure(args: ConfigureInput): Promise<string> {
     jurisdiction,
     check_licenses,
     check_accessibility,
+    edge_case_enabled,
+    edge_case_block_on_critical,
+    edge_case_categories,
   } = args;
 
   await ensureDirectories(project_path);
@@ -72,6 +75,24 @@ export async function postrcConfigure(args: ConfigureInput): Promise<string> {
     if (check_accessibility !== undefined) state.config.legalPolicy.checkAccessibility = check_accessibility;
   }
 
+  // Edge case policy updates (initialize if missing for backward compat)
+  if (
+    edge_case_enabled !== undefined ||
+    edge_case_block_on_critical !== undefined ||
+    edge_case_categories !== undefined
+  ) {
+    if (!state.config.edgeCasePolicy) {
+      state.config.edgeCasePolicy = {
+        enabled: false,
+        suppressedFindings: [],
+        blockOnCritical: false,
+      };
+    }
+    if (edge_case_enabled !== undefined) state.config.edgeCasePolicy.enabled = edge_case_enabled;
+    if (edge_case_block_on_critical !== undefined) state.config.edgeCasePolicy.blockOnCritical = edge_case_block_on_critical;
+    if (edge_case_categories !== undefined) state.config.edgeCasePolicy.categories = edge_case_categories;
+  }
+
   state.updatedAt = new Date().toISOString();
   await saveState(project_path, state);
   audit('config.change', 'post-rc', project_path, {
@@ -111,6 +132,11 @@ export async function postrcConfigure(args: ConfigureInput): Promise<string> {
     Jurisdiction:         ${state.config.legalPolicy?.jurisdiction ?? 'both'}
     Check Licenses:       ${state.config.legalPolicy?.checkLicenses ?? true}
     Check Accessibility:  ${state.config.legalPolicy?.checkAccessibility ?? true}
+
+  EDGE CASE POLICY (Pro):
+    Enabled:          ${state.config.edgeCasePolicy?.enabled ?? false}
+    Block Critical:   ${state.config.edgeCasePolicy?.blockOnCritical ?? false}
+    Categories:       ${state.config.edgeCasePolicy?.categories?.join(', ') || 'All'}
 
   State saved to: post-rc/state/POSTRC-STATE.md
 ===============================================`;

@@ -250,11 +250,50 @@ export function destroySession(sessionId: string): void {
 }
 
 /**
- * Update user's tier.
+ * Update user's tier in the database and write tier.json to all user project directories.
+ * This ensures MCP-only clients see the correct tier via `.rc-engine/tier.json`.
  */
 export function updateUserTier(userId: string, tier: string): boolean {
   const result = getDb().prepare(`UPDATE users SET tier = ? WHERE id = ?`).run(tier, userId);
+  if (result.changes > 0) {
+    writeTierToProjects(userId, tier);
+  }
   return result.changes > 0;
+}
+
+/**
+ * Write `.rc-engine/tier.json` to the user's project directories.
+ * This bridges the gap between web-based tier management and MCP-level enforcement.
+ */
+function writeTierToProjects(userId: string, tier: string): void {
+  try {
+    const baseDir = process.env.RC_PROJECTS_DIR || path.join(process.env.HOME || '/tmp', 'rc-projects');
+    const userDir = path.join(baseDir, userId);
+    if (!fs.existsSync(userDir)) return;
+
+    // Scan for project directories (those with .rc-engine or any domain dir)
+    const entries = fs.readdirSync(userDir, { withFileTypes: true });
+    for (const entry of entries) {
+      if (!entry.isDirectory() || entry.name.startsWith('.')) continue;
+      const projectPath = path.join(userDir, entry.name);
+      const rcDir = path.join(projectPath, '.rc-engine');
+      // Only write to directories that look like RC Engine projects
+      const isProject =
+        fs.existsSync(path.join(projectPath, 'pre-rc-research')) ||
+        fs.existsSync(path.join(projectPath, '.rc-method')) ||
+        fs.existsSync(rcDir);
+      if (!isProject) continue;
+
+      fs.mkdirSync(rcDir, { recursive: true });
+      fs.writeFileSync(
+        path.join(rcDir, 'tier.json'),
+        JSON.stringify({ tier, updatedAt: new Date().toISOString() }, null, 2),
+        'utf-8',
+      );
+    }
+  } catch (err) {
+    console.error('[auth] Failed to write tier.json to projects:', (err as Error).message);
+  }
 }
 
 /**

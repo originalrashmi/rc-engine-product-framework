@@ -63,45 +63,43 @@ function parseCookies(cookieHeader?: string): Record<string, string> {
 }
 
 // ── Tier Enforcement ─────────────────────────────────────────────────────────
-// Maps tool names to required tier features. Tools not listed are available on all tiers.
-const TOOL_FEATURE_REQUIREMENTS: Record<string, keyof ReturnType<typeof getTier>['features']> = {
-  // Build tools require fullPipeline (not available on free tier)
-  rc_start: 'fullPipeline',
-  rc_import_prerc: 'fullPipeline',
-  rc_illuminate: 'fullPipeline',
-  rc_define: 'fullPipeline',
-  rc_architect: 'fullPipeline',
-  rc_sequence: 'fullPipeline',
-  rc_validate: 'fullPipeline',
-  rc_forge_task: 'fullPipeline',
-  rc_gate: 'fullPipeline',
-  // Design tools
-  ux_design: 'designOptions',
-  // Security scanning
-  postrc_scan: 'securityScan',
-  postrc_report: 'securityScan',
-  postrc_override: 'securityScan',
-  postrc_gate: 'securityScan',
-  postrc_configure: 'securityScan',
-  // Stress test (Pro/Enterprise only)
-  prc_stress_test: 'playbook',
-  // Traceability
-  trace_enhance_prd: 'traceability',
-  trace_map_findings: 'traceability',
-  trace_status: 'traceability',
-};
+// Single source of truth: shared with MCP server via core/pricing/tool-requirements.ts
+import { TOOL_FEATURE_REQUIREMENTS } from '../../src/core/pricing/tool-requirements.js';
+
+/** Valid tier IDs for fail-closed validation. */
+const VALID_TIERS = new Set<string>(['free', 'starter', 'pro', 'enterprise']);
+
+/**
+ * Normalize a tier string to a valid TierId.
+ * Unknown tiers are treated as 'free' (fail-closed).
+ */
+function normalizeTier(userTier: string): TierId {
+  return VALID_TIERS.has(userTier) ? (userTier as TierId) : 'free';
+}
 
 function checkTierAccess(toolName: string, userTier: string): string | null {
   const requiredFeature = TOOL_FEATURE_REQUIREMENTS[toolName];
   if (!requiredFeature) return null; // Tool available on all tiers
-  const tierId = userTier as TierId;
-  try {
-    if (hasFeature(tierId, requiredFeature)) return null;
-    const tierDef = getTier(tierId);
-    return `Your ${tierDef.name} plan does not include this feature. Upgrade to access ${requiredFeature.replace(/([A-Z])/g, ' $1').toLowerCase()}.`;
-  } catch {
-    return null; // Unknown tier -- allow (fail-open for dev)
-  }
+  const tierId = normalizeTier(userTier);
+  if (hasFeature(tierId, requiredFeature)) return null;
+  const tierDef = getTier(tierId);
+  return `Your ${tierDef.name} plan does not include this feature. Upgrade to access ${requiredFeature.replace(/([A-Z])/g, ' $1').toLowerCase()}.`;
+}
+
+/**
+ * Check if a user's tier includes a specific feature.
+ * Returns null if allowed, or an error message string if blocked.
+ * Unknown tiers are treated as 'free' (fail-closed).
+ */
+function checkFeatureAccess(
+  userTier: string,
+  feature: keyof ReturnType<typeof getTier>['features'],
+  label: string,
+): string | null {
+  const tierId = normalizeTier(userTier);
+  if (hasFeature(tierId, feature)) return null;
+  const tierDef = getTier(tierId);
+  return `Your ${tierDef.name} plan does not include ${label}. Upgrade to access this feature.`;
 }
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -555,6 +553,11 @@ async function main() {
 
   // PDF export -- generates print-ready HTML from project artifacts
   app.get('/api/project/export', requireAuth, (req, res) => {
+    if (!isAuthBypassed()) {
+      const tierError = checkFeatureAccess(req.user?.tier || 'free', 'pdfExport', 'PDF export');
+      if (tierError) { res.status(403).json({ error: tierError }); return; }
+    }
+
     const projectPath = req.query.path as string;
     const filesParam = req.query.files as string;
     const title = req.query.title as string | undefined;
@@ -586,6 +589,11 @@ async function main() {
 
   // Playbook / ARD generation -- aggregates all pipeline outputs
   app.get('/api/project/playbook', requireAuth, (req, res) => {
+    if (!isAuthBypassed()) {
+      const tierError = checkFeatureAccess(req.user?.tier || 'free', 'playbook', 'playbook export');
+      if (tierError) { res.status(403).json({ error: tierError }); return; }
+    }
+
     const projectPath = req.query.path as string;
     const format = req.query.format as string | undefined; // 'html' or default 'md'
 
@@ -619,6 +627,11 @@ async function main() {
 
   // Diagram generation -- creates Mermaid diagrams from task data
   app.get('/api/project/diagrams', requireAuth, async (req, res) => {
+    if (!isAuthBypassed()) {
+      const tierError = checkFeatureAccess(req.user?.tier || 'free', 'diagrams', 'architecture diagrams');
+      if (tierError) { res.status(403).json({ error: tierError }); return; }
+    }
+
     const projectPath = req.query.path as string;
     const pathError = validateProjectPath(projectPath);
     if (pathError) {
@@ -643,6 +656,10 @@ async function main() {
 
   // Save selected design option
   app.post('/api/project/design-select', requireAuth, async (req, res) => {
+    if (!isAuthBypassed()) {
+      const tierError = checkFeatureAccess(req.user?.tier || 'free', 'designOptions', 'design options');
+      if (tierError) { res.status(403).json({ error: tierError }); return; }
+    }
     const { projectPath, optionId, specPath } = req.body as {
       projectPath?: string;
       optionId?: string;
@@ -714,6 +731,11 @@ async function main() {
 
   // Value report for a project (computes human-equivalent savings)
   app.get('/api/project/value', requireAuth, async (req, res) => {
+    if (!isAuthBypassed()) {
+      const tierError = checkFeatureAccess(req.user?.tier || 'free', 'fullPipeline', 'value report');
+      if (tierError) { res.status(403).json({ error: tierError }); return; }
+    }
+
     const projectPath = req.query.path as string;
     const pathError = validateProjectPath(projectPath);
     if (pathError) {

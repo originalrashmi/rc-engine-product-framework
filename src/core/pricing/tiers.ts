@@ -57,6 +57,8 @@ export interface TierFeatures {
   webhooks: boolean;
   /** Idea Stress Test (viability analysis after PRD synthesis). */
   stressTest: boolean;
+  /** Edge case analysis module. */
+  edgeCaseAnalysis: boolean;
 }
 
 // ── Tier Definitions ────────────────────────────────────────────────────────
@@ -84,6 +86,7 @@ export const TIERS: Record<TierId, TierDefinition> = {
       apiAccess: false,
       webhooks: false,
       stressTest: false,
+      edgeCaseAnalysis: false,
     },
   },
   starter: {
@@ -108,6 +111,7 @@ export const TIERS: Record<TierId, TierDefinition> = {
       apiAccess: false,
       webhooks: false,
       stressTest: false,
+      edgeCaseAnalysis: false,
     },
   },
   pro: {
@@ -133,6 +137,7 @@ export const TIERS: Record<TierId, TierDefinition> = {
       apiAccess: true,
       webhooks: false,
       stressTest: true,
+      edgeCaseAnalysis: true,
     },
   },
   enterprise: {
@@ -157,6 +162,7 @@ export const TIERS: Record<TierId, TierDefinition> = {
       apiAccess: true,
       webhooks: true,
       stressTest: true,
+      edgeCaseAnalysis: true,
     },
   },
 };

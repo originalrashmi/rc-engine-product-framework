@@ -9,6 +9,7 @@ export enum ValidationModule {
   Monitoring = 'monitoring',
   LegalClaims = 'legal-claims',
   LegalProduct = 'legal-product',
+  EdgeCase = 'edge-case',
   // Future modules:
   // Performance = 'performance',
   // TestAdequacy = 'test-adequacy',
@@ -99,6 +100,27 @@ export interface Override {
   status: OverrideStatus;
 }
 
+export type EdgeCaseCategory =
+  | 'input-boundary'
+  | 'error-state'
+  | 'concurrency'
+  | 'data-integrity'
+  | 'integration'
+  | 'state-transition'
+  | 'performance-edge';
+
+export interface EdgeCasePolicy {
+  enabled: boolean;
+  /** Categories to scan. Defaults to all if omitted. */
+  categories?: EdgeCaseCategory[];
+  /** Severity threshold below which findings are omitted. Defaults to 'info'. */
+  minSeverity?: Severity;
+  /** Finding IDs to suppress from output. */
+  suppressedFindings: string[];
+  /** Block ship gate on critical edge case findings. */
+  blockOnCritical: boolean;
+}
+
 export interface ProjectConfig {
   projectPath: string;
   projectName: string;
@@ -106,6 +128,7 @@ export interface ProjectConfig {
   securityPolicy: SecurityPolicy;
   monitoringPolicy: MonitoringPolicy;
   legalPolicy?: LegalPolicy;
+  edgeCasePolicy?: EdgeCasePolicy;
 }
 
 export interface SecurityPolicy {
@@ -211,6 +234,26 @@ export const PostRCConfigureInputSchema = z.object({
     .describe('Jurisdiction for compliance checks (e.g., eu triggers GDPR checks)'),
   check_licenses: z.boolean().optional().describe('Check dependency license compliance'),
   check_accessibility: z.boolean().optional().describe('Check accessibility compliance (ADA/WCAG)'),
+  // Edge case policy configuration (Pro tier)
+  edge_case_enabled: z.boolean().optional().describe('Enable edge case analysis module (Pro tier)'),
+  edge_case_block_on_critical: z
+    .boolean()
+    .optional()
+    .describe('Block ship gate on critical edge case findings'),
+  edge_case_categories: z
+    .array(
+      z.enum([
+        'input-boundary',
+        'error-state',
+        'concurrency',
+        'data-integrity',
+        'integration',
+        'state-transition',
+        'performance-edge',
+      ]),
+    )
+    .optional()
+    .describe('Edge case categories to scan (default: all)'),
 });
 
 export const PostRCGateInputSchema = z.object({

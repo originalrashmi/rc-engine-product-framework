@@ -1,7 +1,7 @@
 {
   "name": "rc-engine",
-  "version": "1.0.0",
-  "description": "RC Engine - A complete AI-native product development pipeline. Research, build, validate, and ship software products from idea to production with 31 orchestrated tools across 4 domains.",
+  "version": "1.1.0",
+  "description": "RC Engine - A complete AI-native product development pipeline. Research, build, validate, and ship software products from idea to production with 33 orchestrated tools across 4 domains.",
   "type": "module",
   "main": "dist/index.js",
   "license": "MIT",
@@ -27,6 +27,12 @@
     "build-methodology",
     "quality-gates"
   ],
+  "files": [
+    "dist/",
+    "README.md",
+    "LICENSE",
+    "CHANGELOG.md"
+  ],
   "bin": {
     "rc-engine": "dist/index.js"
   },
@@ -41,6 +47,7 @@
     "format:check": "prettier --check 'src/**/*.ts' 'tests/**/*.ts' 'web/server/**/*.ts'",
     "test": "vitest run",
     "test:watch": "vitest",
+    "prepublishOnly": "npm run check && npm run build",
     "check": "tsc --noEmit && tsc --noEmit -p web/tsconfig.json && npm run lint && npm run format:check && npm test",
     "web:dev": "concurrently \"vite --config web/vite.config.ts\" \"tsx watch web/server/index.ts\"",
     "web:build": "npm run build && vite build --config web/vite.config.ts",

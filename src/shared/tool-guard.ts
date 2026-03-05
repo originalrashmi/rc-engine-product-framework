@@ -13,6 +13,15 @@ import { PathValidator } from '../core/sandbox/path-validator.js';
 import { checkInputs, DEFAULT_LIMITS } from '../core/sandbox/input-limits.js';
 import type { InputLimitConfig } from '../core/sandbox/input-limits.js';
 import { recordToolCall } from './usage-meter.js';
+import { checkMcpTierAccess, readTier } from './tier-guard.js';
+import { logActivity } from './activity-logger.js';
+import { recordTelemetryEvent } from './telemetry.js';
+import { TOOL_FEATURE_REQUIREMENTS } from '../core/pricing/tool-requirements.js';
+
+/** Check if a tool requires a paid tier (has an entry in the feature requirements map). */
+function isGatedTool(toolName: string): boolean {
+  return toolName in TOOL_FEATURE_REQUIREMENTS;
+}
 
 // Shared PathValidator instance -- root "/" means basic safety checks only.
 // Domain-specific write restrictions are enforced separately.
@@ -34,13 +43,14 @@ type ToolResult = { content: Array<{ type: 'text'; text: string }>; isError?: bo
 type ToolHandler = (args: Record<string, unknown>) => Promise<ToolResult>;
 
 /**
- * Wrap a tool handler with path validation and input size checks.
+ * Wrap a tool handler with path validation, tier enforcement, and input size checks.
  *
  * - If `project_path` exists in args, validates it is a safe absolute path.
+ * - Checks tier access if a tool name is provided.
  * - Validates all known string fields against size limits.
  * - Returns an error result instead of throwing on validation failure.
  */
-export function guardedTool(handler: ToolHandler): ToolHandler {
+export function guardedTool(handler: ToolHandler, toolName?: string): ToolHandler {
   return async (args: Record<string, unknown>): Promise<ToolResult> => {
     // 1. Validate project_path if present
     const projectPath = args.project_path;
@@ -49,17 +59,40 @@ export function guardedTool(handler: ToolHandler): ToolHandler {
       if (pathResult) {
         return { content: [{ type: 'text', text: pathResult }], isError: true };
       }
+
+      // 1b. Tier enforcement -- check if this tool requires a paid tier
+      if (toolName) {
+        const tierError = checkMcpTierAccess(toolName, projectPath);
+        if (tierError) {
+          logActivity(projectPath, { event: 'tier_block', tool: toolName, detail: tierError });
+          return { content: [{ type: 'text', text: tierError }], isError: true };
+        }
+      }
+    } else if (toolName && isGatedTool(toolName)) {
+      // 1c. Tools that require a paid tier but have no project_path cannot
+      // be tier-checked -- block them to prevent bypass.
+      return {
+        content: [{ type: 'text', text: `[Tier Restriction] Tool "${toolName}" requires project_path for tier verification.` }],
+        isError: true,
+      };
     }
 
     // 2. Validate input sizes
     const sizeErrors = validateInputSizes(args);
     if (sizeErrors) {
+      const pid = typeof projectPath === 'string' ? projectPath : '';
+      if (pid) logActivity(pid, { event: 'validation_error', tool: toolName, detail: sizeErrors });
       return { content: [{ type: 'text', text: sizeErrors }], isError: true };
     }
 
-    // 3. Record tool call for usage metering
+    // 3. Record tool call for usage metering, activity log, and telemetry
     const pid = typeof projectPath === 'string' ? projectPath : '';
     recordToolCall('operator', pid);
+    if (pid && toolName) logActivity(pid, { event: 'tool_call', tool: toolName });
+    if (toolName) {
+      const tier = pid ? readTier(pid) : 'free';
+      recordTelemetryEvent(toolName, tier);
+    }
 
     // 4. Delegate to actual handler
     return handler(args);
@@ -67,9 +100,10 @@ export function guardedTool(handler: ToolHandler): ToolHandler {
 }
 
 function validatePath(projectPath: string): string | null {
-  // Must be an absolute path
-  if (!projectPath.startsWith('/')) {
-    return `Invalid project_path: "${projectPath}" -- must be an absolute path starting with /.`;
+  // Must be an absolute path (Unix: /path or Windows: C:\path, D:/path)
+  const isAbsolute = projectPath.startsWith('/') || /^[A-Za-z]:[/\\]/.test(projectPath);
+  if (!isAbsolute) {
+    return `Invalid project_path: "${projectPath}" -- must be an absolute path (e.g., /home/user/project or C:\\Users\\user\\project).`;
   }
 
   // Must not point to system directories

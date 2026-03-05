@@ -7,7 +7,7 @@
 
 **Results through Clarity** -- an AI-native product development pipeline.
 
-Take a one-line product idea through structured research, architecture, build, validation, and traceability -- with 32 orchestrated tools across 4 domains.
+Take a one-line product idea through structured research, architecture, build, validation, and traceability -- with 33 orchestrated tools across 4 domains.
 
 Built for developers, technical founders, and product teams who want structured methodology instead of ad-hoc AI coding.
 
@@ -35,12 +35,33 @@ You never call tools directly. Open your IDE, describe what you want to build, a
 
 | Edition | What You Get | License |
 |---------|-------------|---------|
-| **RC Engine (this repo)** | Full MCP server, 32 tools, pipeline structure, state management, quality gates | MIT (free) |
+| **RC Engine (this repo)** | Full MCP server, 33 tools, pipeline structure, state management, quality gates | MIT (free) |
 | **[RC Engine Pro](https://github.com/originalrashmi/rc-engine-pro)** | 46 methodology knowledge files -- research personas, build skills, UX specialists, security databases | Proprietary |
 
 **Community mode** (without Pro): Tools assemble structured prompts for your IDE's AI to process. Full pipeline discipline at zero cost.
 
 **Pro mode** (with Pro knowledge): Autonomous execution -- the engine calls LLMs directly with methodology-enriched prompts.
+
+### Free vs Paid
+
+| Capability | Free | Starter ($29/mo) | Pro ($79/mo) |
+|------------|------|-------------------|--------------|
+| **Pre-RC Research** (20 AI specialists, 6 stages, 3 gates) | 1 project/mo | 5 projects/mo | Unlimited |
+| **RC Method Build** (8 phases, architecture, forge, gates) | -- | Included | Included |
+| **Post-RC Validation** (security scan, monitoring, ship gate) | -- | Included | Included |
+| **Traceability** (requirement IDs, coverage matrix, HTML report) | -- | -- | Included |
+| **Design Options** (lo-fi/hi-fi wireframes) | -- | 1 per project | 3 per project |
+| **Stress Test** (GO/NO-GO challenge before build) | -- | -- | Included |
+| **PDF Export** | -- | Included | Included |
+| **Architecture Diagrams** | -- | Included | Included |
+| **Playbook / ARD Export** | -- | -- | Included |
+| **Priority AI Routing** | -- | -- | Included |
+| **Custom Knowledge Files** | -- | -- | Included |
+| **API Access** | -- | -- | Included |
+| **Web UI** | Included (research only) | Full pipeline | Full pipeline |
+| **MCP / CLI** | Included (research only) | Full pipeline | Full pipeline |
+
+Free users get full access to the Pre-RC research pipeline (1 project/month). Building, validation, and traceability require a paid tier.
 
 ---
 
@@ -61,6 +82,7 @@ You never call tools directly. Open your IDE, describe what you want to build, a
 
 | Domain | Tools | What It Does |
 |--------|-------|-------------|
+| **Gateway** | 1 | `rc_init` -- unified entry point. Detects project state and routes you to the right tool. Start here |
 | **Pre-RC Research** | 6 | Up to 20 AI specialists analyze your idea across market, users, security, UX, and business |
 | **RC Method Build** | 14 | 8-phase gated pipeline: discover, define, architect, sequence, validate, build, integrate, harden |
 | **Post-RC Validation** | 7 | Security scanning, monitoring readiness, legal compliance review (Pro), override tracking, ship/no-ship gate |
@@ -109,7 +131,7 @@ cp .env.example .env
 
 ### 4. Start building
 
-Open your IDE and describe your product idea. The AI handles the rest.
+Open your IDE and describe your product idea. The AI will call `rc_init` to detect your project state and route you to the right starting point -- Pre-RC research by default.
 
 ---
 
@@ -156,7 +178,7 @@ All deliverables are saved as markdown and HTML files in your project directory.
 
 | Phase | Status | What |
 |-------|--------|------|
-| **CLI/MCP Pipeline** | Available now | Full 31-tool pipeline via Claude Code, Cursor, Windsurf, VS Code |
+| **CLI/MCP Pipeline** | Available now | Full 33-tool pipeline via Claude Code, Cursor, Windsurf, VS Code |
 | **Parallel Synthesis** | Available now | PRD generation runs 8 section groups concurrently for faster output |
 | **Web Dashboard** | Planned | Browser-based project management with real-time pipeline visualization |
 | **Pro Knowledge Marketplace** | Planned | Enhanced research personas, build skills, and security databases |

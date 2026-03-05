@@ -4,6 +4,60 @@ All notable changes to RC Engine are documented here.
 
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.1.0] - 2026-03-04
+
+### Added
+
+#### Gateway
+- **`rc_init` unified entry point** -- new cross-domain gateway tool that detects project state across all 4 domains (Pre-RC, RC, Post-RC, Traceability) and routes to the correct next tool
+- Defaults to Pre-RC research (`prc_start`) for new projects -- research before building, always
+- `skip_research` opt-out parameter for users who explicitly want to bypass Pre-RC
+- State detection cascade: Post-RC → RC (phase-aware) → Pre-RC complete → Pre-RC in progress → new project
+- Total tool count: 32 → 33
+
+#### npm Distribution
+- **Published to npm** -- install with `npm install -g rc-engine` or run with `npx rc-engine`
+- `files` array in package.json ensures only `dist/`, README, LICENSE, CHANGELOG are published
+- `prepublishOnly` script runs full check suite + build before every publish
+
+#### Startup Banner + Update Check
+- Startup log now shows version: `Connected v1.1.0 - 33 tools - ...`
+- Non-blocking version check against npm registry (3s timeout, 24h cache)
+- Shows update notice in stderr when a newer version is available
+
+#### Opt-in Telemetry
+- Anonymous usage data collection (OFF by default -- opt-in via `.rc-engine/preferences.json`)
+- Collects: tool name, tier, OS, Node version, rc-engine version, random session ID
+- Never collects: project paths, brief content, API keys, any user data
+- Events buffered in memory, flushed once at process exit
+
+#### Edge Case Analysis Module (Pro)
+- **New Post-RC scan module:** automated edge case detection across 7 categories
+- Categories: `input-boundary`, `error-state`, `concurrency`, `data-integrity`, `integration`, `state-transition`, `performance-edge`
+- 3-layer analysis: static pattern matching (15 rules), structural PRD/task gap analysis, LLM edge case matrix
+- Finding ID prefix: `ECX-` (e.g., ECX-001)
+- Pro tier: full matrix with severity, category, reproduction scenario, and remediation
+- Free/Starter tier: summary count teaser ("12 edge cases found -- upgrade for details")
+- Runs in parallel with existing security, monitoring, and legal modules (fan-out/fan-in graph)
+- Auto-generates `[EDGE-CASE]` tagged remediation tasks for `rc_forge_task`
+- Configurable via `postrc_configure` with `edge_case_enabled`, `edge_case_block_on_critical`, `edge_case_categories`
+- `edgeCaseAnalysis` feature flag in tier definitions (Pro + Enterprise)
+
+#### Security & Stability Fixes
+- **Fix:** Windows paths (`C:\...`) now accepted in MCP tools (previously rejected)
+- **Fix:** Tier enforcement now fail-closed (unknown tiers default to free, not full access)
+- **Fix:** Gated tools without `project_path` are blocked instead of bypassing tier checks
+- **Fix:** `prc_stress_test` correctly mapped to `stressTest` feature (was `playbook` in web server)
+- **New:** Single source of truth for tool-tier mapping (`src/core/pricing/tool-requirements.ts`)
+- **New:** Activity audit log at `.rc-engine/audit/activity.jsonl` (JSONL, append-only)
+- **New:** Web server writes `.rc-engine/tier.json` on tier change (bridges web-MCP enforcement)
+
+#### Demo
+- FreelanceFlow demo app: full RC Method lifecycle (all 8 phases) with SQLite local dev setup
+- Seed data: 5 clients, 5 invoices (all statuses), 15 line items, 10 time entries, 2 templates
+
+---
+
 ## [1.0.0] - 2026-03-02
 
 ### Added
@@ -53,7 +107,7 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 - SQLite checkpoint store with WAL mode and atomic writes
 - Per-domain token tracking with persistent PIPELINE.md summary
 - Zod-validated state management with corruption detection
-- Web UI with guided wizard, magic link auth, and real-time updates
+- Web UI with guided wizard, magic link auth, and real-time updates (free tier: research only; paid tiers: full pipeline access)
 
 #### Documentation
 - Comprehensive README with full pipeline walkthrough
