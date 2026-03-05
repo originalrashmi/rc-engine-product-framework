@@ -19,7 +19,7 @@ export class FrontendEngineer extends BuildAgent {
   }
 
   getKnowledgeFiles(state: ForgeState): string[] {
-    const files = ['skills/rc-master.md'];
+    const files = ['skills/rc-master.md', 'forge/rc-forge-frontend.md'];
     try {
       files.push(`skills/stacks/stack-${state.techStack.language}-${state.techStack.framework}.md`);
     } catch {

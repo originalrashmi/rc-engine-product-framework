@@ -19,7 +19,7 @@ export class UxDesigner extends BuildAgent {
   }
 
   getKnowledgeFiles(state: ForgeState): string[] {
-    const files = ['skills/rc-master.md'];
+    const files = ['skills/rc-master.md', 'forge/rc-forge-ux-review.md'];
     try {
       files.push('skills/rc-ux-core.md');
     } catch {

@@ -19,7 +19,7 @@ export class DatabaseArchitect extends BuildAgent {
   }
 
   getKnowledgeFiles(state: ForgeState): string[] {
-    const files = ['skills/rc-master.md'];
+    const files = ['skills/rc-master.md', 'forge/rc-forge-database.md'];
     try {
       const stackFile = `skills/stacks/stack-${state.techStack.language}-${state.techStack.framework}.md`;
       files.push(stackFile);

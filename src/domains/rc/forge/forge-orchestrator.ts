@@ -9,6 +9,8 @@
 
 import type { ContextLoader } from '../context-loader.js';
 import { parseTasks, groupByLayer, getLayerOrder } from './task-parser.js';
+import { RetroAgent } from './retro-agent.js';
+import type { RetroReport } from './retro-agent.js';
 import type {
   BuildTask,
   TaskBuildResult,
@@ -85,7 +87,7 @@ export class ForgeOrchestrator {
     projectPath: string,
     techStack: TechStack,
     prdContent?: string,
-  ): Promise<{ metrics: ForgeMetrics; results: TaskBuildResult[]; state: ForgeState }> {
+  ): Promise<{ metrics: ForgeMetrics; results: TaskBuildResult[]; state: ForgeState; retro?: RetroReport }> {
     const totalStartMs = Date.now();
 
     // Parse tasks
@@ -109,6 +111,7 @@ export class ForgeOrchestrator {
     };
 
     const allResults: TaskBuildResult[] = [];
+    let reworkCount = 0;
     const layerTimings: Record<BuildLayer, number> = {
       [BuildLayer.Foundation]: 0,
       [BuildLayer.Backend]: 0,
@@ -179,6 +182,50 @@ export class ForgeOrchestrator {
         }
       }
 
+      // Rework loop: tasks with needs_rework get one rework pass
+      const reworkTasks = layerTasks.filter((task) => {
+        const review = forgeState.reviews[task.taskId];
+        return review && review.verdict === 'needs_rework';
+      });
+
+      if (reworkTasks.length > 0) {
+        reworkCount += reworkTasks.length;
+
+        const reworkResults = await Promise.allSettled(
+          reworkTasks.map((task) => this.reworkTask(task, forgeState)),
+        );
+
+        for (const result of reworkResults) {
+          if (result.status === 'fulfilled') {
+            const reworkResult = result.value;
+            // Replace the original result
+            const idx = allResults.findIndex((r) => r.taskId === reworkResult.taskId);
+            if (idx >= 0) allResults[idx] = reworkResult;
+            forgeState.taskResults[reworkResult.taskId] = reworkResult;
+          }
+        }
+
+        // Re-review reworked tasks
+        const reworkReviewResults = await Promise.allSettled(
+          reworkTasks.map(async (task) => {
+            const buildResult = forgeState.taskResults[task.taskId];
+            if (!buildResult?.success) return [];
+            return this.reviewRouter.reviewTask(task, buildResult, forgeState);
+          }),
+        );
+
+        for (const reviewResult of reworkReviewResults) {
+          if (reviewResult.status === 'fulfilled') {
+            for (const review of reviewResult.value) {
+              forgeState.reviews[review.taskId] = review;
+            }
+          }
+        }
+
+        // Update contracts after rework
+        this.updateContracts(forgeState, layer, allResults);
+      }
+
       layerTimings[layer] = Date.now() - layerStartMs;
     }
 
@@ -196,11 +243,45 @@ export class ForgeOrchestrator {
       totalCostUsd: totalCost,
       totalTokens,
       reviewPassRate: this.computeReviewPassRate(forgeState),
-      reworkCount: 0, // Will be incremented when rework loop is added
+      reworkCount,
       layerTimings,
     };
 
-    return { metrics, results: allResults, state: forgeState };
+    // Run retrospective analysis
+    let retro: RetroReport | undefined;
+    try {
+      const retroAgent = new RetroAgent();
+      retro = await retroAgent.analyze(forgeState, metrics);
+
+      // Persist to LearningStore
+      try {
+        const { getLearningStore } = await import('../../../core/learning/store.js');
+        const store = getLearningStore();
+        store.recordRetrospective({
+          projectId: forgeState.projectPath,
+          projectName: forgeState.projectName,
+          totalTasks: metrics.totalTasks,
+          completedTasks: metrics.completedTasks,
+          failedTasks: metrics.failedTasks,
+          reviewPassRate: metrics.reviewPassRate,
+          reworkCount: metrics.reworkCount,
+          totalDurationMs: metrics.totalDurationMs,
+          totalCostUsd: metrics.totalCostUsd,
+          totalTokens: metrics.totalTokens,
+          successes: retro.successes,
+          failures: retro.failures,
+          patterns: retro.patterns,
+          recommendations: retro.recommendations,
+          summary: retro.summary,
+        });
+      } catch {
+        // LearningStore may not be initialized — non-fatal
+      }
+    } catch {
+      // Retro is non-fatal — don't fail the forge
+    }
+
+    return { metrics, results: allResults, state: forgeState, retro };
   }
 
   /**
@@ -209,6 +290,27 @@ export class ForgeOrchestrator {
   private async buildTask(task: BuildTask, state: ForgeState): Promise<TaskBuildResult> {
     const agent = this.agents[task.tag];
     return agent.build(task, state);
+  }
+
+  /**
+   * Rework a task by re-running the build agent with review feedback injected.
+   * Capped at 1 rework pass per task (no infinite loops).
+   */
+  private async reworkTask(task: BuildTask, state: ForgeState): Promise<TaskBuildResult> {
+    const review = state.reviews[task.taskId];
+    const findings = review?.findings ?? [];
+    const feedbackSummary = findings
+      .map((f) => `[${f.severity}] ${f.category}: ${f.description}`)
+      .join('\n');
+
+    // Create a modified task with review feedback appended to the spec
+    const reworkTask: BuildTask = {
+      ...task,
+      spec: `${task.spec}\n\n## REWORK INSTRUCTIONS (from code review)\nThe previous implementation had the following issues. Fix ALL of them:\n${feedbackSummary}\n\nReview summary: ${review?.summary ?? 'No summary'}`,
+    };
+
+    const agent = this.agents[task.tag];
+    return agent.build(reworkTask, state);
   }
 
   /**

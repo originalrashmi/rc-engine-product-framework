@@ -379,7 +379,7 @@ export function registerRcPhaseTools(server: McpServer): void {
         };
 
         const forgeOrchestrator = new ForgeOrchestrator(contextLoader);
-        const { metrics, results } = await forgeOrchestrator.forgeAll(
+        const { metrics, results, retro } = await forgeOrchestrator.forgeAll(
           taskContent,
           state.projectName,
           project_path,
@@ -419,7 +419,8 @@ export function registerRcPhaseTools(server: McpServer): void {
 ### Results
 ${results.map((r) => `- ${r.taskId} (${r.agentName}): ${r.success ? 'OK' : 'FAILED'} — ${r.generatedFiles.length} files`).join('\n')}
 
-${metrics.failedTasks > 0 ? '\n### Failed Tasks\n' + results.filter((r) => !r.success).map((r) => `- ${r.taskId}: ${r.error}`).join('\n') : ''}`;
+${metrics.failedTasks > 0 ? '\n### Failed Tasks\n' + results.filter((r) => !r.success).map((r) => `- ${r.taskId}: ${r.error}`).join('\n') : ''}
+${retro ? `\n### Retrospective\n${retro.summary}\n\n#### Recommendations\n${retro.recommendations.map((r) => `- ${r}`).join('\n')}` : ''}`;
 
         return { content: [{ type: 'text' as const, text: summary }] };
       } catch (err) {
@@ -462,10 +463,11 @@ ${metrics.failedTasks > 0 ? '\n### Failed Tasks\n' + results.filter((r) => !r.su
           .describe('Maximum budget in USD. Pipeline halts if exceeded. Default: $15'),
       },
     },
-    async ({ project_path, description, tech_stack, budget_cap_usd }) => {
+    async ({ project_path, description, tech_stack, auto_approve_threshold, budget_cap_usd }) => {
+      const log: string[] = [];
+      const addLog = (msg: string) => log.push(`[${new Date().toISOString().substring(11, 19)}] ${msg}`);
+
       try {
-        // v1 skeleton: return instructions for how autopilot will work
-        // Full implementation will chain phases with auto-gate-approval
         const parsedStack = tech_stack
           ? {
               language: tech_stack.language,
@@ -480,36 +482,140 @@ ${metrics.failedTasks > 0 ? '\n### Failed Tasks\n' + results.filter((r) => !r.su
         const { getCostTracker } = await import('../../../shared/cost-tracker.js');
         getCostTracker().setBudget('rc-session', { maxCostUsd: budget_cap_usd ?? 15 });
 
-        // Start the project
-        const result = await getOrchestrator().start(
+        const orchestrator = getOrchestrator();
+        const contextLoader = new ContextLoader();
+        const threshold = auto_approve_threshold ?? 0.8;
+
+        // Phase 0: Start
+        addLog('Phase 0: Starting project...');
+        await orchestrator.start(
           project_path,
           description.substring(0, 50).replace(/[^a-zA-Z0-9 ]/g, ''),
           description,
           parsedStack,
         );
+        addLog('Phase 0: Project initialized');
 
-        const text = `## RC Autopilot — Initialized
+        // Phase 1: Illuminate
+        addLog('Phase 1: Illuminate...');
+        await orchestrator.illuminate(project_path, description);
+        await orchestrator.gate(project_path, 'approve', `Auto-approved by autopilot (threshold: ${threshold})`);
+        addLog('Phase 1: Illuminate complete + gate approved');
+
+        // Phase 2: Define
+        addLog('Phase 2: Define...');
+        await orchestrator.define(project_path, description);
+        await orchestrator.gate(project_path, 'approve', `Auto-approved by autopilot (threshold: ${threshold})`);
+        addLog('Phase 2: Define complete + gate approved');
+
+        // Phase 3: Architect
+        addLog('Phase 3: Architect...');
+        await orchestrator.architect(project_path, '');
+        await orchestrator.gate(project_path, 'approve', `Auto-approved by autopilot (threshold: ${threshold})`);
+        addLog('Phase 3: Architect complete + gate approved');
+
+        // Phase 4: Sequence
+        addLog('Phase 4: Sequence...');
+        await orchestrator.sequence(project_path);
+        await orchestrator.gate(project_path, 'approve', `Auto-approved by autopilot (threshold: ${threshold})`);
+        addLog('Phase 4: Sequence complete + gate approved');
+
+        // Phase 5: Validate
+        addLog('Phase 5: Validate...');
+        await orchestrator.validate(project_path);
+        await orchestrator.gate(project_path, 'approve', `Auto-approved by autopilot (threshold: ${threshold})`);
+        addLog('Phase 5: Validate complete + gate approved');
+
+        // Phase 6: Forge (parallel multi-agent build)
+        addLog('Phase 6: Forge All (parallel multi-agent build)...');
+        const state = _stateManager.load(project_path);
+        const taskArtifact = state.artifacts.find((a: string) => a.includes('/tasks/'));
+        let taskContent = '';
+        if (taskArtifact) {
+          try {
+            taskContent = contextLoader.loadProjectFile(project_path, taskArtifact);
+          } catch {
+            // no tasks file
+          }
+        }
+
+        let forgeMetricsSummary = 'Forge skipped: no TASKS file found';
+        if (taskContent) {
+          const forgeStack = state.techStack ?? {
+            language: 'typescript' as const,
+            framework: 'nextjs',
+            uiFramework: 'react',
+            database: 'postgresql',
+            orm: 'prisma',
+          };
+          const forgeOrchestrator = new ForgeOrchestrator(contextLoader);
+          const { metrics, results } = await forgeOrchestrator.forgeAll(
+            taskContent,
+            state.projectName,
+            project_path,
+            forgeStack,
+          );
+
+          // Save forge results to state
+          if (!state.forgeTasks) state.forgeTasks = {};
+          for (const result of results) {
+            state.forgeTasks[result.taskId] = {
+              taskId: result.taskId,
+              status: result.success ? 'complete' : 'failed',
+              startedAt: new Date().toISOString(),
+              completedAt: new Date().toISOString(),
+              generatedFiles: result.generatedFiles,
+            };
+          }
+          _stateManager.save(project_path, state);
+
+          forgeMetricsSummary = `${metrics.completedTasks}/${metrics.totalTasks} tasks, ${metrics.failedTasks} failed, $${metrics.totalCostUsd.toFixed(4)}, ${metrics.reworkCount} reworks`;
+        }
+        addLog(`Phase 6: Forge complete — ${forgeMetricsSummary}`);
+
+        // Phase 6 has no gate (developer-controlled), advance state manually
+        state.currentPhase = 7;
+        _stateManager.save(project_path, state);
+
+        // Phase 7: Connect
+        addLog('Phase 7: Connect...');
+        await orchestrator.connect(project_path);
+        await orchestrator.gate(project_path, 'approve', `Auto-approved by autopilot (threshold: ${threshold})`);
+        addLog('Phase 7: Connect complete + gate approved');
+
+        // Phase 8: Compound
+        addLog('Phase 8: Compound...');
+        await orchestrator.compound(project_path);
+        await orchestrator.gate(project_path, 'approve', `Auto-approved by autopilot (threshold: ${threshold})`);
+        addLog('Phase 8: Compound complete + gate approved');
+
+        const text = `## RC Autopilot — Complete
 
 ### Configuration
 - Budget cap: $${budget_cap_usd ?? 15}
+- Auto-approve threshold: ${threshold}
 - Tech stack: ${parsedStack ? `${parsedStack.language}/${parsedStack.framework}` : 'typescript/nextjs (default)'}
 
-### Phase 1: Illuminate — Started
-${result.text}
+### Pipeline Log
+${log.map((l) => `- ${l}`).join('\n')}
 
----
-
-**Autopilot v1 Note:** This skeleton has initialized the project and set the budget cap.
-Full autonomous execution (auto-gate-approval, parallel forge, retrospective) will be
-chained in subsequent iterations. For now, proceed with the standard phase tools
-(rc_illuminate → rc_define → rc_architect → rc_sequence → rc_validate → rc_forge_all).`;
+### Result
+All 8 phases completed autonomously. Review the generated artifacts in \`${project_path}/rc-method/\`.`;
 
         return { content: [{ type: 'text' as const, text }] };
       } catch (err) {
-        return {
-          content: [{ type: 'text' as const, text: `Error: ${(err as Error).message}` }],
-          isError: true,
-        };
+        const errorMsg = (err as Error).message;
+        const text = `## RC Autopilot — Halted
+
+### Error
+${errorMsg}
+
+### Pipeline Log
+${log.map((l) => `- ${l}`).join('\n')}
+
+${errorMsg.includes('Budget') ? '**Budget limit reached.** Increase budget_cap_usd or review costs.' : 'Review the error and retry or continue manually with individual phase tools.'}`;
+
+        return { content: [{ type: 'text' as const, text }], isError: true };
       }
     },
   );

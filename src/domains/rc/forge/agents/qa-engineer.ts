@@ -19,7 +19,7 @@ export class QAEngineer extends BuildAgent {
   }
 
   getKnowledgeFiles(state: ForgeState): string[] {
-    const files = ['skills/rc-master.md'];
+    const files = ['skills/rc-master.md', 'forge/rc-forge-qa.md'];
     try {
       files.push('skills/rc-test-scripts.md');
     } catch {
