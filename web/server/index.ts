@@ -326,7 +326,9 @@ async function main() {
     import('../../src/core/pricing/tiers.js')
       .then(({ TIERS, getTierOrder }) => {
         const order = getTierOrder();
-        res.json({ tiers: order.map((id) => TIERS[id]) });
+        res.json({
+          tiers: order.map((id: 'free' | 'starter' | 'pro' | 'enterprise') => TIERS[id]),
+        });
       })
       .catch(() => {
         res.status(500).json({ error: 'Pricing unavailable' });
@@ -652,7 +654,7 @@ async function main() {
       const projectName = path.basename(projectPath);
       const results = await generateDiagrams(projectPath, projectName);
       res.json({
-        diagrams: results.map((d) => ({
+        diagrams: results.map((d: { diagramType: string; htmlPath: string; mermaidSyntax: string }) => ({
           type: d.diagramType,
           htmlPath: d.htmlPath,
           mermaidSyntax: d.mermaidSyntax,
