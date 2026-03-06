@@ -29,7 +29,7 @@ const PHASE_TOOLS: Record<Phase, string> = {
 export function registerInitTool(server: McpServer): void {
   server.tool(
     'rc_init',
-    'START HERE. Unified entry point for the RC Engine pipeline. Detects your project state across all domains (Pre-RC, RC, Post-RC, Traceability) and tells you exactly which tool to call next. Defaults to Pre-RC research (prc_start) for new projects — because research comes before building. Call this FIRST before any other tool.',
+    'START HERE. Unified entry point for the RC Engine pipeline. Call this when starting a new project, resuming where you left off, or checking project status. Responds to: "rc_init", "resume project", "continue building", "where did I leave off", "pick up where I left off", "what\'s next", "continue from where I stopped". Detects your project state across all domains (Pre-RC, RC, Post-RC, Traceability) and tells you exactly which tool to call next. Defaults to Pre-RC research (prc_start) for new projects — because research comes before building.',
     {
       project_path: z.string().describe('Absolute path to the project directory'),
       brief: z.string().optional().describe('Product idea or description (for new projects)'),
