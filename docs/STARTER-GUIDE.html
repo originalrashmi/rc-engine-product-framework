@@ -21,7 +21,20 @@
 
   @media print {
     body { padding: 0 20px 20px; font-size: 11.5px; line-height: 1.6; }
-    .header { border-radius: 0; margin-left: -20px; margin-right: -20px; padding: 20px 32px 18px; }
+    .header {
+      border-radius: 0; margin-left: -20px; margin-right: -20px; padding: 20px 32px 18px;
+      -webkit-print-color-adjust: exact;
+      print-color-adjust: exact;
+      background: #1B2A4A !important;
+    }
+    .header h1 { color: #F5F0E8 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    .header h1 .rc {
+      -webkit-text-fill-color: #C9A962 !important;
+      color: #C9A962 !important;
+      background: none !important;
+    }
+    .header .subtitle { color: #F5F0E8 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    .header .tagline { color: #C9A962 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
     .page-break { page-break-before: always; }
     h2 { page-break-after: avoid; }
     pre, table, .path-card, .pipeline, .deliverables { page-break-inside: avoid; }
