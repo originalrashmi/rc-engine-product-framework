@@ -233,7 +233,7 @@ async function main() {
       sameSite: 'lax',
       maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
     });
-    res.json({ ok: true, user: { email: result.user.email, tier: result.user.tier } });
+    res.redirect('/');
   });
 
   app.post('/auth/logout', (req, res) => {
