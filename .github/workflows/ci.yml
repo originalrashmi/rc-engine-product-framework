@@ -29,6 +29,9 @@ jobs:
       - name: Type check (core)
         run: npx tsc --noEmit
 
+      - name: Build core (web server imports from dist/)
+        run: npx tsc
+
       - name: Type check (web server)
         run: npx tsc --noEmit -p web/tsconfig.json
 
