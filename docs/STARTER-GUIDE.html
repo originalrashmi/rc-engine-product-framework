@@ -279,7 +279,7 @@
 
 <!-- WHAT IS IT -->
 <h2>What is RC Engine?</h2>
-<p>RC Engine takes a product idea -- even a single sentence -- and walks it through a structured development pipeline: research, architecture, build, validation, and traceability. It uses 37 orchestrated AI tools behind the scenes so you can focus on your product, not the process.</p>
+<p>RC Engine takes a product idea -- even a single sentence -- and walks it through a structured development pipeline: research, architecture, build, validation, and traceability. It uses 38 orchestrated AI tools behind the scenes so you can focus on your product, not the process.</p>
 <p>Up to 20 specialized AI analysts research your idea before a single line of code is written. They cover market fit, user needs, technical feasibility, security, UX, and more. Then the engine designs the architecture, builds task by task, and scans for security and legal issues before shipping.</p>
 <p>You approve every step. Nothing moves forward without your sign-off.</p>
 
@@ -293,11 +293,11 @@
   <div class="path-card gold">
     <div class="path-label"><span>Path A</span></div>
     <h3>Web UI</h3>
-    <p>Open RC Engine in your browser. Sign in with your email. Describe your idea. Follow the guided steps.</p>
+    <p>Run <code>npm run web</code> locally. Open the dashboard in your browser. Describe your idea. Follow the guided steps.</p>
     <ul>
-      <li>No installation required</li>
       <li>Visual pipeline with progress tracking</li>
       <li>Download deliverables from the dashboard</li>
+      <li>Runs locally on your machine</li>
       <li>Works on any device with a browser</li>
     </ul>
     <div class="setup-time">Setup time: 2 minutes</div>
@@ -321,20 +321,15 @@
 <!-- PATH A: WEB UI -->
 <h2>Path A: Web UI</h2>
 
-<h3><span class="step-tag">1</span> Go to RC Engine</h3>
-<p>Open <strong><a href="https://app.rc-engine.dev">app.rc-engine.dev</a></strong> in your browser.</p>
+<h3><span class="step-tag">1</span> Start the Web UI</h3>
+<p>Run <code>npm run web</code> from your RC Engine directory, then open <strong>http://localhost:3000</strong> in your browser.</p>
 
 <h3><span class="step-tag">2</span> Sign In</h3>
 <ol>
   <li>Enter your email address</li>
   <li>Click <strong>Continue</strong></li>
-  <li>Check your inbox for the sign-in email from RC Engine</li>
-  <li>Click the link in the email -- you land on the dashboard</li>
+  <li>You land on the dashboard</li>
 </ol>
-
-<div class="callout">
-  <strong>Tip:</strong> If you don't see the email within a minute, check your spam folder.
-</div>
 
 <h3><span class="step-tag">3</span> Start Your First Project</h3>
 <ol>
@@ -570,15 +565,9 @@ echo %cd%\dist\index.js</code></pre>
 <!-- PRICING -->
 <h2>Pricing</h2>
 
-<table>
-  <tr><th>Plan</th><th>Research</th><th>Full Pipeline</th><th>Traceability</th><th>Price</th></tr>
-  <tr><td><strong>Free</strong></td><td>1 project/month</td><td>--</td><td>--</td><td>$0</td></tr>
-  <tr><td><strong>Starter</strong></td><td>5 projects/month</td><td>Included</td><td>--</td><td>$29/month</td></tr>
-  <tr><td><strong>Pro</strong></td><td>Unlimited</td><td>Included</td><td>Included</td><td>$79/month</td></tr>
-</table>
+<p><strong>Free tier</strong> includes the Pre-RC research pipeline (1 project/month). Paid tiers unlock the full build pipeline, security scanning, traceability, and Pro knowledge files. See the <a href="https://toerana.com">RC Engine website</a> for current pricing.</p>
 
-<p style="font-size: 13px; color: #64748b;"><strong>Web UI users:</strong> Your subscription covers everything -- AI costs are included.<br>
-<strong>MCP users:</strong> AI service costs (Anthropic, Perplexity, etc.) are separate pay-per-use charges. Typical total: $3-20 per project.</p>
+<p style="font-size: 13px; color: #64748b;"><strong>BYOK model:</strong> RC Engine uses your own API keys (Anthropic, Perplexity, etc.) -- you pay providers directly at their rates. Typical total: $3-10 per project.</p>
 
 <hr>
 
@@ -589,10 +578,10 @@ echo %cd%\dist\index.js</code></pre>
 <p>No. The Web UI is designed for non-technical users. Describe your idea in plain language and the engine handles everything. The MCP path is for developers who prefer working in their IDE.</p>
 
 <h4>What happens to my data?</h4>
-<p>Your project data stays private. The Web UI stores your work on our servers (encrypted). The MCP path keeps everything on your local machine. In both cases, AI API calls go to the providers you configure (Anthropic, Perplexity, etc.) -- RC Engine does not store or train on your data.</p>
+<p>Your project data stays private. Both paths keep everything on your local machine. AI API calls go to the providers you configure (Anthropic, Perplexity, etc.) -- RC Engine does not store or train on your data.</p>
 
 <h4>Can I switch between Web UI and MCP?</h4>
-<p>The two paths are independent. Your Web UI projects live on the hosted platform; your MCP projects live on your machine. We plan to add sync between them in a future release.</p>
+<p>Both paths store data locally. The Web UI and MCP server share the same project state files.</p>
 
 <h4>What if I only need the research phase?</h4>
 <p>Choose "Research Only" when starting a project. You get the full 20-analyst research pipeline and a complete requirements document without entering the build phase. This is available on all plans including Free.</p>

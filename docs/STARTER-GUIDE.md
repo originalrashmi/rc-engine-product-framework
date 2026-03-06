@@ -2,7 +2,7 @@
 
 ## What is RC Engine?
 
-RC Engine takes a product idea -- even a single sentence -- and walks it through a structured development pipeline: research, architecture, build, validation, and traceability. It uses 37 orchestrated AI tools behind the scenes so you can focus on your product, not the process.
+RC Engine takes a product idea -- even a single sentence -- and walks it through a structured development pipeline: research, architecture, build, validation, and traceability. It uses 38 orchestrated AI tools behind the scenes so you can focus on your product, not the process.
 
 Up to 20 specialized AI analysts research your idea before a single line of code is written. They cover market fit, user needs, technical feasibility, security, UX, and more. Then the engine designs the architecture, builds task by task, and scans for security and legal issues before shipping.
 
@@ -27,7 +27,7 @@ Pick the way that fits how you work. Both paths use the same pipeline and produc
 
 ### 1. Go to RC Engine
 
-Open **[app.rc-engine.dev](https://app.rc-engine.dev)** in your browser.
+Run `npm run web` from your RC Engine directory, then open **http://localhost:3000** in your browser.
 
 ### 2. Sign In
 
@@ -193,15 +193,9 @@ You are in control at every checkpoint. Nothing moves forward without your appro
 
 ## Pricing
 
-| Plan | Research | Full Pipeline | Traceability | Price |
-|------|----------|---------------|-------------|-------|
-| Free | 1 project/month | -- | -- | $0 |
-| Starter | 5 projects/month | Included | -- | $29/month |
-| Pro | Unlimited | Included | Included | $79/month |
+**Free tier** includes the Pre-RC research pipeline (1 project/month). Paid tiers unlock the full build pipeline, security scanning, traceability, and Pro knowledge files. See the [RC Engine website](https://toerana.com) for current pricing.
 
-**Web UI users:** Your subscription covers everything -- AI costs are included.
-
-**MCP users:** AI service costs (Anthropic, Perplexity, etc.) are separate pay-per-use charges. Typical total: $3-20 per project.
+**BYOK model:** RC Engine uses your own API keys (Anthropic, Perplexity, etc.) -- you pay providers directly at their rates. Typical total: $3-10 per project.
 
 ---
 
@@ -211,10 +205,10 @@ You are in control at every checkpoint. Nothing moves forward without your appro
 No. The Web UI is designed for non-technical users. Describe your idea in plain language and the engine handles everything.
 
 **What happens to my data?**
-Your project data stays private. The Web UI stores your work on our servers (encrypted). The MCP path keeps everything on your local machine.
+Your project data stays private. Both paths keep everything on your local machine.
 
 **Can I switch between Web UI and MCP?**
-The two paths are independent for now. Sync between them is planned for a future release.
+Both paths store data locally. The Web UI and MCP server share the same project state files.
 
 **What if I only need the research phase?**
 Choose "Research Only" when starting a project. Available on all plans including Free.

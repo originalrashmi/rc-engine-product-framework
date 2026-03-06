@@ -45,7 +45,7 @@ You never call tools directly. Open your IDE, describe what you want to build, a
 
 | Edition | What You Get | License |
 |---------|-------------|---------|
-| **RC Engine (this repo)** | Full MCP server, 33 tools, pipeline structure, state management, quality gates | MIT (free) |
+| **RC Engine (this repo)** | Full MCP server, 38 tools, pipeline structure, state management, quality gates | MIT (free) |
 | **[RC Engine Pro](https://github.com/originalrashmi/rc-engine-pro)** | 46 methodology knowledge files -- research personas, build skills, UX specialists, security databases | Proprietary |
 
 **Community mode** (without Pro): Tools assemble structured prompts for your IDE's AI to process. Full pipeline discipline at zero cost.
