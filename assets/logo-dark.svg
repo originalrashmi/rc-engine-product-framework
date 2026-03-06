@@ -1,0 +1,36 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <defs>
+    <linearGradient id="bgfd" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0D1B2A"/>
+      <stop offset="100%" stop-color="#1B2A4A"/>
+    </linearGradient>
+    <linearGradient id="goldfd" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#E8D5A3"/>
+      <stop offset="50%" stop-color="#C9A962"/>
+      <stop offset="100%" stop-color="#A8893F"/>
+    </linearGradient>
+    <linearGradient id="goldfddim" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#E8D5A3" stop-opacity="0.07"/>
+      <stop offset="100%" stop-color="#C9A962" stop-opacity="0.07"/>
+    </linearGradient>
+  </defs>
+  <!-- Rounded square background -->
+  <rect width="512" height="512" rx="96" ry="96" fill="url(#bgfd)"/>
+  <rect x="4" y="4" width="504" height="504" rx="92" ry="92" fill="none" stroke="#C9A962" stroke-width="2" opacity="0.3"/>
+
+  <!-- Watermark RC — geometric bold -->
+  <text x="256" y="430" font-family="'Trebuchet MS', 'Futura', 'Century Gothic', sans-serif" font-size="400" font-weight="700" fill="url(#goldfddim)" text-anchor="middle" letter-spacing="-20">RC</text>
+
+  <!-- Pipeline line in cream -->
+  <line x1="120" y1="260" x2="392" y2="260" stroke="#F5F0E8" stroke-width="1.5" opacity="0.25"/>
+  <!-- Phase dots — cream outer, gold center -->
+  <circle cx="160" cy="260" r="4.5" fill="#F5F0E8" opacity="0.35"/>
+  <circle cx="256" cy="260" r="6.5" fill="url(#goldfd)"/>
+  <circle cx="352" cy="260" r="4.5" fill="#F5F0E8" opacity="0.35"/>
+
+  <!-- Foreground RC — cream text with gold glow -->
+  <text x="256" y="238" font-family="'Trebuchet MS', 'Futura', 'Century Gothic', sans-serif" font-size="130" font-weight="700" fill="#F5F0E8" text-anchor="middle" letter-spacing="-4">RC</text>
+
+  <!-- ENGINE below — cream -->
+  <text x="256" y="322" font-family="'Trebuchet MS', 'Futura', 'Century Gothic', sans-serif" font-size="40" font-weight="400" fill="#F5F0E8" text-anchor="middle" letter-spacing="20" opacity="0.45">ENGINE</text>
+</svg>

@@ -1,11 +1,21 @@
-# RC Engine
+<p align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="assets/logo-dark.svg" width="160">
+    <source media="(prefers-color-scheme: light)" srcset="assets/logo-light.svg" width="160">
+    <img src="assets/logo-dark.svg" alt="RC Engine" width="160">
+  </picture>
+</p>
 
-[![CI](https://github.com/originalrashmi/rc-engine-product-framework/actions/workflows/ci.yml/badge.svg)](https://github.com/originalrashmi/rc-engine-product-framework/actions/workflows/ci.yml)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Node.js](https://img.shields.io/badge/node-%3E%3D18-brightgreen.svg)](https://nodejs.org)
-[![MCP](https://img.shields.io/badge/MCP-compatible-blue.svg)](https://modelcontextprotocol.io)
+<h1 align="center">RC Engine</h1>
 
-**Results through Clarity** -- an AI-native product development pipeline.
+<p align="center">
+  <a href="https://github.com/originalrashmi/rc-engine-product-framework/actions/workflows/ci.yml"><img src="https://github.com/originalrashmi/rc-engine-product-framework/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
+  <a href="https://opensource.org/licenses/MIT"><img src="https://img.shields.io/badge/License-MIT-yellow.svg" alt="License: MIT"></a>
+  <a href="https://nodejs.org"><img src="https://img.shields.io/badge/node-%3E%3D18-brightgreen.svg" alt="Node.js"></a>
+  <a href="https://modelcontextprotocol.io"><img src="https://img.shields.io/badge/MCP-compatible-blue.svg" alt="MCP"></a>
+</p>
+
+<p align="center"><strong>Results through Clarity</strong> -- an AI-native product development pipeline.</p>
 
 Take a one-line product idea through structured research, architecture, build, validation, and traceability -- with 33 orchestrated tools across 4 domains.
 
