@@ -42,26 +42,7 @@ You never call tools directly. Open your IDE, describe what you want to build, a
 
 **Pro mode** (with Pro knowledge): Autonomous execution -- the engine calls LLMs directly with methodology-enriched prompts.
 
-### Free vs Paid
-
-| Capability | Free | Starter ($29/mo) | Pro ($79/mo) |
-|------------|------|-------------------|--------------|
-| **Pre-RC Research** (20 AI specialists, 6 stages, 3 gates) | 1 project/mo | 5 projects/mo | Unlimited |
-| **RC Method Build** (8 phases, architecture, forge, gates) | -- | Included | Included |
-| **Post-RC Validation** (security scan, monitoring, ship gate) | -- | Included | Included |
-| **Traceability** (requirement IDs, coverage matrix, HTML report) | -- | -- | Included |
-| **Design Options** (lo-fi/hi-fi wireframes) | -- | 1 per project | 3 per project |
-| **Stress Test** (GO/NO-GO challenge before build) | -- | -- | Included |
-| **PDF Export** | -- | Included | Included |
-| **Architecture Diagrams** | -- | Included | Included |
-| **Playbook / ARD Export** | -- | -- | Included |
-| **Priority AI Routing** | -- | -- | Included |
-| **Custom Knowledge Files** | -- | -- | Included |
-| **API Access** | -- | -- | Included |
-| **Web UI** | Included (research only) | Full pipeline | Full pipeline |
-| **MCP / CLI** | Included (research only) | Full pipeline | Full pipeline |
-
-Free users get full access to the Pre-RC research pipeline (1 project/month). Building, validation, and traceability require a paid tier.
+**Free tier** includes the Pre-RC research pipeline (1 project/month). Paid tiers unlock the full build pipeline, security scanning, traceability, and Pro knowledge files. See the [RC Engine website](https://toerana.com) for current pricing.
 
 ---
 
