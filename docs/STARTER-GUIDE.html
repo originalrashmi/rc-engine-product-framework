@@ -4,71 +4,140 @@
 <meta charset="utf-8">
 <title>RC Engine -- Starter Guide</title>
 <style>
-  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400&display=swap');
+  @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400;1,700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400&display=swap');
 
   * { margin: 0; padding: 0; box-sizing: border-box; }
 
   body {
     font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-    color: #1a1a2e;
+    color: #1B2A4A;
     background: #fff;
     line-height: 1.75;
     font-size: 14px;
     max-width: 800px;
     margin: 0 auto;
-    padding: 48px 40px;
+    padding: 0 40px 48px;
   }
 
   @media print {
-    body { padding: 20px; font-size: 11.5px; line-height: 1.6; }
+    body { padding: 0 20px 20px; font-size: 11.5px; line-height: 1.6; }
+    .header { border-radius: 0; margin-left: -20px; margin-right: -20px; padding: 20px 32px 18px; }
     .page-break { page-break-before: always; }
     h2 { page-break-after: avoid; }
     pre, table, .path-card, .pipeline, .deliverables { page-break-inside: avoid; }
   }
 
-  /* Header */
+  /* ===== HEADER — Navy gradient with brand identity ===== */
   .header {
+    background: linear-gradient(135deg, #0D1B2A 0%, #1B2A4A 100%);
+    margin: 0 -40px;
+    padding: 36px 40px 32px;
     text-align: center;
     margin-bottom: 36px;
-    padding-bottom: 28px;
     border-bottom: 3px solid #C9A962;
   }
-  .header h1 { font-size: 36px; font-weight: 700; margin-bottom: 8px; }
-  .header h1 .rc { color: #C9A962; }
-  .header .subtitle { font-size: 16px; color: #64748b; margin-bottom: 4px; }
-  .header .tagline { font-size: 13px; color: #94a3b8; }
-
-  h2 {
-    font-size: 20px;
+  .header-logo {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 16px;
+    margin-bottom: 12px;
+  }
+  .header-logo svg {
+    border-radius: 12px;
+    flex-shrink: 0;
+  }
+  .header h1 {
+    font-family: 'Playfair Display', Georgia, serif;
+    font-size: 34px;
     font-weight: 700;
-    color: #1a1a2e;
+    color: #F5F0E8;
+    letter-spacing: 1px;
+  }
+  .header h1 .rc {
+    background: linear-gradient(135deg, #E8D5A3, #C9A962, #A8893F);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+  .header .subtitle {
+    font-family: 'Inter', sans-serif;
+    font-size: 15px;
+    color: #F5F0E8;
+    opacity: 0.7;
+    letter-spacing: 4px;
+    text-transform: uppercase;
+    margin-bottom: 6px;
+  }
+  .header .tagline {
+    font-family: 'Playfair Display', Georgia, serif;
+    font-style: italic;
+    font-size: 14px;
+    color: #C9A962;
+    opacity: 0.8;
+  }
+
+  /* ===== SECTION WRAPPER with watermark number ===== */
+  .section {
+    position: relative;
+    overflow: hidden;
+  }
+  .section .watermark {
+    position: absolute;
+    top: -18px;
+    right: -8px;
+    font-family: 'Playfair Display', Georgia, serif;
+    font-size: 120px;
+    font-weight: 700;
+    line-height: 1;
+    color: #C9A962;
+    opacity: 0.06;
+    pointer-events: none;
+    user-select: none;
+    z-index: 0;
+  }
+  .section > *:not(.watermark) {
+    position: relative;
+    z-index: 1;
+  }
+
+  /* ===== HEADINGS ===== */
+  h2 {
+    font-family: 'Playfair Display', Georgia, serif;
+    font-size: 22px;
+    font-weight: 700;
+    color: #0D1B2A;
     margin-top: 36px;
     margin-bottom: 14px;
     padding-bottom: 6px;
-    border-bottom: 2px solid #e2e8f0;
+    border-bottom: 2px solid #C9A962;
   }
   h3 {
     font-size: 15px;
     font-weight: 600;
-    color: #334155;
+    color: #1B2A4A;
     margin-top: 20px;
     margin-bottom: 8px;
   }
   h4 {
     font-size: 14px;
     font-weight: 600;
-    color: #475569;
+    color: #1B2A4A;
     margin-top: 16px;
     margin-bottom: 6px;
   }
 
   p { margin-bottom: 12px; }
+  a { color: #C9A962; }
+  a:hover { color: #A8893F; }
 
+  /* ===== CODE ===== */
   pre {
-    background: #0f172a;
-    color: #e2e8f0;
+    background: #0D1B2A;
+    color: #F5F0E8;
     padding: 16px 20px;
     border-radius: 8px;
+    border: 1px solid #1B2A4A;
     overflow-x: auto;
     font-family: 'JetBrains Mono', monospace;
     font-size: 12.5px;
@@ -78,15 +147,17 @@
   code {
     font-family: 'JetBrains Mono', monospace;
     font-size: 12px;
-    background: #f1f5f9;
+    background: #F5F0E8;
+    color: #1B2A4A;
     padding: 2px 6px;
     border-radius: 4px;
   }
-  pre code { background: none; padding: 0; font-size: 12.5px; }
-  .comment { color: #64748b; }
+  pre code { background: none; padding: 0; font-size: 12.5px; color: #F5F0E8; }
+  .comment { color: #C9A962; opacity: 0.6; }
   .env-key { color: #C9A962; }
-  .env-val { color: #94a3b8; }
+  .env-val { color: #F5F0E8; opacity: 0.6; }
 
+  /* ===== TABLES ===== */
   table {
     width: 100%;
     border-collapse: collapse;
@@ -94,39 +165,44 @@
     font-size: 13px;
   }
   th {
-    background: #f8fafc;
+    background: #0D1B2A;
+    color: #F5F0E8;
     font-weight: 600;
     text-align: left;
     padding: 10px 12px;
-    border-bottom: 2px solid #e2e8f0;
+    border-bottom: 2px solid #C9A962;
   }
   td {
     padding: 8px 12px;
-    border-bottom: 1px solid #f1f5f9;
+    border-bottom: 1px solid #F5F0E8;
     vertical-align: top;
   }
+  tr:nth-child(even) td { background: #FDFBF7; }
 
   ul, ol { margin-left: 20px; margin-bottom: 12px; }
   li { margin-bottom: 6px; }
 
+  /* ===== CALLOUTS ===== */
   .callout {
-    background: #fffbeb;
+    background: #FDFBF7;
     border-left: 4px solid #C9A962;
     padding: 12px 16px;
     border-radius: 0 8px 8px 0;
     margin-bottom: 16px;
     font-size: 13px;
   }
-  .callout-blue {
-    background: #eff6ff;
-    border-left-color: #3b82f6;
+  .callout-navy {
+    background: rgba(13, 27, 42, 0.04);
+    border-left-color: #1B2A4A;
   }
   .callout-green {
-    background: #f0fdf4;
-    border-left-color: #22c55e;
+    background: rgba(201, 169, 98, 0.08);
+    border-left-color: #C9A962;
+    font-style: italic;
+    color: #0D1B2A;
   }
 
-  /* Path chooser */
+  /* ===== PATH CHOOSER ===== */
   .paths-container {
     display: flex;
     gap: 20px;
@@ -134,16 +210,18 @@
   }
   .path-card {
     flex: 1;
-    border: 2px solid #e2e8f0;
+    border: 2px solid #E8D5A3;
     border-radius: 12px;
     padding: 24px;
+    background: #FDFBF7;
   }
-  .path-card.gold { border-color: #C9A962; background: #fffdf7; }
-  .path-card.blue { border-color: #3b82f6; background: #f8faff; }
+  .path-card.gold { border-color: #C9A962; background: rgba(201, 169, 98, 0.06); }
+  .path-card.navy { border-color: #1B2A4A; background: rgba(13, 27, 42, 0.03); }
   .path-card h3 {
+    font-family: 'Playfair Display', Georgia, serif;
     font-size: 18px;
     margin: 0 0 4px;
-    color: #1a1a2e;
+    color: #0D1B2A;
     text-align: center;
   }
   .path-label {
@@ -153,8 +231,8 @@
   }
   .path-label span {
     display: inline-block;
-    background: #C9A962;
-    color: #fff;
+    background: linear-gradient(135deg, #E8D5A3, #C9A962, #A8893F);
+    color: #0D1B2A;
     font-size: 11px;
     font-weight: 600;
     padding: 2px 10px;
@@ -162,23 +240,26 @@
     text-transform: uppercase;
     letter-spacing: 0.5px;
   }
-  .path-label span.alt { background: #3b82f6; }
-  .path-card p { font-size: 13px; color: #475569; margin-bottom: 6px; }
+  .path-label span.alt {
+    background: linear-gradient(135deg, #0D1B2A, #1B2A4A);
+    color: #F5F0E8;
+  }
+  .path-card p { font-size: 13px; color: #1B2A4A; opacity: 0.7; margin-bottom: 6px; }
   .path-card .setup-time {
     text-align: center;
     font-size: 12px;
-    color: #94a3b8;
+    color: #C9A962;
     margin-top: 12px;
     font-style: italic;
   }
-  .path-card ul { font-size: 13px; color: #475569; margin-top: 10px; }
-  .path-card li { margin-bottom: 4px; }
+  .path-card ul { font-size: 13px; color: #1B2A4A; margin-top: 10px; }
+  .path-card li { margin-bottom: 4px; opacity: 0.7; }
 
-  /* Step numbers */
+  /* ===== STEP NUMBERS ===== */
   .step-tag {
     display: inline-block;
-    background: #C9A962;
-    color: #fff;
+    background: linear-gradient(135deg, #E8D5A3, #C9A962, #A8893F);
+    color: #0D1B2A;
     width: 26px;
     height: 26px;
     line-height: 26px;
@@ -189,12 +270,15 @@
     margin-right: 8px;
     vertical-align: middle;
   }
-  .step-tag.alt { background: #3b82f6; }
+  .step-tag.alt {
+    background: linear-gradient(135deg, #0D1B2A, #1B2A4A);
+    color: #F5F0E8;
+  }
 
-  /* Pipeline */
+  /* ===== PIPELINE ===== */
   .pipeline {
-    background: #f8fafc;
-    border: 1px solid #e2e8f0;
+    background: rgba(13, 27, 42, 0.03);
+    border: 1px solid rgba(27, 42, 74, 0.12);
     border-radius: 12px;
     padding: 24px 28px;
     margin: 16px 0 20px;
@@ -209,8 +293,8 @@
     height: 28px;
     min-width: 28px;
     border-radius: 50%;
-    background: #C9A962;
-    color: #fff;
+    background: linear-gradient(135deg, #E8D5A3, #C9A962, #A8893F);
+    color: #0D1B2A;
     font-size: 12px;
     font-weight: 700;
     display: flex;
@@ -222,12 +306,13 @@
   .pipeline-connector {
     width: 2px;
     height: 8px;
-    background: #cbd5e1;
+    background: #C9A962;
+    opacity: 0.3;
     margin-left: 13px;
     margin-bottom: 4px;
   }
-  .pipeline-text strong { display: block; font-size: 14px; color: #1a1a2e; }
-  .pipeline-text span { font-size: 12px; color: #64748b; }
+  .pipeline-text strong { display: block; font-size: 14px; color: #0D1B2A; }
+  .pipeline-text span { font-size: 12px; color: #1B2A4A; opacity: 0.6; }
   .pipeline-checkpoint {
     font-size: 11px;
     color: #C9A962;
@@ -236,7 +321,7 @@
     letter-spacing: 0.3px;
   }
 
-  /* Deliverables */
+  /* ===== DELIVERABLES ===== */
   .deliverables {
     display: grid;
     grid-template-columns: 1fr 1fr;
@@ -244,48 +329,88 @@
     margin: 16px 0;
   }
   .deliverable {
-    background: #f8fafc;
-    border: 1px solid #e2e8f0;
+    background: #FDFBF7;
+    border: 1px solid rgba(201, 169, 98, 0.25);
     border-radius: 8px;
     padding: 14px 16px;
   }
-  .deliverable strong { font-size: 13px; display: block; margin-bottom: 2px; }
-  .deliverable span { font-size: 12px; color: #64748b; }
+  .deliverable strong { font-size: 13px; display: block; margin-bottom: 2px; color: #0D1B2A; }
+  .deliverable span { font-size: 12px; color: #1B2A4A; opacity: 0.6; }
 
+  /* ===== HR ===== */
   hr {
     border: none;
-    border-top: 1px solid #e2e8f0;
+    border-top: 1px solid rgba(201, 169, 98, 0.25);
     margin: 32px 0;
   }
 
+  /* ===== FOOTER ===== */
   .footer {
-    margin-top: 40px;
-    padding-top: 20px;
-    border-top: 2px solid #e2e8f0;
+    background: linear-gradient(135deg, #0D1B2A 0%, #1B2A4A 100%);
+    margin: 40px -40px 0;
+    padding: 20px 40px;
     text-align: center;
-    color: #94a3b8;
+    color: #F5F0E8;
     font-size: 12px;
+    opacity: 0.7;
+    border-top: 2px solid #C9A962;
   }
+  .footer a { color: #C9A962; }
 </style>
 </head>
 <body>
 
 <!-- HEADER -->
 <div class="header">
-  <h1><span class="rc">RC</span> Engine</h1>
+  <div class="header-logo">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="56" height="56">
+      <defs>
+        <linearGradient id="bgfd" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" stop-color="#0D1B2A"/>
+          <stop offset="100%" stop-color="#1B2A4A"/>
+        </linearGradient>
+        <linearGradient id="goldfd" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" stop-color="#E8D5A3"/>
+          <stop offset="50%" stop-color="#C9A962"/>
+          <stop offset="100%" stop-color="#A8893F"/>
+        </linearGradient>
+        <linearGradient id="goldfddim" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" stop-color="#E8D5A3" stop-opacity="0.07"/>
+          <stop offset="100%" stop-color="#C9A962" stop-opacity="0.07"/>
+        </linearGradient>
+      </defs>
+      <rect width="512" height="512" rx="96" ry="96" fill="url(#bgfd)"/>
+      <rect x="4" y="4" width="504" height="504" rx="92" ry="92" fill="none" stroke="#C9A962" stroke-width="2" opacity="0.3"/>
+      <text x="256" y="430" font-family="'Trebuchet MS', 'Century Gothic', sans-serif" font-size="400" font-weight="700" fill="url(#goldfddim)" text-anchor="middle" letter-spacing="-20">RC</text>
+      <line x1="120" y1="260" x2="392" y2="260" stroke="#F5F0E8" stroke-width="1.5" opacity="0.25"/>
+      <circle cx="160" cy="260" r="4.5" fill="#F5F0E8" opacity="0.35"/>
+      <circle cx="256" cy="260" r="6.5" fill="url(#goldfd)"/>
+      <circle cx="352" cy="260" r="4.5" fill="#F5F0E8" opacity="0.35"/>
+      <text x="256" y="238" font-family="'Trebuchet MS', 'Century Gothic', sans-serif" font-size="130" font-weight="700" fill="#F5F0E8" text-anchor="middle" letter-spacing="-4">RC</text>
+      <text x="256" y="322" font-family="'Trebuchet MS', 'Century Gothic', sans-serif" font-size="40" font-weight="400" fill="#F5F0E8" text-anchor="middle" letter-spacing="20" opacity="0.45">ENGINE</text>
+    </svg>
+    <div>
+      <h1><span class="rc">RC</span> Engine</h1>
+    </div>
+  </div>
   <div class="subtitle">Starter Guide</div>
-  <div class="tagline">AI-native product development pipeline -- from idea to production-ready software</div>
+  <div class="tagline">Results through Clarity &mdash; an AI-native product development pipeline</div>
 </div>
 
 <!-- WHAT IS IT -->
+<div class="section">
+<span class="watermark">01</span>
 <h2>What is RC Engine?</h2>
 <p>RC Engine takes a product idea -- even a single sentence -- and walks it through a structured development pipeline: research, architecture, build, validation, and traceability. It uses 38 orchestrated AI tools behind the scenes so you can focus on your product, not the process.</p>
 <p>Up to 20 specialized AI analysts research your idea before a single line of code is written. They cover market fit, user needs, technical feasibility, security, UX, and more. Then the engine designs the architecture, builds task by task, and scans for security and legal issues before shipping.</p>
 <p>You approve every step. Nothing moves forward without your sign-off.</p>
+</div>
 
 <hr>
 
 <!-- CHOOSE YOUR PATH -->
+<div class="section">
+<span class="watermark">02</span>
 <h2>Choose Your Path</h2>
 <p>Pick the way that fits how you work. Both paths use the same pipeline and produce the same deliverables.</p>
 
@@ -302,7 +427,7 @@
     </ul>
     <div class="setup-time">Setup time: 2 minutes</div>
   </div>
-  <div class="path-card blue">
+  <div class="path-card navy">
     <div class="path-label"><span class="alt">Path B</span></div>
     <h3>MCP Server</h3>
     <p>Install RC Engine locally and connect it to your IDE. Chat naturally -- the AI calls the right tools for you.</p>
@@ -315,10 +440,13 @@
     <div class="setup-time">Setup time: 10 minutes</div>
   </div>
 </div>
+</div>
 
 <hr>
 
 <!-- PATH A: WEB UI -->
+<div class="section">
+<span class="watermark">03</span>
 <h2>Path A: Web UI</h2>
 
 <h3><span class="step-tag">1</span> Start the Web UI</h3>
@@ -349,10 +477,13 @@
 <p>When the pipeline completes (or at any stage), download your deliverables directly from the dashboard -- requirements document, architecture plan, task breakdown, security report, and more.</p>
 
 <p>That's it. No terminal, no configuration, no API keys to manage.</p>
+</div>
 
 <hr class="page-break">
 
 <!-- PATH B: MCP -->
+<div class="section">
+<span class="watermark">04</span>
 <h2>Path B: MCP Server (IDE Integration)</h2>
 
 <h3><span class="step-tag alt">1</span> Prerequisites</h3>
@@ -392,7 +523,7 @@ npm install && npm run build</code></pre>
   <tr><td><strong>OpenAI</strong></td><td>UX and content analysis</td><td>Optional</td><td>Minimal</td></tr>
 </table>
 
-<div class="callout callout-blue">
+<div class="callout callout-navy">
   <strong>No API keys?</strong> RC Engine works in manual mode -- it generates structured prompts you copy into any AI tool (ChatGPT, Claude.ai, Gemini) and paste the results back. Same methodology, more hands-on.
 </div>
 
@@ -446,10 +577,13 @@ echo %cd%\dist\index.js</code></pre>
   <tr><td>Post-RC (Validation)</td><td>Security scanning, monitoring readiness, and ship/no-ship gate</td></tr>
   <tr><td>Traceability (Audit)</td><td>Tracks which requirements were built and verified</td></tr>
 </table>
+</div>
 
 <hr class="page-break">
 
 <!-- THE PIPELINE -->
+<div class="section">
+<span class="watermark">05</span>
 <h2>The Pipeline</h2>
 <p>Whichever path you choose, RC Engine runs your idea through this structured process:</p>
 
@@ -518,7 +652,7 @@ echo %cd%\dist\index.js</code></pre>
     <span class="pipeline-checkpoint">Checkpoint: ship / fix / accept risk</span>
   </div>
   <div class="pipeline-step">
-    <div class="pipeline-dot" style="background: #22c55e;">&#10003;</div>
+    <div class="pipeline-dot" style="background: linear-gradient(135deg, #E8D5A3, #C9A962, #A8893F);">&#10003;</div>
     <div class="pipeline-text">
       <strong>Ship</strong>
       <span>Production-ready with full audit trail</span>
@@ -527,10 +661,13 @@ echo %cd%\dist\index.js</code></pre>
 </div>
 
 <p><strong>You are in control at every checkpoint.</strong> Nothing moves forward without your approval.</p>
+</div>
 
 <hr>
 
 <!-- WHAT YOU GET -->
+<div class="section">
+<span class="watermark">06</span>
 <h2>What You Get</h2>
 
 <div class="deliverables">
@@ -559,19 +696,26 @@ echo %cd%\dist\index.js</code></pre>
     <span>Cost and time savings vs. a human consulting team</span>
   </div>
 </div>
+</div>
 
 <hr>
 
 <!-- PRICING -->
+<div class="section">
+<span class="watermark">07</span>
 <h2>Pricing</h2>
 
 <p><strong>Free tier</strong> includes the Pre-RC research pipeline (1 project/month). Paid tiers unlock the full build pipeline, security scanning, traceability, and Pro knowledge files. See the <a href="https://toerana.com">RC Engine website</a> for current pricing.</p>
 
-<p style="font-size: 13px; color: #64748b;"><strong>BYOK model:</strong> RC Engine uses your own API keys (Anthropic, Perplexity, etc.) -- you pay providers directly at their rates. Typical total: $3-10 per project.</p>
+<p style="font-size: 13px; color: #1B2A4A; opacity: 0.6;"><strong>BYOK model:</strong> RC Engine uses your own API keys (Anthropic, Perplexity, etc.) -- you pay providers directly at their rates. Typical total: $3-10 per project.</p>
+
+</div>
 
 <hr>
 
 <!-- FAQ -->
+<div class="section">
+<span class="watermark">08</span>
 <h2>Common Questions</h2>
 
 <h4>Do I need to be technical to use RC Engine?</h4>
@@ -588,9 +732,10 @@ echo %cd%\dist\index.js</code></pre>
 
 <h4>How long does a full pipeline run take?</h4>
 <p>A typical full pipeline run takes 30-60 minutes of AI processing time. You can step away and come back -- your progress is saved at every checkpoint.</p>
+</div>
 
 <div class="footer">
-  RC Engine by Toerana &middot; MIT License &middot; <a href="https://github.com/originalrashmi/rc-engine-product-framework" style="color: #94a3b8;">GitHub</a>
+  RC Engine by <a href="https://toerana.com">Toerana</a> &middot; MIT License &middot; <a href="https://github.com/originalrashmi/rc-engine-product-framework">GitHub</a>
 </div>
 
 </body>
