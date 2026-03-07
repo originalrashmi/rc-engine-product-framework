@@ -4,6 +4,9 @@ import { Orchestrator } from '../orchestrator.js';
 import type { DesignResearchInput } from '../agents/design-research-agent.js';
 import type { DesignIntakeInput } from '../design-intake-types.js';
 import type { BrandImportInput } from '../brand-types.js';
+import { loadPrdContext, loadResearchContext } from './shared-loaders.js';
+import fs from 'node:fs';
+import path from 'node:path';
 
 let _orchestrator: Orchestrator | null = null;
 function getOrchestrator(): Orchestrator {
@@ -35,15 +38,12 @@ export function registerDesignTools(server: McpServer): void {
         const { icpData, competitorData } = await loadResearchContext(project_path);
 
         // Check for brand profile and design intake
-        const fs = await import('node:fs');
-        const pathMod = await import('node:path');
-
         let brandProfilePath: string | undefined;
-        const brandCandidate = pathMod.join(project_path, 'rc-method', 'design', 'BRAND-PROFILE.json');
+        const brandCandidate = path.join(project_path, 'rc-method', 'design', 'BRAND-PROFILE.json');
         if (fs.existsSync(brandCandidate)) brandProfilePath = brandCandidate;
 
         let designIntakePath: string | undefined;
-        const intakeCandidate = pathMod.join(project_path, 'rc-method', 'design', 'DESIGN-INTAKE.md');
+        const intakeCandidate = path.join(project_path, 'rc-method', 'design', 'DESIGN-INTAKE.md');
         if (fs.existsSync(intakeCandidate)) designIntakePath = intakeCandidate;
 
         const input: DesignResearchInput = {
@@ -193,64 +193,4 @@ export function registerDesignTools(server: McpServer): void {
       }
     },
   );
-}
-
-/** Load PRD content from a project for design context */
-async function loadPrdContext(projectPath: string): Promise<string> {
-  const fs = await import('node:fs');
-  const pathMod = await import('node:path');
-  const prdsDir = pathMod.join(projectPath, 'rc-method', 'prds');
-
-  try {
-    if (!fs.existsSync(prdsDir)) {
-      const preRcDir = pathMod.join(projectPath, 'pre-rc-research');
-      if (fs.existsSync(preRcDir)) {
-        const files = fs.readdirSync(preRcDir).filter((f: string) => f.endsWith('.md') && f.includes('prd'));
-        if (files.length > 0) {
-          return fs.readFileSync(pathMod.join(preRcDir, files[0]), 'utf-8');
-        }
-      }
-      return 'No PRD found. Will work from project description only.';
-    }
-
-    const files = fs.readdirSync(prdsDir).filter((f: string) => f.endsWith('.md'));
-    return files.map((f: string) => fs.readFileSync(pathMod.join(prdsDir, f), 'utf-8')).join('\n\n---\n\n');
-  } catch {
-    return 'Could not load PRD files.';
-  }
-}
-
-/** Load ICP and competitor data from Pre-RC research */
-async function loadResearchContext(projectPath: string): Promise<{
-  icpData: string | undefined;
-  competitorData: string | undefined;
-}> {
-  const fs = await import('node:fs');
-  const pathMod = await import('node:path');
-  const researchDir = pathMod.join(projectPath, 'pre-rc-research');
-
-  let icpData: string | undefined;
-  let competitorData: string | undefined;
-
-  try {
-    if (fs.existsSync(researchDir)) {
-      const files = fs.readdirSync(researchDir);
-      const icpFile = files.find(
-        (f: string) => f.includes('icp') || f.includes('persona') || f.includes('user-research'),
-      );
-      if (icpFile) {
-        icpData = fs.readFileSync(pathMod.join(researchDir, icpFile), 'utf-8');
-      }
-      const compFile = files.find(
-        (f: string) => f.includes('competitor') || f.includes('market') || f.includes('landscape'),
-      );
-      if (compFile) {
-        competitorData = fs.readFileSync(pathMod.join(researchDir, compFile), 'utf-8');
-      }
-    }
-  } catch {
-    // Non-fatal
-  }
-
-  return { icpData, competitorData };
 }

@@ -58,9 +58,12 @@ export class ContextLoader {
     return this.proBasePath !== null;
   }
 
-  /** Load multiple knowledge files, joined with separators */
+  /** Load multiple knowledge files, joined with separators. Skips missing files gracefully. */
   loadFiles(relativePaths: string[]): string {
-    return relativePaths.map((p) => this.loadFile(p)).join('\n\n---\n\n');
+    return relativePaths
+      .map((p) => this.tryLoadFile(p))
+      .filter(Boolean)
+      .join('\n\n---\n\n');
   }
 
   /** Load UX core rules + dynamically selected specialist modules */

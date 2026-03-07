@@ -124,7 +124,10 @@ OUTPUT FORMAT: Return ONLY valid JSON matching this structure (no markdown, no c
 }`;
 
     const text = await this.execute(
-      ['skills/rc-design-generation.md'],
+      [
+        'skills/design/rc-design-patterns.md',
+        'skills/design/rc-design-accessibility.md',
+      ],
       instructions,
       `Generate design options for this product.\n\n## Product Requirements\n${input.prdContext}${inspirationSection}${icpSection}${competitorSection}`,
     );
@@ -224,7 +227,10 @@ OUTPUT FORMAT: For each screen, output in this exact format:
 ===END_WIREFRAME===`;
 
     const text = await this.execute(
-      ['skills/rc-design-generation.md'],
+      [
+        'skills/design/rc-design-patterns.md',
+        'skills/design/rc-design-accessibility.md',
+      ],
       instructions,
       `Generate wireframes for design option "${option.id}: ${option.name}".\n\nScreens:\n${screenList}\n\nDesign personality: ${option.style.personality}`,
     );

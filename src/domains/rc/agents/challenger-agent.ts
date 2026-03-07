@@ -173,10 +173,12 @@ Focus: Contrast, keyboard, screen reader, motion, cognitive a11y, responsive.`,
       sections.push(`## Screen Descriptions\n${input.screenDescriptions}`);
     }
 
-    // Try to load additional artifacts from project
+    // Try to load additional artifacts from project (exclude own previous report to prevent context pollution)
     const designDir = path.join(input.projectPath, 'rc-method', 'design');
     if (fs.existsSync(designDir)) {
-      const designFiles = fs.readdirSync(designDir).filter((f) => f.endsWith('.md') || f.endsWith('.json'));
+      const designFiles = fs.readdirSync(designDir).filter(
+        (f) => (f.endsWith('.md') || f.endsWith('.json')) && f !== 'CHALLENGE-REPORT.md',
+      );
       for (const f of designFiles.slice(0, 5)) {
         const content = fs.readFileSync(path.join(designDir, f), 'utf-8');
         sections.push(`## ${f}\n${content.slice(0, 3000)}`);

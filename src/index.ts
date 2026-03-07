@@ -208,9 +208,6 @@ async function main() {
 
   const knowledgeMode = manifest.mode === 'pro' ? 'pro' : 'community';
   const execMode = hasAnyApiKey ? 'autonomous' : 'passthrough';
-import { checkForUpdate } from './shared/version-check.js';
-import { initTelemetry } from './shared/telemetry.js';
-import { closeAllStores } from './shared/state/store-factory.js';
 }
 
 main().catch((err) => {
