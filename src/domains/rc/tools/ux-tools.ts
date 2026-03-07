@@ -142,6 +142,36 @@ export function registerRcUxTools(server: McpServer): void {
         // Provide cost estimate in response
         const cost = estimateDesignCost(optionCount);
 
+        // Auto-detect brand profile, copy system, and font embed
+        const fs = await import('node:fs');
+        const pathMod = await import('node:path');
+
+        let brandProfilePath: string | undefined;
+        const brandCandidate = pathMod.join(project_path, 'rc-method', 'design', 'BRAND-PROFILE.json');
+        if (fs.existsSync(brandCandidate)) brandProfilePath = brandCandidate;
+
+        let copySystemPath: string | undefined;
+        const copyCandidate = pathMod.join(project_path, 'rc-method', 'copy', 'COPY-SYSTEM.md');
+        if (fs.existsSync(copyCandidate)) copySystemPath = copyCandidate;
+
+        let designIntakePath: string | undefined;
+        const intakeCandidate = pathMod.join(project_path, 'rc-method', 'design', 'DESIGN-INTAKE.md');
+        if (fs.existsSync(intakeCandidate)) designIntakePath = intakeCandidate;
+
+        // Load font embed HTML from brand profile if available
+        let fontEmbedHtml: string | undefined;
+        if (brandProfilePath) {
+          try {
+            const brand = JSON.parse(fs.readFileSync(brandProfilePath, 'utf-8'));
+            const fonts = [brand.typography?.headingFont?.family, brand.typography?.bodyFont?.family]
+              .filter(Boolean)
+              .map((f: string) => f.replace(/\s+/g, '+'));
+            if (fonts.length > 0) {
+              fontEmbedHtml = `<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=${fonts.join('&family=')}&display=swap" rel="stylesheet">`;
+            }
+          } catch { /* continue without fonts */ }
+        }
+
         const input: DesignInput = {
           projectPath: project_path,
           optionCount,
@@ -149,6 +179,10 @@ export function registerRcUxTools(server: McpServer): void {
           prdContext,
           icpData,
           competitorData,
+          brandProfilePath,
+          copySystemPath,
+          designIntakePath,
+          fontEmbedHtml,
         };
 
         const result = await orchestrator.designGenerate(input);

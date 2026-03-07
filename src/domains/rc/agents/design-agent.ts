@@ -15,23 +15,66 @@ export class DesignAgent extends BaseAgent {
     // Step 1: Generate design spec JSON
     const spec = await this.generateSpec(state, input);
 
-    // Step 2: Generate wireframes for each option
+    // Step 2: Generate wireframes for each option (with brand/copy/font context)
     const wireframes: DesignWireframe[] = [];
     for (const option of spec.options) {
-      const screens = await this.generateWireframes(state, option, spec);
+      const screens = await this.generateWireframes(state, option, spec, input);
       wireframes.push(...screens);
     }
 
-    // Step 3: Save artifacts
+    // Step 3: Self-critique against design rules (if critique knowledge available)
+    const critiqueNote = await this.selfCritique(state, spec);
+
+    // Step 4: Save artifacts
     const savedFiles = this.saveDesignArtifacts(state, spec, wireframes);
 
     // Build user-facing summary
-    const summary = this.formatSummary(spec, wireframes, savedFiles);
+    let summary = this.formatSummary(spec, wireframes, savedFiles);
+    if (critiqueNote) {
+      summary += `\n\n---\n\n## Design Self-Critique\n\n${critiqueNote}`;
+    }
 
     return {
       text: summary,
       artifacts: savedFiles,
     };
+  }
+
+  /** Self-critique the generated design spec against design rules */
+  private async selfCritique(state: ProjectState, spec: DesignSpec): Promise<string | null> {
+    const critiqueKnowledge = this.contextLoader.tryLoadFile('skills/design/rc-design-critique.md');
+    if (!critiqueKnowledge) return null;
+
+    const a11yKnowledge = this.contextLoader.tryLoadFile('skills/design/rc-design-accessibility.md');
+
+    const knowledgeFiles = ['skills/design/rc-design-critique.md'];
+    if (a11yKnowledge) knowledgeFiles.push('skills/design/rc-design-accessibility.md');
+
+    const specSummary = spec.options.map((o) => {
+      return `Option ${o.id} "${o.name}": Primary=${o.style.colorPalette.primary}, Secondary=${o.style.colorPalette.secondary}, Heading=${o.style.typography.headingFont}, Body=${o.style.typography.bodyFont}, Radius=${o.style.layout.borderRadius}, ICP=${o.icpAlignment}`;
+    }).join('\n');
+
+    const instructions = `You are a design critic. Review this design specification and identify potential issues.
+
+FOCUS ON:
+- Color contrast (will primary text on background meet WCAG AA 4.5:1?)
+- Typography pairing quality (do heading + body fonts complement each other?)
+- ICP alignment (does the visual style match the target user?)
+- Missing states (did the spec account for loading, empty, error states?)
+- Accessibility risks (color-only indicators, small touch targets, etc.)
+
+Be concise. List the top 3-5 findings as bullet points with severity (critical/high/medium).
+If the design is solid, say so briefly.`;
+
+    try {
+      return await this.execute(
+        knowledgeFiles,
+        instructions,
+        `Critique this design specification for "${state.projectName}":\n\n${specSummary}\n\nRecommended option: ${spec.recommendation.optionId} — ${spec.recommendation.reason}`,
+      );
+    } catch {
+      return null;
+    }
   }
 
   /** Generate the design specification JSON */
@@ -108,17 +151,48 @@ OUTPUT FORMAT: Return ONLY valid JSON matching this structure (no markdown, no c
     state: ProjectState,
     option: DesignSpec['options'][0],
     _spec: DesignSpec,
+    input?: DesignInput,
   ): Promise<DesignWireframe[]> {
     const { colorPalette, typography, layout } = option.style;
     const screenList = option.keyScreens.map((s) => `- ${s.name}: ${s.description}`).join('\n');
+
+    // Build font embed instruction
+    let fontSection = '';
+    if (input?.fontEmbedHtml) {
+      fontSection = `\n\nFONT EMBED (include in <head> of hi-fi wireframes):\n${input.fontEmbedHtml}`;
+    }
+
+    // Build copy context instruction
+    let copySection = '';
+    if (input?.copySystemPath) {
+      try {
+        const copyContent = fs.readFileSync(input.copySystemPath, 'utf-8');
+        copySection = `\n\nCOPY SYSTEM (use real copy from this, not placeholder text):\n${copyContent.slice(0, 4000)}`;
+      } catch { /* continue with placeholder copy */ }
+    }
+
+    // Build brand constraints
+    let brandSection = '';
+    if (input?.brandProfilePath) {
+      try {
+        const brandJson = fs.readFileSync(input.brandProfilePath, 'utf-8');
+        const brand = JSON.parse(brandJson);
+        if (brand.shape?.borderRadius) {
+          brandSection += `\n- Brand border radius: ${brand.shape.borderRadius.default}`;
+        }
+        if (brand.voice?.personality) {
+          brandSection += `\n- Brand personality: ${brand.voice.personality.join(', ')}`;
+        }
+      } catch { /* continue without brand */ }
+    }
 
     const instructions = `You are a UI wireframe generator. Create self-contained HTML wireframes for the design option described below.
 
 RULES:
 - Generate TWO versions for each screen: lo-fi (grayscale, boxes, placeholder text) and hi-fi (full colors, real-looking content)
-- Each HTML file must be COMPLETELY self-contained (inline CSS, no external dependencies)
+- Each HTML file must be self-contained (inline CSS). The ONLY allowed external dependency is Google Fonts via <link> tag
 - Use the exact color palette and typography specified
-- Include realistic placeholder content (not "Lorem ipsum")
+- Include realistic placeholder content (not "Lorem ipsum")${copySection ? ' — USE THE COPY SYSTEM BELOW for actual headlines, CTAs, and body text' : ''}
 - Make layouts responsive with max-width constraint
 - Lo-fi: Use #ccc for backgrounds, #666 for text, simple rectangles for images
 - Hi-fi: Use the full color palette, proper spacing, rounded corners per spec
@@ -137,7 +211,7 @@ DESIGN TOKENS:
 - Scale: ${typography.scale}
 - Max width: ${layout.maxWidth}
 - Spacing: ${layout.spacing}
-- Border radius: ${layout.borderRadius}
+- Border radius: ${layout.borderRadius}${brandSection}${fontSection}${copySection}
 
 OUTPUT FORMAT: For each screen, output in this exact format:
 

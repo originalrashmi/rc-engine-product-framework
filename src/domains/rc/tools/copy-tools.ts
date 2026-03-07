@@ -175,6 +175,36 @@ export function registerCopyTools(server: McpServer): void {
       }
     },
   );
+
+  // copy_critique — Self-critique copy system
+  server.registerTool(
+    'copy_critique',
+    {
+      description:
+        'Self-critique the generated copy system against conversion heuristics. Scores across 7 categories: Clarity (25%), Persuasion Framework (20%), Behavioral Design (15%), Voice & Tone (15%), Microcopy (10%), Specificity (10%), SEO (5%). Returns weighted score with verdict: SHIP (4.0+), REVISE (3.0-3.9), or REWRITE (<3.0). Call AFTER copy_generate. Loads the COPY-SYSTEM.md artifact automatically.',
+      inputSchema: {
+        project_path: z.string().describe('Absolute path to the project directory'),
+      },
+      annotations: {
+        title: 'Copy Critique',
+        readOnlyHint: true,
+        destructiveHint: false,
+        idempotentHint: true,
+        openWorldHint: true,
+      },
+    },
+    async ({ project_path }) => {
+      try {
+        const result = await getOrchestrator().copyCritique(project_path);
+        return { content: [{ type: 'text' as const, text: result.text }] };
+      } catch (err) {
+        return {
+          content: [{ type: 'text' as const, text: `Error: ${(err as Error).message}` }],
+          isError: true,
+        };
+      }
+    },
+  );
 }
 
 /** Load PRD content from a project */

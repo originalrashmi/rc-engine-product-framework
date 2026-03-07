@@ -12,6 +12,8 @@ import { DesignResearchAgent } from './agents/design-research-agent.js';
 import { CopyResearchAgent } from './agents/copy-research-agent.js';
 import { CopyAgent } from './agents/copy-agent.js';
 import { ChallengerAgent } from './agents/challenger-agent.js';
+import { DesignIntakeAgent } from './agents/design-intake.js';
+import { BrandAssetLoader } from './agents/brand-loader.js';
 import { PreRcBridgeAgent } from './agents/prerc-bridge-agent.js';
 import { llmFactory } from '../../shared/llm/factory.js';
 import type { LLMFactory } from '../../shared/llm/factory.js';
@@ -29,6 +31,8 @@ import type { AgentResult, ProjectState, Phase, TechStack } from './types.js';
 import type { DesignInput } from './design-types.js';
 import type { CopyResearchInput, CopyGenerateInput, CopyIterateInput } from './copy-types.js';
 import type { ChallengeInput } from './challenger-types.js';
+import type { BrandImportInput } from './brand-types.js';
+import type { DesignIntakeInput } from './design-intake-types.js';
 import type { DesignResearchInput } from './agents/design-research-agent.js';
 import { GateStatus, PHASE_NAMES, GATED_PHASES } from './types.js';
 import { getProjectStore } from '../../shared/state/store-factory.js';
@@ -52,6 +56,8 @@ export class Orchestrator {
   private copyResearchAgent: CopyResearchAgent;
   private copyAgent: CopyAgent;
   private challengerAgent: ChallengerAgent;
+  private designIntakeAgent: DesignIntakeAgent;
+  private brandLoader: BrandAssetLoader;
   private preRcBridgeAgent: PreRcBridgeAgent;
 
   constructor() {
@@ -70,6 +76,8 @@ export class Orchestrator {
     this.copyResearchAgent = new CopyResearchAgent(this.contextLoader, this.llmFactory);
     this.copyAgent = new CopyAgent(this.contextLoader, this.llmFactory);
     this.challengerAgent = new ChallengerAgent(this.contextLoader, this.llmFactory);
+    this.designIntakeAgent = new DesignIntakeAgent(this.contextLoader, this.llmFactory);
+    this.brandLoader = new BrandAssetLoader();
     this.preRcBridgeAgent = new PreRcBridgeAgent(this.contextLoader, this.llmFactory);
   }
 
@@ -712,6 +720,79 @@ ${tokenTracker.getDomainSummary('rc')}${formatCostSummary()}${getLearningSummary
     const result = await this.designAgent.generate(state, input);
     this.stateManager.save(input.projectPath, state);
     return result;
+  }
+
+  /** Import brand assets from project files, URL, or manual input */
+  async brandImport(input: BrandImportInput): Promise<AgentResult> {
+    const state = this.stateManager.load(input.projectPath);
+    const result = await this.brandLoader.import(input);
+
+    // Save brand profile to project
+    const profilePath = path.join(input.projectPath, 'rc-method', 'design', 'BRAND-PROFILE.json');
+    fs.mkdirSync(path.dirname(profilePath), { recursive: true });
+    fs.writeFileSync(profilePath, JSON.stringify(result.profile, null, 2), 'utf-8');
+
+    // Update state
+    state.brand = {
+      profilePath,
+      mode: result.source === 'auto-detected' ? 'constrained' : 'generation',
+      importedAt: new Date().toISOString(),
+    };
+    const artifactRef = 'rc-method/design/BRAND-PROFILE.json';
+    if (!state.artifacts.includes(artifactRef)) {
+      state.artifacts.push(artifactRef);
+    }
+    this.stateManager.save(input.projectPath, state);
+
+    const summary = [
+      `# Brand Import Complete`,
+      ``,
+      `**Source:** ${result.source}`,
+      `**Confidence:** ${result.confidence}%`,
+      `**Detected from:** ${result.detectedFrom.join(', ')}`,
+      result.gaps.length > 0 ? `**Gaps (auto-filled):** ${result.gaps.join(', ')}` : '',
+      ``,
+      `Saved to: ${artifactRef}`,
+    ].filter(Boolean).join('\n');
+
+    return { text: summary, artifacts: [artifactRef] };
+  }
+
+  /** Run design intake assessment (competitor + preference analysis) */
+  async designIntake(
+    input: DesignIntakeInput,
+    prdContext: string,
+    icpData?: string,
+  ): Promise<AgentResult> {
+    const state = this.stateManager.load(input.projectPath);
+
+    // Load brand profile if available
+    let brandProfile;
+    if (state.brand?.profilePath) {
+      try {
+        brandProfile = JSON.parse(fs.readFileSync(state.brand.profilePath, 'utf-8'));
+      } catch { /* continue without brand */ }
+    }
+
+    const result = await this.designIntakeAgent.analyze(input, prdContext, icpData, brandProfile);
+
+    // Save assessment
+    const assessmentPath = path.join(input.projectPath, 'rc-method', 'design', 'DESIGN-INTAKE.md');
+    fs.mkdirSync(path.dirname(assessmentPath), { recursive: true });
+    fs.writeFileSync(assessmentPath, result.text, 'utf-8');
+
+    state.designIntake = {
+      assessmentPath,
+      verdict: result.assessment.verdict,
+      completedAt: new Date().toISOString(),
+    };
+    const artifactRef = 'rc-method/design/DESIGN-INTAKE.md';
+    if (!state.artifacts.includes(artifactRef)) {
+      state.artifacts.push(artifactRef);
+    }
+    this.stateManager.save(input.projectPath, state);
+
+    return { text: result.text, artifacts: [artifactRef] };
   }
 
   /** Generate design research brief */
