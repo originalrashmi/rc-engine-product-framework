@@ -1,16 +1,9 @@
 import { z } from 'zod';
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
-import { Orchestrator } from '../orchestrator.js';
 import { estimateDesignCost } from '../design-types.js';
 import type { DesignInput } from '../design-types.js';
 import type { ChallengeInput } from '../challenger-types.js';
-import { loadPrdContext, loadResearchContext } from './shared-loaders.js';
-
-let _orchestrator: Orchestrator | null = null;
-function getOrchestrator(): Orchestrator {
-  if (!_orchestrator) _orchestrator = new Orchestrator();
-  return _orchestrator;
-}
+import { getOrchestrator, loadPrdContext, loadResearchContext } from './shared-loaders.js';
 
 export function registerRcUxTools(server: McpServer): void {
   // ux_score - Score UX complexity and get routing recommendation

@@ -121,6 +121,10 @@ export interface AgentResult {
   artifacts?: string[];
   gateReady?: boolean;
   phaseComplete?: boolean;
+  /** True if the result represents an error — callers can check without parsing text */
+  isError?: boolean;
+  /** Structured error code for programmatic handling */
+  errorCode?: 'VALIDATION_FAILED' | 'KNOWLEDGE_MISSING' | 'LLM_ERROR' | 'FILE_NOT_FOUND' | 'UNKNOWN';
 }
 
 // UX specialist routing table (from rc-ux-core.md)

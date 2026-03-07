@@ -1,5 +1,14 @@
 import fs from 'node:fs';
 import path from 'node:path';
+import { Orchestrator } from '../orchestrator.js';
+
+let _orchestrator: Orchestrator | null = null;
+
+/** Shared lazy singleton — all tool files use the same Orchestrator instance */
+export function getOrchestrator(): Orchestrator {
+  if (!_orchestrator) _orchestrator = new Orchestrator();
+  return _orchestrator;
+}
 
 /** Load PRD content from a project for agent context */
 export async function loadPrdContext(projectPath: string): Promise<string> {

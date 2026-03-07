@@ -1,15 +1,9 @@
 import { z } from 'zod';
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
-import { Orchestrator } from '../orchestrator.js';
 import { createRcCoordinator } from './rc-coordinator-factory.js';
 import type { RcCoordinator } from '../graph/rc-coordinator.js';
 import type { GateResume } from '../../../core/graph/types.js';
-
-let _orchestrator: Orchestrator | null = null;
-function getOrchestrator(): Orchestrator {
-  if (!_orchestrator) _orchestrator = new Orchestrator();
-  return _orchestrator;
-}
+import { getOrchestrator } from './shared-loaders.js';
 
 let _coordinator: RcCoordinator | null = null;
 function getCoordinator(): RcCoordinator {

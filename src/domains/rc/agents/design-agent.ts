@@ -141,9 +141,8 @@ OUTPUT FORMAT: Return ONLY valid JSON matching this structure (no markdown, no c
     const parsed = JSON.parse(jsonMatch[0]);
     const result = DesignSpecSchema.safeParse(parsed);
     if (!result.success) {
-      // Return partial result with validation warnings
-      console.error('Design spec validation warnings:', result.error.issues);
-      return parsed as DesignSpec;
+      const issues = result.error.issues.map((i) => `${i.path.join('.')}: ${i.message}`).join('; ');
+      throw new Error(`Design spec validation failed: ${issues}`);
     }
 
     return result.data;

@@ -147,50 +147,64 @@ Focus: Contrast, keyboard, screen reader, motion, cognitive a11y, responsive.`,
     return lensMap[lens];
   }
 
-  /** Gather all available project context into a single string */
+  /** Gather all available project context into a single string, capped at ~30K chars */
   private gatherContext(input: ChallengeInput): string {
+    const MAX_CONTEXT_CHARS = 30_000;
+    const MAX_FILE_CHARS = 3_000;
     const sections: string[] = [];
 
-    sections.push(`## PRD Context\n${input.prdContext}`);
+    // Primary context (always included)
+    sections.push(`## PRD Context\n${input.prdContext.slice(0, 5000)}`);
 
     if (input.icpData) {
-      sections.push(`## ICP / User Research\n${input.icpData}`);
+      sections.push(`## ICP / User Research\n${input.icpData.slice(0, 3000)}`);
     }
 
     if (input.designSpecPath && fs.existsSync(input.designSpecPath)) {
-      sections.push(`## Design Spec\n${fs.readFileSync(input.designSpecPath, 'utf-8')}`);
+      sections.push(`## Design Spec\n${fs.readFileSync(input.designSpecPath, 'utf-8').slice(0, 5000)}`);
     }
 
     if (input.copySystemPath && fs.existsSync(input.copySystemPath)) {
-      sections.push(`## Copy System\n${fs.readFileSync(input.copySystemPath, 'utf-8')}`);
+      sections.push(`## Copy System\n${fs.readFileSync(input.copySystemPath, 'utf-8').slice(0, 5000)}`);
     }
 
     if (input.wireframeHtml) {
-      sections.push(`## Wireframe HTML\n\`\`\`html\n${input.wireframeHtml}\n\`\`\``);
+      sections.push(`## Wireframe HTML\n\`\`\`html\n${input.wireframeHtml.slice(0, 5000)}\n\`\`\``);
     }
 
     if (input.screenDescriptions) {
-      sections.push(`## Screen Descriptions\n${input.screenDescriptions}`);
+      sections.push(`## Screen Descriptions\n${input.screenDescriptions.slice(0, 3000)}`);
     }
 
-    // Try to load additional artifacts from project (exclude own previous report to prevent context pollution)
-    const designDir = path.join(input.projectPath, 'rc-method', 'design');
-    if (fs.existsSync(designDir)) {
-      const designFiles = fs.readdirSync(designDir).filter(
-        (f) => (f.endsWith('.md') || f.endsWith('.json')) && f !== 'CHALLENGE-REPORT.md',
-      );
-      for (const f of designFiles.slice(0, 5)) {
-        const content = fs.readFileSync(path.join(designDir, f), 'utf-8');
-        sections.push(`## ${f}\n${content.slice(0, 3000)}`);
+    // Supplementary context — only add if we have budget
+    const currentLen = sections.reduce((sum, s) => sum + s.length, 0);
+    let budget = MAX_CONTEXT_CHARS - currentLen;
+
+    if (budget > 0) {
+      const designDir = path.join(input.projectPath, 'rc-method', 'design');
+      if (fs.existsSync(designDir)) {
+        const designFiles = fs.readdirSync(designDir).filter(
+          (f) => (f.endsWith('.md') || f.endsWith('.json')) && f !== 'CHALLENGE-REPORT.md',
+        );
+        for (const f of designFiles.slice(0, 3)) {
+          if (budget <= 0) break;
+          const content = fs.readFileSync(path.join(designDir, f), 'utf-8').slice(0, MAX_FILE_CHARS);
+          sections.push(`## ${f}\n${content}`);
+          budget -= content.length;
+        }
       }
     }
 
-    const copyDir = path.join(input.projectPath, 'rc-method', 'copy');
-    if (fs.existsSync(copyDir)) {
-      const copyFiles = fs.readdirSync(copyDir).filter((f) => f.endsWith('.md'));
-      for (const f of copyFiles.slice(0, 3)) {
-        const content = fs.readFileSync(path.join(copyDir, f), 'utf-8');
-        sections.push(`## ${f}\n${content.slice(0, 3000)}`);
+    if (budget > 0) {
+      const copyDir = path.join(input.projectPath, 'rc-method', 'copy');
+      if (fs.existsSync(copyDir)) {
+        const copyFiles = fs.readdirSync(copyDir).filter((f) => f.endsWith('.md'));
+        for (const f of copyFiles.slice(0, 2)) {
+          if (budget <= 0) break;
+          const content = fs.readFileSync(path.join(copyDir, f), 'utf-8').slice(0, MAX_FILE_CHARS);
+          sections.push(`## ${f}\n${content}`);
+          budget -= content.length;
+        }
       }
     }
 

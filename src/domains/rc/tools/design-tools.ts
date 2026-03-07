@@ -1,18 +1,11 @@
 import { z } from 'zod';
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
-import { Orchestrator } from '../orchestrator.js';
 import type { DesignResearchInput } from '../agents/design-research-agent.js';
 import type { DesignIntakeInput } from '../design-intake-types.js';
 import type { BrandImportInput } from '../brand-types.js';
-import { loadPrdContext, loadResearchContext } from './shared-loaders.js';
+import { getOrchestrator, loadPrdContext, loadResearchContext } from './shared-loaders.js';
 import fs from 'node:fs';
 import path from 'node:path';
-
-let _orchestrator: Orchestrator | null = null;
-function getOrchestrator(): Orchestrator {
-  if (!_orchestrator) _orchestrator = new Orchestrator();
-  return _orchestrator;
-}
 
 export function registerDesignTools(server: McpServer): void {
   // design_research_brief - Phase 2 design research

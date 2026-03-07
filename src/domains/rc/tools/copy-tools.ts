@@ -1,17 +1,10 @@
 import { z } from 'zod';
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
-import { Orchestrator } from '../orchestrator.js';
 import { estimateCopyCost } from '../copy-types.js';
 import type { CopyResearchInput, CopyGenerateInput, CopyIterateInput } from '../copy-types.js';
 import fs from 'node:fs';
 import path from 'node:path';
-import { loadPrdContext, loadResearchContext } from './shared-loaders.js';
-
-let _orchestrator: Orchestrator | null = null;
-function getOrchestrator(): Orchestrator {
-  if (!_orchestrator) _orchestrator = new Orchestrator();
-  return _orchestrator;
-}
+import { getOrchestrator, loadPrdContext, loadResearchContext } from './shared-loaders.js';
 
 export function registerCopyTools(server: McpServer): void {
   // copy_research_brief — Phase 1 copy research
