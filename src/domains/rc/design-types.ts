@@ -76,6 +76,15 @@ export interface DesignInput {
   fontEmbedHtml?: string; // Pre-generated <link> tags for Google Fonts (from FontService)
 }
 
+// ── Design Iteration Input ───────────────────────────────────────────────
+
+export interface DesignIterateInput {
+  projectPath: string;
+  feedback: string; // User feedback on the current design
+  targetScreens?: string[]; // Specific screens to revise (all if omitted)
+  targetOptionId?: string; // Specific option to revise (selected option if omitted)
+}
+
 // ── Design Generation Result ──────────────────────────────────────────────
 
 export interface DesignResult {

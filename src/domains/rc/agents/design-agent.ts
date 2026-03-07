@@ -3,7 +3,7 @@ import path from 'node:path';
 import { BaseAgent } from './base-agent.js';
 import type { AgentResult, ProjectState } from '../types.js';
 import { DesignSpecSchema } from '../design-types.js';
-import type { DesignInput, DesignSpec, DesignWireframe } from '../design-types.js';
+import type { DesignInput, DesignIterateInput, DesignSpec, DesignWireframe } from '../design-types.js';
 
 export class DesignAgent extends BaseAgent {
   /**
@@ -375,8 +375,119 @@ OUTPUT FORMAT: For each screen, output in this exact format:
     return lines.join('\n');
   }
 
+  /**
+   * Iterate on existing wireframes based on user feedback.
+   * Loads the current design spec and selected option, regenerates wireframes
+   * for targeted screens with the feedback applied.
+   */
+  async iterate(state: ProjectState, input: DesignIterateInput): Promise<AgentResult> {
+    // Load existing design spec
+    const designDir = path.join(state.projectPath, 'rc-method', 'design');
+    const specFiles = fs.readdirSync(designDir).filter((f) => f.startsWith('design-spec-') && f.endsWith('.json'));
+    if (specFiles.length === 0) {
+      return { text: 'Error: No design spec found. Run ux_design first.', isError: true, errorCode: 'FILE_NOT_FOUND' };
+    }
+
+    const specContent = fs.readFileSync(path.join(designDir, specFiles[0]), 'utf-8');
+    const spec: DesignSpec = JSON.parse(specContent);
+
+    // Find the target option
+    const optionId = input.targetOptionId ?? state.selectedDesign?.optionId ?? spec.recommendation.optionId;
+    const option = spec.options.find((o) => o.id === optionId);
+    if (!option) {
+      return { text: `Error: Design option "${optionId}" not found in spec.`, isError: true, errorCode: 'FILE_NOT_FOUND' };
+    }
+
+    // Filter screens if specified
+    const screens = input.targetScreens
+      ? option.keyScreens.filter((s) => input.targetScreens!.some((t) => s.name.toLowerCase().includes(t.toLowerCase())))
+      : option.keyScreens;
+
+    if (screens.length === 0) {
+      return { text: `Error: No matching screens found for targets: ${input.targetScreens?.join(', ')}`, isError: true };
+    }
+
+    // Load existing wireframes for context
+    const optionDir = path.join(designDir, `option-${optionId.toLowerCase()}`);
+    let existingWireframes = '';
+    if (fs.existsSync(optionDir)) {
+      const hifiFiles = fs.readdirSync(optionDir).filter((f) => f.endsWith('-hifi.html'));
+      for (const f of hifiFiles.slice(0, 3)) {
+        existingWireframes += `\n\n### ${f}\n\`\`\`html\n${fs.readFileSync(path.join(optionDir, f), 'utf-8').slice(0, 2000)}\n\`\`\``;
+      }
+    }
+
+    const { colorPalette, typography, layout } = option.style;
+    const screenList = screens.map((s) => `- ${s.name}: ${s.description}`).join('\n');
+
+    const instructions = `You are a UI wireframe iteration agent. Revise wireframes based on user feedback while maintaining the design system.
+
+RULES:
+- Apply the feedback to the specified screens
+- Maintain consistency with the existing design spec (colors, typography, layout)
+- Generate BOTH lo-fi and hi-fi versions for each revised screen
+- Each HTML file must be self-contained (inline CSS). The ONLY allowed external dependency is Google Fonts via <link> tag
+- Show what changed and why
+- The project is "${state.projectName}"
+
+DESIGN TOKENS:
+- Primary: ${colorPalette.primary}, Secondary: ${colorPalette.secondary}
+- Background: ${colorPalette.background}, Surface: ${colorPalette.surface}
+- Text: ${colorPalette.text}, Muted: ${colorPalette.muted}
+- Heading font: ${typography.headingFont}, Body font: ${typography.bodyFont}
+- Max width: ${layout.maxWidth}, Spacing: ${layout.spacing}, Border radius: ${layout.borderRadius}
+
+OUTPUT FORMAT: For each screen, output in this exact format:
+
+===WIREFRAME: screenName|lofi===
+<complete HTML document>
+===END_WIREFRAME===
+
+===WIREFRAME: screenName|hifi===
+<complete HTML document>
+===END_WIREFRAME===`;
+
+    const text = await this.execute(
+      [
+        'skills/design/rc-design-patterns.md',
+        'skills/design/rc-design-accessibility.md',
+      ],
+      instructions,
+      `Revise wireframes for option "${optionId}: ${option.name}" based on this feedback:\n\n${input.feedback}\n\nScreens to revise:\n${screenList}`,
+      existingWireframes ? `## Existing Wireframes (for reference)${existingWireframes}` : undefined,
+    );
+
+    // Parse and save revised wireframes
+    const wireframes = this.parseWireframes(optionId, text);
+    const savedFiles: string[] = [];
+
+    for (const wf of wireframes) {
+      const screenSlug = wf.screenName.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+      fs.mkdirSync(optionDir, { recursive: true });
+
+      const lofiPath = path.join(optionDir, `${screenSlug}-lofi.html`);
+      fs.writeFileSync(lofiPath, wf.lofiHtml, 'utf-8');
+      savedFiles.push(`rc-method/design/option-${optionId.toLowerCase()}/${screenSlug}-lofi.html`);
+
+      const hifiPath = path.join(optionDir, `${screenSlug}-hifi.html`);
+      fs.writeFileSync(hifiPath, wf.hifiHtml, 'utf-8');
+      savedFiles.push(`rc-method/design/option-${optionId.toLowerCase()}/${screenSlug}-hifi.html`);
+    }
+
+    for (const ref of savedFiles) {
+      if (!state.artifacts.includes(ref)) {
+        state.artifacts.push(ref);
+      }
+    }
+
+    return {
+      text: `## Design Iteration Complete\n\n**Option:** ${optionId} — ${option.name}\n**Screens revised:** ${wireframes.map((w) => w.screenName).join(', ')}\n**Feedback applied:** ${input.feedback}\n\n### Updated Files (${savedFiles.length})\n${savedFiles.map((f) => `- \`${f}\``).join('\n')}`,
+      artifacts: savedFiles,
+    };
+  }
+
   /** Required by BaseAgent */
   async run(): Promise<AgentResult> {
-    return { text: 'Design agent requires calling generate() directly.' };
+    return { text: 'Design agent requires calling generate() or iterate() directly.' };
   }
 }

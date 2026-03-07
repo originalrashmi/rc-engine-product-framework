@@ -28,7 +28,7 @@ import { recordProjectUsage } from '../../shared/usage-meter.js';
 import { formatCostSummary } from '../../shared/cost-tracker.js';
 import { recordPipelineTimings } from '../../shared/benchmark.js';
 import type { AgentResult, ProjectState, Phase, TechStack } from './types.js';
-import type { DesignInput } from './design-types.js';
+import type { DesignInput, DesignIterateInput } from './design-types.js';
 import type { CopyResearchInput, CopyGenerateInput, CopyIterateInput } from './copy-types.js';
 import type { ChallengeInput } from './challenger-types.js';
 import type { BrandImportInput } from './brand-types.js';
@@ -718,6 +718,14 @@ ${tokenTracker.getDomainSummary('rc')}${formatCostSummary()}${getLearningSummary
   async designGenerate(input: DesignInput): Promise<AgentResult> {
     const state = this.stateManager.load(input.projectPath);
     const result = await this.designAgent.generate(state, input);
+    this.stateManager.save(input.projectPath, state);
+    return result;
+  }
+
+  /** Iterate on wireframes with user feedback */
+  async designIterate(input: DesignIterateInput): Promise<AgentResult> {
+    const state = this.stateManager.load(input.projectPath);
+    const result = await this.designAgent.iterate(state, input);
     this.stateManager.save(input.projectPath, state);
     return result;
   }

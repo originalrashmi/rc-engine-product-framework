@@ -3,6 +3,7 @@ import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import type { DesignResearchInput } from '../agents/design-research-agent.js';
 import type { DesignIntakeInput } from '../design-intake-types.js';
 import type { BrandImportInput } from '../brand-types.js';
+import type { DesignIterateInput } from '../design-types.js';
 import { getOrchestrator, loadPrdContext, loadResearchContext } from './shared-loaders.js';
 import fs from 'node:fs';
 import path from 'node:path';
@@ -178,6 +179,165 @@ export function registerDesignTools(server: McpServer): void {
 
         const result = await getOrchestrator().brandImport(input);
         return { content: [{ type: 'text' as const, text: result.text }] };
+      } catch (err) {
+        return {
+          content: [{ type: 'text' as const, text: `Error: ${(err as Error).message}` }],
+          isError: true,
+        };
+      }
+    },
+  );
+
+  // design_iterate - Revise wireframes with feedback
+  server.registerTool(
+    'design_iterate',
+    {
+      description:
+        'Iterate on existing wireframes based on user feedback. Loads the current design spec and regenerates wireframes for specified screens (or all screens) applying the feedback. Maintains design system consistency. Requires ux_design to have been run first.',
+      inputSchema: {
+        project_path: z.string().describe('Absolute path to the project directory'),
+        feedback: z.string().describe('User feedback on the current design — what to change and why'),
+        target_screens: z
+          .array(z.string())
+          .optional()
+          .describe('Specific screen names to revise (revises all if omitted)'),
+        target_option_id: z
+          .string()
+          .optional()
+          .describe('Design option ID to revise (uses selected/recommended if omitted)'),
+      },
+      annotations: {
+        title: 'Design Iterate',
+        readOnlyHint: false,
+        destructiveHint: false,
+        idempotentHint: false,
+        openWorldHint: true,
+      },
+    },
+    async ({ project_path, feedback, target_screens, target_option_id }) => {
+      try {
+        const input: DesignIterateInput = {
+          projectPath: project_path,
+          feedback,
+          targetScreens: target_screens,
+          targetOptionId: target_option_id,
+        };
+
+        const result = await getOrchestrator().designIterate(input);
+        return { content: [{ type: 'text' as const, text: result.text }] };
+      } catch (err) {
+        return {
+          content: [{ type: 'text' as const, text: `Error: ${(err as Error).message}` }],
+          isError: true,
+        };
+      }
+    },
+  );
+
+  // design_pipeline - Full design intelligence pipeline in one call
+  server.registerTool(
+    'design_pipeline',
+    {
+      description:
+        'Run the full Design Intelligence pipeline in sequence: brand_import → design_research_brief → ux_design → design_challenge. Requires PRD to exist (run rc_define first). Optional: provide design preferences for a design_intake step. Returns a combined report with all artifacts. This is a convenience tool — each step can also be called individually for more control.',
+      inputSchema: {
+        project_path: z.string().describe('Absolute path to the project directory'),
+        option_count: z
+          .enum(['1', '3'])
+          .optional()
+          .describe('Number of design options to generate (default: 3)'),
+        inspiration: z
+          .string()
+          .optional()
+          .describe('Design inspiration, references, or preferences'),
+        run_challenge: z
+          .boolean()
+          .optional()
+          .describe('Run the Design Challenger after generation (default: true)'),
+      },
+      annotations: {
+        title: 'Design Pipeline',
+        readOnlyHint: false,
+        destructiveHint: false,
+        idempotentHint: false,
+        openWorldHint: true,
+      },
+    },
+    async ({ project_path, option_count, inspiration, run_challenge }) => {
+      try {
+        const orchestrator = getOrchestrator();
+        const steps: string[] = [];
+        const allArtifacts: string[] = [];
+
+        // Step 1: Brand Import
+        steps.push('## Step 1: Brand Import');
+        try {
+          const brandResult = await orchestrator.brandImport({
+            projectPath: project_path,
+            mode: 'infer',
+          });
+          steps.push(brandResult.text);
+          if (brandResult.artifacts) allArtifacts.push(...brandResult.artifacts);
+        } catch (err) {
+          steps.push(`Skipped — ${(err as Error).message}`);
+        }
+
+        // Step 2: Design Research Brief
+        steps.push('\n---\n\n## Step 2: Design Research Brief');
+        const prdContext = await loadPrdContext(project_path);
+        const { icpData, competitorData } = await loadResearchContext(project_path);
+
+        let brandProfilePath: string | undefined;
+        const brandCandidate = path.join(project_path, 'rc-method', 'design', 'BRAND-PROFILE.json');
+        if (fs.existsSync(brandCandidate)) brandProfilePath = brandCandidate;
+
+        const researchResult = await orchestrator.designResearch({
+          projectPath: project_path,
+          prdContext,
+          icpData,
+          competitorData,
+          brandProfilePath,
+        });
+        steps.push(`Design Research Brief generated (${researchResult.text.length} chars)`);
+        if (researchResult.artifacts) allArtifacts.push(...researchResult.artifacts);
+
+        // Step 3: Design Generation
+        steps.push('\n---\n\n## Step 3: Design Generation');
+        const designInput = {
+          projectPath: project_path,
+          optionCount: (option_count === '1' ? 1 : 3) as 1 | 3,
+          prdContext,
+          icpData,
+          competitorData,
+          inspiration,
+          brandProfilePath,
+          copySystemPath: fs.existsSync(path.join(project_path, 'rc-method', 'copy', 'COPY-SYSTEM.md'))
+            ? path.join(project_path, 'rc-method', 'copy', 'COPY-SYSTEM.md')
+            : undefined,
+        };
+        const designResult = await orchestrator.designGenerate(designInput);
+        steps.push(designResult.text);
+        if (designResult.artifacts) allArtifacts.push(...designResult.artifacts);
+
+        // Step 4: Design Challenge (optional, default true)
+        if (run_challenge !== false) {
+          steps.push('\n---\n\n## Step 4: Design Challenge');
+          try {
+            const challengeResult = await orchestrator.designChallenge({
+              projectPath: project_path,
+              prdContext,
+              icpData,
+            });
+            steps.push(challengeResult.text);
+            if (challengeResult.artifacts) allArtifacts.push(...challengeResult.artifacts);
+          } catch (err) {
+            steps.push(`Challenge skipped — ${(err as Error).message}`);
+          }
+        }
+
+        const report = `# Design Pipeline Complete\n\n${steps.join('\n')}\n\n---\n\n## All Artifacts (${allArtifacts.length})\n${allArtifacts.map((a) => `- \`${a}\``).join('\n')}`;
+
+        return { content: [{ type: 'text' as const, text: report }] };
       } catch (err) {
         return {
           content: [{ type: 'text' as const, text: `Error: ${(err as Error).message}` }],
