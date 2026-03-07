@@ -193,6 +193,48 @@ export async function runMonitoringModule(
     });
   }
 
+  // -------------------------------------------------------
+  // Check 8: Audit trail for sensitive operations
+  // -------------------------------------------------------
+  const hasSensitiveOps = /(?:delete|remove|destroy|update.*role|update.*permission|create.*admin|create.*user)/i.test(
+    allContent,
+  );
+  const hasAuditLogging = /(?:audit\.log|auditLog|audit_log|createAuditEntry|logActivity|activityLog)/i.test(
+    allContent,
+  );
+  if (hasSensitiveOps && !hasAuditLogging) {
+    findings.push({
+      id: nextId(),
+      module: ValidationModule.Monitoring,
+      severity: Severity.High,
+      title: 'Sensitive operations without audit trail',
+      description:
+        'The codebase has destructive or privilege-changing operations but no audit logging pattern. Changes to users, roles, or data deletion will be untraceable.',
+      remediation:
+        'Add audit logging for all sensitive operations: who did what, when, to which resource. Store in a separate audit table or external service.',
+      category: 'audit-trail',
+    });
+  }
+
+  // -------------------------------------------------------
+  // Check 9: Structured logging for security events
+  // -------------------------------------------------------
+  const hasAuthEvents = /(?:login|logout|signin|signout|password.*reset|token.*refresh)/i.test(allContent);
+  const hasStructuredLogging = /(?:logger\.|winston|pino|bunyan|structuredLog|console\.info.*JSON)/i.test(allContent);
+  if (hasAuthEvents && !hasStructuredLogging) {
+    findings.push({
+      id: nextId(),
+      module: ValidationModule.Monitoring,
+      severity: Severity.Medium,
+      title: 'Auth events without structured logging',
+      description:
+        'Auth-related events (login, logout, password reset) exist but no structured logging library is detected. Security event investigation will be difficult.',
+      remediation:
+        'Add structured logging (pino, winston) for auth events including: userId, action, timestamp, IP, success/failure.',
+      category: 'audit-trail',
+    });
+  }
+
   return findings;
 }
 

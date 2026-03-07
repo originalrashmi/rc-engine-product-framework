@@ -21,6 +21,7 @@ function createGateCoordinator(): PostRcCoordinator {
     scanLegalClaims: async (state) => ({ state }),
     scanLegalProduct: async (state) => ({ state }),
     scanEdgeCase: async (state) => ({ state }),
+    scanAppSecurity: async (state) => ({ state }),
     mergeScans: (_states, original) => original,
   });
 }

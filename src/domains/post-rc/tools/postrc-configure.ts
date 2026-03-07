@@ -22,6 +22,9 @@ export async function postrcConfigure(args: ConfigureInput): Promise<string> {
     jurisdiction,
     check_licenses,
     check_accessibility,
+    app_security_enabled,
+    app_security_block_on_critical,
+    app_security_skills,
     edge_case_enabled,
     edge_case_block_on_critical,
     edge_case_categories,
@@ -73,6 +76,26 @@ export async function postrcConfigure(args: ConfigureInput): Promise<string> {
     if (jurisdiction !== undefined) state.config.legalPolicy.jurisdiction = jurisdiction;
     if (check_licenses !== undefined) state.config.legalPolicy.checkLicenses = check_licenses;
     if (check_accessibility !== undefined) state.config.legalPolicy.checkAccessibility = check_accessibility;
+  }
+
+  // App security policy updates (initialize if missing for backward compat)
+  if (
+    app_security_enabled !== undefined ||
+    app_security_block_on_critical !== undefined ||
+    app_security_skills !== undefined
+  ) {
+    if (!state.config.appSecurityPolicy) {
+      state.config.appSecurityPolicy = {
+        enabled: false,
+        suppressedFindings: [],
+        blockOnCritical: true,
+      };
+    }
+    if (app_security_enabled !== undefined) state.config.appSecurityPolicy.enabled = app_security_enabled;
+    if (app_security_block_on_critical !== undefined)
+      state.config.appSecurityPolicy.blockOnCritical = app_security_block_on_critical;
+    if (app_security_skills !== undefined)
+      state.config.appSecurityPolicy.skills = app_security_skills as (1 | 2 | 3 | 4 | 5)[];
   }
 
   // Edge case policy updates (initialize if missing for backward compat)
@@ -133,6 +156,11 @@ export async function postrcConfigure(args: ConfigureInput): Promise<string> {
     Jurisdiction:         ${state.config.legalPolicy?.jurisdiction ?? 'both'}
     Check Licenses:       ${state.config.legalPolicy?.checkLicenses ?? true}
     Check Accessibility:  ${state.config.legalPolicy?.checkAccessibility ?? true}
+
+  APP SECURITY POLICY:
+    Enabled:          ${state.config.appSecurityPolicy?.enabled ?? false}
+    Block Critical:   ${state.config.appSecurityPolicy?.blockOnCritical ?? true}
+    Skills:           ${state.config.appSecurityPolicy?.skills?.join(', ') || 'All (1-5)'}
 
   EDGE CASE POLICY (Pro):
     Enabled:          ${state.config.edgeCasePolicy?.enabled ?? false}

@@ -15,6 +15,7 @@ import { runMonitoringModule } from '../modules/monitoring/monitoring-checker.js
 import { runClaimsAuditModule } from '../modules/legal/claims-auditor.js';
 import { runProductLegalModule } from '../modules/legal/product-legal-auditor.js';
 import { runEdgeCaseModule } from '../modules/edge-case/edge-case-analyzer.js';
+import { runAppSecurityModule } from '../modules/application/application-security-auditor.js';
 import { readTier } from '../../../shared/tier-guard.js';
 import { PostRcCoordinator } from '../graph/postrc-coordinator.js';
 import type { PostRcNodeHandlers } from '../graph/postrc-graph.js';
@@ -59,6 +60,11 @@ function createScanHandlers(codeContext: string | undefined, state: PostRCState)
     scanEdgeCase: async (s) => {
       if (!state.config.edgeCasePolicy?.enabled) return { state: s };
       const findings = await runEdgeCaseModule(s.projectPath, codeContext, state.config.edgeCasePolicy);
+      return { state: { ...s, _pendingFindings: findings } };
+    },
+    scanAppSecurity: async (s) => {
+      if (!state.config.appSecurityPolicy?.enabled) return { state: s };
+      const findings = await runAppSecurityModule(s.projectPath, codeContext, state.config.appSecurityPolicy);
       return { state: { ...s, _pendingFindings: findings } };
     },
     mergeScans: (states, original) => {
@@ -351,6 +357,7 @@ async function generateRemediationTasks(projectPath: string, scanId: string, fin
         'legal-claims': '[LEGAL-CLAIMS]',
         'legal-product': '[LEGAL]',
         'edge-case': '[EDGE-CASE]',
+        'app-security': '[APP-SECURITY]',
       };
       const tag = tagMap[module] || `[${module.toUpperCase()}]`;
       const priority =

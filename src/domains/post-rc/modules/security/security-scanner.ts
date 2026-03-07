@@ -257,6 +257,26 @@ const STATIC_PATTERNS: PatternRule[] = [
     category: 'path-traversal',
     remediation: 'Validate and canonicalize paths. Ensure resolved path stays within the allowed directory.',
   },
+  // Env exposure: NEXT_PUBLIC_ with sensitive values
+  {
+    pattern: /NEXT_PUBLIC_(?:SECRET|API_KEY|DATABASE|SUPABASE_SERVICE|PRIVATE|PASSWORD|TOKEN)/gi,
+    title: 'Sensitive value exposed via NEXT_PUBLIC_ prefix',
+    severity: Severity.Critical,
+    cweId: 'CWE-200',
+    category: 'env-exposure',
+    remediation:
+      'Never use NEXT_PUBLIC_ prefix for secrets, database URLs, or service role keys. These are bundled into client-side JavaScript.',
+  },
+  // Env exposure: process.env in client component
+  {
+    pattern: /['"]use client['"][\s\S]{0,500}process\.env\./gis,
+    title: 'process.env accessed in client component',
+    severity: Severity.High,
+    cweId: 'CWE-200',
+    category: 'env-exposure',
+    remediation:
+      'Only access non-NEXT_PUBLIC_ env vars in server components, API routes, or getServerSideProps.',
+  },
 ];
 
 function runStaticPatternScan(code: string, policy: SecurityPolicy): Finding[] {
