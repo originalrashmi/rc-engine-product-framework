@@ -4,6 +4,8 @@ import { BaseAgent } from './base-agent.js';
 import type { AgentResult, ProjectState } from '../types.js';
 import { DesignSpecSchema } from '../design-types.js';
 import type { DesignInput, DesignIterateInput, DesignSpec, DesignWireframe } from '../design-types.js';
+import type { DesignDirectionAssessment, ExtractedDesignConstraints } from '../design-intake-types.js';
+import { stampVersion } from '../artifact-versioning.js';
 
 export class DesignAgent extends BaseAgent {
   /**
@@ -22,8 +24,8 @@ export class DesignAgent extends BaseAgent {
       wireframes.push(...screens);
     }
 
-    // Step 3: Self-critique against design rules (if critique knowledge available)
-    const critiqueNote = await this.selfCritique(state, spec);
+    // Step 3: Self-critique against design rules + intake constraints
+    const critiqueNote = await this.selfCritique(state, spec, input);
 
     // Step 4: Save artifacts
     const savedFiles = this.saveDesignArtifacts(state, spec, wireframes);
@@ -40,19 +42,23 @@ export class DesignAgent extends BaseAgent {
     };
   }
 
-  /** Self-critique the generated design spec against design rules */
-  private async selfCritique(state: ProjectState, spec: DesignSpec): Promise<string | null> {
-    const critiqueKnowledge = this.contextLoader.tryLoadFile('skills/design/rc-design-critique.md');
-    if (!critiqueKnowledge) return null;
-
-    const a11yKnowledge = this.contextLoader.tryLoadFile('skills/design/rc-design-accessibility.md');
-
-    const knowledgeFiles = ['skills/design/rc-design-critique.md'];
-    if (a11yKnowledge) knowledgeFiles.push('skills/design/rc-design-accessibility.md');
+  /** Self-critique the generated design spec against design rules and intake constraints */
+  private async selfCritique(state: ProjectState, spec: DesignSpec, input?: DesignInput): Promise<string | null> {
+    // Both critique files are required -- loadDesignContext('critique') would also work
+    const knowledgeFiles = ['skills/design/rc-design-critique.md', 'skills/design/rc-design-accessibility.md'];
 
     const specSummary = spec.options.map((o) => {
       return `Option ${o.id} "${o.name}": Primary=${o.style.colorPalette.primary}, Secondary=${o.style.colorPalette.secondary}, Heading=${o.style.typography.headingFont}, Body=${o.style.typography.bodyFont}, Radius=${o.style.layout.borderRadius}, ICP=${o.icpAlignment}`;
     }).join('\n');
+
+    // Include intake constraints so critique can verify compliance
+    let intakeContext = '';
+    if (input) {
+      const constraints = this.loadIntakeConstraints(input);
+      if (constraints) {
+        intakeContext = `\n\nDesign Intake Constraints (verify the spec follows these):\n${this.formatIntakeConstraints(constraints)}`;
+      }
+    }
 
     const instructions = `You are a design critic. Review this design specification and identify potential issues.
 
@@ -61,7 +67,7 @@ FOCUS ON:
 - Typography pairing quality (do heading + body fonts complement each other?)
 - ICP alignment (does the visual style match the target user?)
 - Missing states (did the spec account for loading, empty, error states?)
-- Accessibility risks (color-only indicators, small touch targets, etc.)
+- Accessibility risks (color-only indicators, small touch targets, etc.)${intakeContext ? '\n- Intake constraint compliance (does the spec follow the validated design direction?)' : ''}
 
 Be concise. List the top 3-5 findings as bullet points with severity (critical/high/medium).
 If the design is solid, say so briefly.`;
@@ -70,11 +76,124 @@ If the design is solid, say so briefly.`;
       return await this.execute(
         knowledgeFiles,
         instructions,
-        `Critique this design specification for "${state.projectName}":\n\n${specSummary}\n\nRecommended option: ${spec.recommendation.optionId} — ${spec.recommendation.reason}`,
+        `Critique this design specification for "${state.projectName}":\n\n${specSummary}\n\nRecommended option: ${spec.recommendation.optionId} — ${spec.recommendation.reason}${intakeContext}`,
       );
-    } catch {
-      return null;
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err);
+      console.error(`[DesignAgent] selfCritique failed: ${message}`);
+      return `**Warning: Design self-critique was skipped due to an error.**\nReason: ${message}\n\nConsider running \`design_challenge\` manually to get a full design review.`;
     }
+  }
+
+  /**
+   * Load design intake constraints from JSON file.
+   * Tries .json first (structured), falls back to .md path by swapping extension.
+   */
+  private loadIntakeConstraints(input: DesignInput): ExtractedDesignConstraints | null {
+    if (!input.designIntakePath) return null;
+
+    // Try JSON version first (Gap A saves this alongside .md)
+    const jsonPath = input.designIntakePath.replace(/\.md$/, '.json');
+    for (const candidate of [jsonPath, input.designIntakePath]) {
+      try {
+        if (!fs.existsSync(candidate)) continue;
+        if (candidate.endsWith('.json')) {
+          const assessment: DesignDirectionAssessment = JSON.parse(fs.readFileSync(candidate, 'utf-8'));
+          return assessment.extractedConstraints;
+        }
+      } catch { /* continue to next candidate */ }
+    }
+    return null;
+  }
+
+  /** Format intake constraints into LLM-consumable text */
+  private formatIntakeConstraints(constraints: ExtractedDesignConstraints): string {
+    const sections: string[] = ['## Design Intake Constraints (MUST FOLLOW)'];
+
+    // Color direction
+    if (constraints.colorDirection.primary || constraints.colorDirection.palette?.length) {
+      sections.push(`\n### Color Direction`);
+      if (constraints.colorDirection.primary) sections.push(`- Primary color: ${constraints.colorDirection.primary}`);
+      if (constraints.colorDirection.palette?.length) sections.push(`- Palette: ${constraints.colorDirection.palette.join(', ')}`);
+      if (constraints.colorDirection.avoid?.length) sections.push(`- AVOID: ${constraints.colorDirection.avoid.join(', ')}`);
+      if (constraints.colorDirection.semanticColors) {
+        const sc = constraints.colorDirection.semanticColors;
+        sections.push(`- Semantic: success=${sc.success ?? 'auto'}, warning=${sc.warning ?? 'auto'}, error=${sc.error ?? 'auto'}, info=${sc.info ?? 'auto'}`);
+      }
+      sections.push(`- Rationale: ${constraints.colorDirection.rationale}`);
+    }
+
+    // Typography
+    if (constraints.typographyDirection.headingStyle || constraints.typographyDirection.bodyStyle) {
+      sections.push(`\n### Typography Direction`);
+      if (constraints.typographyDirection.headingStyle) sections.push(`- Heading style: ${constraints.typographyDirection.headingStyle}`);
+      if (constraints.typographyDirection.bodyStyle) sections.push(`- Body style: ${constraints.typographyDirection.bodyStyle}`);
+      if (constraints.typographyDirection.pairingSuggestions.length) sections.push(`- Pairings: ${constraints.typographyDirection.pairingSuggestions.join('; ')}`);
+    }
+
+    // Layout
+    sections.push(`\n### Layout Direction`);
+    if (constraints.layoutDirection.patterns.length) sections.push(`- Preferred patterns: ${constraints.layoutDirection.patterns.join(', ')}`);
+    if (constraints.layoutDirection.avoidPatterns.length) sections.push(`- AVOID patterns: ${constraints.layoutDirection.avoidPatterns.join(', ')}`);
+    if (constraints.layoutDirection.navigationPattern) sections.push(`- Navigation: ${constraints.layoutDirection.navigationPattern}`);
+    if (constraints.layoutDirection.contentDensity) sections.push(`- Content density: ${constraints.layoutDirection.contentDensity}`);
+
+    // Mood
+    if (constraints.moodDirection.keywords.length) {
+      sections.push(`\n### Mood & Aesthetic`);
+      sections.push(`- Keywords: ${constraints.moodDirection.keywords.join(', ')}`);
+      if (constraints.moodDirection.aesthetic) sections.push(`- Aesthetic: ${constraints.moodDirection.aesthetic}`);
+    }
+
+    // Interaction & Motion
+    if (constraints.interactionDirection.animationLevel || constraints.interactionDirection.interactionDensity) {
+      sections.push(`\n### Interaction & Motion`);
+      if (constraints.interactionDirection.animationLevel) sections.push(`- Animation level: ${constraints.interactionDirection.animationLevel}`);
+      if (constraints.interactionDirection.interactionDensity) sections.push(`- Interaction density: ${constraints.interactionDirection.interactionDensity}`);
+    }
+
+    // Component preferences
+    const cd = constraints.componentDirection;
+    if (cd.cardStyle || cd.formStyle || cd.buttonStyle || cd.iconStyle || cd.imageryStyle) {
+      sections.push(`\n### Component Preferences`);
+      if (cd.cardStyle) sections.push(`- Cards: ${cd.cardStyle}`);
+      if (cd.formStyle) sections.push(`- Forms: ${cd.formStyle}`);
+      if (cd.buttonStyle) sections.push(`- Buttons: ${cd.buttonStyle}`);
+      if (cd.modalPreference) sections.push(`- Modals: ${cd.modalPreference}`);
+      if (cd.iconStyle) sections.push(`- Icons: ${cd.iconStyle}`);
+      if (cd.imageryStyle) sections.push(`- Imagery: ${cd.imageryStyle}`);
+    }
+
+    // Platform
+    if (constraints.platformDirection.primaryPlatform || constraints.platformDirection.designSystemFramework) {
+      sections.push(`\n### Platform & Device`);
+      if (constraints.platformDirection.primaryPlatform) sections.push(`- Platform: ${constraints.platformDirection.primaryPlatform}`);
+      if (constraints.platformDirection.devicePriority) sections.push(`- Device priority: ${constraints.platformDirection.devicePriority}`);
+      if (constraints.platformDirection.designSystemFramework) sections.push(`- Framework: ${constraints.platformDirection.designSystemFramework}`);
+    }
+
+    // Accessibility
+    if (constraints.accessibilityDirection.wcagTarget || constraints.accessibilityDirection.requirements.length) {
+      sections.push(`\n### Accessibility`);
+      if (constraints.accessibilityDirection.wcagTarget) sections.push(`- WCAG target: ${constraints.accessibilityDirection.wcagTarget}`);
+      if (constraints.accessibilityDirection.requirements.length) sections.push(`- Requirements: ${constraints.accessibilityDirection.requirements.join(', ')}`);
+    }
+
+    // Screen inventory
+    if (constraints.screenInventory.keyScreens.length) {
+      sections.push(`\n### Screen Inventory (from intake)`);
+      sections.push(`- Key screens: ${constraints.screenInventory.keyScreens.join(', ')}`);
+      if (constraints.screenInventory.priorityScreens.length) sections.push(`- Priority screens (design these first): ${constraints.screenInventory.priorityScreens.join(', ')}`);
+      if (constraints.screenInventory.criticalFlows.length) sections.push(`- Critical flows: ${constraints.screenInventory.criticalFlows.join('; ')}`);
+    }
+
+    // Competitive differentiation
+    if (constraints.competitiveDifferentiators.length) {
+      sections.push(`\n### Competitive Differentiation`);
+      for (const d of constraints.competitiveDifferentiators) sections.push(`- ${d}`);
+    }
+
+    return sections.join('\n');
   }
 
   /** Generate the design specification JSON */
@@ -87,6 +206,19 @@ If the design is solid, say so briefly.`;
 
     const competitorSection = input.competitorData ? `\n\n## Competitor Analysis\n${input.competitorData}` : '';
 
+    // Load and format design intake constraints
+    const intakeConstraints = this.loadIntakeConstraints(input);
+    const intakeSection = intakeConstraints
+      ? `\n\n${this.formatIntakeConstraints(intakeConstraints)}`
+      : '';
+
+    const intakeRules = intakeConstraints
+      ? `\n- CRITICAL: Follow the Design Intake Constraints below — these represent validated user preferences aligned with ICP
+- Use the intake's screen inventory for keyScreens (don't invent different screens)
+- Respect color, typography, mood, component, and platform constraints
+- Each option should interpret the constraints differently while staying within bounds`
+      : '';
+
     const instructions = `You are a senior product designer and design system architect. Generate ${input.optionCount === 1 ? '1 design option' : '3 distinct design options'} for the product described below.
 
 RULES:
@@ -95,7 +227,7 @@ RULES:
 - Consider current design trends and competitor gaps
 - Include a color palette, typography, layout strategy, and key screen descriptions
 - Score each option for ICP alignment (0-100)
-- Recommend the best option with clear reasoning
+- Recommend the best option with clear reasoning${intakeRules}
 - The project is "${state.projectName}"
 
 OUTPUT FORMAT: Return ONLY valid JSON matching this structure (no markdown, no code fences):
@@ -123,13 +255,17 @@ OUTPUT FORMAT: Return ONLY valid JSON matching this structure (no markdown, no c
   "recommendation": { "optionId": "A", "reason": "..." }
 }`;
 
+    // Load full 'generate' knowledge set: patterns, emotional design, accessibility, trends, typography
     const text = await this.execute(
       [
         'skills/design/rc-design-patterns.md',
+        'skills/design/rc-design-emotional.md',
         'skills/design/rc-design-accessibility.md',
+        'skills/design/rc-design-trends-2026.md',
+        'skills/design/rc-design-typography.md',
       ],
       instructions,
-      `Generate design options for this product.\n\n## Product Requirements\n${input.prdContext}${inspirationSection}${icpSection}${competitorSection}`,
+      `Generate design options for this product.\n\n## Product Requirements\n${input.prdContext}${inspirationSection}${icpSection}${competitorSection}${intakeSection}`,
     );
 
     // Parse and validate
@@ -188,6 +324,34 @@ OUTPUT FORMAT: Return ONLY valid JSON matching this structure (no markdown, no c
       } catch { /* continue without brand */ }
     }
 
+    // Build intake constraints for wireframe generation
+    let intakeWireframeSection = '';
+    if (input) {
+      const intakeConstraints = this.loadIntakeConstraints(input);
+      if (intakeConstraints) {
+        const parts: string[] = ['\n\nDESIGN INTAKE CONSTRAINTS (apply to wireframes):'];
+        const cd = intakeConstraints.componentDirection;
+        if (cd.cardStyle) parts.push(`- Card style: ${cd.cardStyle}`);
+        if (cd.formStyle) parts.push(`- Form input style: ${cd.formStyle}`);
+        if (cd.buttonStyle) parts.push(`- Button style: ${cd.buttonStyle}`);
+        if (cd.modalPreference) parts.push(`- Modal pattern: ${cd.modalPreference}`);
+        if (cd.iconStyle) parts.push(`- Icon style: ${cd.iconStyle}`);
+        if (intakeConstraints.interactionDirection.animationLevel) {
+          parts.push(`- Animation level: ${intakeConstraints.interactionDirection.animationLevel}`);
+        }
+        if (intakeConstraints.interactionDirection.interactionDensity) {
+          parts.push(`- Interaction density: ${intakeConstraints.interactionDirection.interactionDensity}`);
+        }
+        if (intakeConstraints.layoutDirection.navigationPattern) {
+          parts.push(`- Navigation pattern: ${intakeConstraints.layoutDirection.navigationPattern}`);
+        }
+        if (intakeConstraints.accessibilityDirection.wcagTarget) {
+          parts.push(`- WCAG target: ${intakeConstraints.accessibilityDirection.wcagTarget} — ensure contrast ratios meet this level`);
+        }
+        if (parts.length > 1) intakeWireframeSection = parts.join('\n');
+      }
+    }
+
     const instructions = `You are a UI wireframe generator. Create self-contained HTML wireframes for the design option described below.
 
 RULES:
@@ -213,7 +377,7 @@ DESIGN TOKENS:
 - Scale: ${typography.scale}
 - Max width: ${layout.maxWidth}
 - Spacing: ${layout.spacing}
-- Border radius: ${layout.borderRadius}${brandSection}${fontSection}${copySection}
+- Border radius: ${layout.borderRadius}${brandSection}${fontSection}${copySection}${intakeWireframeSection}
 
 OUTPUT FORMAT: For each screen, output in this exact format:
 
@@ -225,10 +389,12 @@ OUTPUT FORMAT: For each screen, output in this exact format:
 <complete HTML document>
 ===END_WIREFRAME===`;
 
+    // Wireframes need patterns + accessibility + typography (for font rendering rules)
     const text = await this.execute(
       [
         'skills/design/rc-design-patterns.md',
         'skills/design/rc-design-accessibility.md',
+        'skills/design/rc-design-typography.md',
       ],
       instructions,
       `Generate wireframes for design option "${option.id}: ${option.name}".\n\nScreens:\n${screenList}\n\nDesign personality: ${option.style.personality}`,
@@ -283,9 +449,10 @@ OUTPUT FORMAT: For each screen, output in this exact format:
 
     const savedFiles: string[] = [];
 
-    // Save design spec JSON
+    // Save design spec JSON with schema version
     const specPath = path.join(designDir, `design-spec-${sanitizedName}.json`);
-    fs.writeFileSync(specPath, JSON.stringify(spec, null, 2), 'utf-8');
+    const versionedSpec = stampVersion('design-spec', spec as unknown as Record<string, unknown>);
+    fs.writeFileSync(specPath, JSON.stringify(versionedSpec, null, 2), 'utf-8');
     const specRef = `rc-method/design/design-spec-${sanitizedName}.json`;
     savedFiles.push(specRef);
 

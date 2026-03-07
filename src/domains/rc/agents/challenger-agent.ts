@@ -9,6 +9,7 @@ import type {
   ChallengerLens,
 } from '../challenger-types.js';
 import { COMMUNITY_LENSES, PRO_LENSES } from '../challenger-types.js';
+import { resolveTierCapabilities } from '../../../shared/tier-capabilities.js';
 
 export class ChallengerAgent extends BaseAgent {
   /**
@@ -17,8 +18,9 @@ export class ChallengerAgent extends BaseAgent {
    * Returns a unified Challenge Report with verdict.
    */
   async challenge(state: ProjectState, input: ChallengeInput): Promise<AgentResult> {
-    // Determine which lenses to run based on Pro vs community
-    const lenses = this.contextLoader.isProMode() ? PRO_LENSES : COMMUNITY_LENSES;
+    // Determine which lenses to run based on tier (not knowledge dir heuristic)
+    const caps = resolveTierCapabilities(input.projectPath);
+    const lenses = caps.hasProKnowledge ? PRO_LENSES : COMMUNITY_LENSES;
 
     // Gather all available context for the sub-agents
     const context = this.gatherContext(input);
@@ -53,6 +55,7 @@ export class ChallengerAgent extends BaseAgent {
       criticalIssues,
       highPriorityIssues,
       recommendations,
+      caps.hasProKnowledge,
     );
 
     // Save report
@@ -176,6 +179,44 @@ Focus: Contrast, keyboard, screen reader, motion, cognitive a11y, responsive.`,
       sections.push(`## Screen Descriptions\n${input.screenDescriptions.slice(0, 3000)}`);
     }
 
+    // Design intake assessment -- alignment score, constraints, competitive differentiators
+    const intakeJsonPath = path.join(input.projectPath, 'rc-method', 'design', 'DESIGN-INTAKE.json');
+    if (fs.existsSync(intakeJsonPath)) {
+      try {
+        const intake = JSON.parse(fs.readFileSync(intakeJsonPath, 'utf-8'));
+        const intakeLines: string[] = [`## Design Intake Assessment`];
+        intakeLines.push(`- Verdict: ${intake.verdict}`);
+        intakeLines.push(`- Alignment Score: ${intake.alignmentScore}`);
+        if (intake.extractedConstraints?.moodDirection?.keywords?.length) {
+          intakeLines.push(`- Mood: ${intake.extractedConstraints.moodDirection.keywords.join(', ')}`);
+        }
+        if (intake.extractedConstraints?.competitiveDifferentiators?.length) {
+          intakeLines.push(`- Competitive Differentiators:`);
+          for (const d of intake.extractedConstraints.competitiveDifferentiators) {
+            intakeLines.push(`  - ${d}`);
+          }
+        }
+        if (intake.extractedConstraints?.accessibilityDirection?.wcagTarget) {
+          intakeLines.push(`- WCAG Target: ${intake.extractedConstraints.accessibilityDirection.wcagTarget}`);
+        }
+        sections.push(intakeLines.join('\n'));
+      } catch { /* continue without intake */ }
+    }
+
+    // Brand profile -- voice, personality, visual identity
+    const brandPath = path.join(input.projectPath, 'rc-method', 'design', 'BRAND-PROFILE.json');
+    if (fs.existsSync(brandPath)) {
+      try {
+        const brand = JSON.parse(fs.readFileSync(brandPath, 'utf-8'));
+        const brandLines: string[] = [`## Brand Profile`];
+        if (brand.voice?.personality?.length) brandLines.push(`- Personality: ${brand.voice.personality.join(', ')}`);
+        if (brand.voice?.tone) brandLines.push(`- Tone: ${brand.voice.tone}`);
+        if (brand.positioning?.tagline) brandLines.push(`- Tagline: ${brand.positioning.tagline}`);
+        if (brand.positioning?.valueProposition) brandLines.push(`- Value Prop: ${brand.positioning.valueProposition}`);
+        if (brandLines.length > 1) sections.push(brandLines.join('\n'));
+      } catch { /* continue without brand */ }
+    }
+
     // Supplementary context — only add if we have budget
     const currentLen = sections.reduce((sum, s) => sum + s.length, 0);
     let budget = MAX_CONTEXT_CHARS - currentLen;
@@ -283,6 +324,7 @@ Focus: Contrast, keyboard, screen reader, motion, cognitive a11y, responsive.`,
     criticalIssues: ChallengeFinding[],
     highPriorityIssues: ChallengeFinding[],
     recommendations: ChallengeFinding[],
+    isPro: boolean,
   ): string {
     const lines: string[] = [];
 
@@ -341,7 +383,7 @@ Focus: Contrast, keyboard, screen reader, motion, cognitive a11y, responsive.`,
     }
 
     // Pro upsell for community mode
-    if (!this.contextLoader.isProMode()) {
+    if (!isPro) {
       lines.push('---');
       lines.push('');
       lines.push('> **Community Edition**: This report ran 3 of 5 challenge lenses.');

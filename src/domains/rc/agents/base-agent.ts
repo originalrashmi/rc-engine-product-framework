@@ -30,7 +30,7 @@ export abstract class BaseAgent {
     userMessage: string,
     projectContext?: string,
   ): Promise<string> {
-    const knowledge = this.contextLoader.loadFiles(knowledgeFiles);
+    const knowledge = this.contextLoader.loadRequiredFiles(knowledgeFiles);
 
     const systemPrompt = `${knowledge}\n\n---\n\n${agentInstructions}`;
 

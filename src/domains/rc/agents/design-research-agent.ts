@@ -41,13 +41,46 @@ export class DesignResearchAgent extends BaseAgent {
       }
     }
 
-    // Load design intake assessment if available
+    // Load design intake assessment — prefer structured JSON, fall back to markdown
     if (input.designIntakePath) {
-      try {
-        const intakeContent = fs.readFileSync(input.designIntakePath, 'utf-8');
-        supplementary += `\n\n## Design Intake Assessment\n${intakeContent}`;
-      } catch {
-        console.error(`Warning: Could not load design intake at ${input.designIntakePath}`);
+      const jsonPath = input.designIntakePath.replace(/\.md$/, '.json');
+      let loaded = false;
+      if (fs.existsSync(jsonPath)) {
+        try {
+          const assessment = JSON.parse(fs.readFileSync(jsonPath, 'utf-8'));
+          const c = assessment.extractedConstraints;
+          supplementary += `\n\n## Design Intake Assessment (Structured)`;
+          supplementary += `\n- **Verdict:** ${assessment.verdict} (alignment: ${assessment.alignmentScore}/100)`;
+          if (c?.moodDirection?.keywords?.length) supplementary += `\n- **Mood:** ${c.moodDirection.keywords.join(', ')}`;
+          if (c?.moodDirection?.aesthetic) supplementary += `\n- **Aesthetic:** ${c.moodDirection.aesthetic}`;
+          if (c?.layoutDirection?.navigationPattern) supplementary += `\n- **Navigation:** ${c.layoutDirection.navigationPattern}`;
+          if (c?.layoutDirection?.contentDensity) supplementary += `\n- **Content density:** ${c.layoutDirection.contentDensity}`;
+          if (c?.platformDirection?.primaryPlatform) supplementary += `\n- **Platform:** ${c.platformDirection.primaryPlatform}`;
+          if (c?.platformDirection?.devicePriority) supplementary += `\n- **Device priority:** ${c.platformDirection.devicePriority}`;
+          if (c?.accessibilityDirection?.wcagTarget) supplementary += `\n- **WCAG target:** ${c.accessibilityDirection.wcagTarget}`;
+          if (c?.screenInventory?.keyScreens?.length) supplementary += `\n- **Key screens:** ${c.screenInventory.keyScreens.join(', ')}`;
+          if (c?.competitiveDifferentiators?.length) supplementary += `\n- **Differentiators:** ${c.competitiveDifferentiators.join('; ')}`;
+          if (assessment.findings?.length) {
+            const misaligned = assessment.findings.filter((f: { alignment: string }) => f.alignment === 'misaligned');
+            if (misaligned.length) {
+              supplementary += `\n\n### Misaligned Findings (require attention)`;
+              for (const f of misaligned) {
+                supplementary += `\n- **${f.category}**: ${f.recommendation}`;
+              }
+            }
+          }
+          loaded = true;
+        } catch {
+          // Fall through to markdown loading
+        }
+      }
+      if (!loaded) {
+        try {
+          const intakeContent = fs.readFileSync(input.designIntakePath, 'utf-8');
+          supplementary += `\n\n## Design Intake Assessment\n${intakeContent}`;
+        } catch {
+          console.error(`Warning: Could not load design intake at ${input.designIntakePath}`);
+        }
       }
     }
 

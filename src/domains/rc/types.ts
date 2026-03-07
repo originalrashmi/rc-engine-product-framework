@@ -83,8 +83,21 @@ export interface CopySystemRef {
 
 export interface DesignIntakeRef {
   verdict: 'proceed' | 'proceed_with_adjustments' | 'reconsider';
+  alignmentScore: number;
   assessmentPath: string;
+  /** Path to structured JSON assessment (DESIGN-INTAKE.json) */
+  jsonPath: string;
   completedAt: string;
+  // Key constraint fields cached for quick downstream access
+  primaryPlatform?: string;
+  devicePriority?: string;
+  designSystemFramework?: string;
+  wcagTarget?: string;
+  aesthetic?: string;
+  animationLevel?: string;
+  keyScreens?: string[];
+  priorityScreens?: string[];
+  criticalFlows?: string[];
 }
 
 export interface ProjectState {

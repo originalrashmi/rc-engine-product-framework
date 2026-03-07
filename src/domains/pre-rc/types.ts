@@ -40,6 +40,7 @@ export enum PersonaId {
   DataTelemetryStrategist = 'data-telemetry-strategist',
   SecurityComplianceAnalyst = 'security-compliance-analyst',
   UXSystemsDesigner = 'ux-systems-designer',
+  VisualDesignResearcher = 'visual-design-researcher',
   CognitiveLoadAnalyst = 'cognitive-load-analyst',
   ContentLanguageStrategist = 'content-language-strategist',
   PersonaCoverageAuditor = 'persona-coverage-auditor',

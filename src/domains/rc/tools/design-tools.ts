@@ -60,42 +60,73 @@ export function registerDesignTools(server: McpServer): void {
     },
   );
 
-  // design_intake - Phase 1 design preference assessment
+  // design_intake - Comprehensive design preference assessment
   server.registerTool(
     'design_intake',
     {
       description:
-        'Run the Design Intake Assessment during Phase 1 (Illuminate). Analyzes user design preferences against ICP expectations. Optionally analyzes competitor URLs and reference designs. Returns an alignment score (0-100), verdict (proceed/proceed_with_adjustments/reconsider), and extracted design constraints for the Design Agent. Saves to rc-method/design/DESIGN-INTAKE.md.',
+        'Run the Design Intake Assessment — the FIRST step of the Design Intelligence pipeline after PRD. Captures comprehensive user design preferences: brand identity, colors, typography, layout, mood, animation, component styles, platform targets, accessibility requirements, competitor intelligence, and screen inventory. Evaluates all inputs against ICP expectations. Returns alignment score (0-100), verdict (proceed/proceed_with_adjustments/reconsider), and extracted design constraints that feed into every downstream design tool. Saves to rc-method/design/DESIGN-INTAKE.md.',
       inputSchema: {
         project_path: z.string().describe('Absolute path to the project directory'),
-        competitor_urls: z
-          .array(z.string())
-          .optional()
-          .describe('URLs of competitor sites to analyze for design patterns'),
-        reference_urls: z
-          .array(z.string())
-          .optional()
-          .describe('URLs of reference designs the user likes'),
-        color_likes: z
-          .array(z.string())
-          .optional()
-          .describe('Colors the user prefers (hex codes or names)'),
-        color_dislikes: z
-          .array(z.string())
-          .optional()
-          .describe('Colors the user wants to avoid'),
-        font_likes: z
-          .array(z.string())
-          .optional()
-          .describe('Font preferences (specific fonts or style descriptions like "editorial serif")'),
-        layout_preferences: z
-          .array(z.string())
-          .optional()
-          .describe('Layout/structure preferences (e.g., "sidebar navigation", "card grid")'),
-        additional_context: z
-          .string()
-          .optional()
-          .describe('Any additional design context or preferences'),
+
+        // Brand Identity
+        brand_guidelines_url: z.string().optional().describe('URL or path to existing brand guidelines document'),
+        brand_personality: z.array(z.string()).optional().describe('3-5 brand personality traits: "professional", "playful", "luxurious", "bold", "technical", "warm", "minimal"'),
+        existing_logo_path: z.string().optional().describe('Path to existing logo file'),
+
+        // Colors
+        color_likes: z.array(z.string()).optional().describe('Colors the user prefers (hex codes or names)'),
+        color_dislikes: z.array(z.string()).optional().describe('Colors the user wants to avoid'),
+
+        // Typography
+        font_likes: z.array(z.string()).optional().describe('Font preferences (specific fonts or style descriptions like "editorial serif")'),
+        font_dislikes: z.array(z.string()).optional().describe('Fonts or styles to avoid'),
+
+        // Layout & Structure
+        layout_preferences: z.array(z.string()).optional().describe('Layout preferences: "sidebar navigation", "card grid", "single-page app"'),
+        navigation_pattern: z.enum(['top-nav', 'sidebar', 'bottom-tabs', 'hamburger', 'hybrid', 'no-preference']).optional().describe('Primary navigation pattern'),
+        content_density: z.enum(['minimal', 'balanced', 'dense']).optional().describe('Content density: minimal (Apple-like), balanced, dense (Amazon-like)'),
+
+        // Mood & Aesthetic
+        mood_keywords: z.array(z.string()).optional().describe('Design mood: "clean and modern", "warm and approachable", "bold and energetic"'),
+        aesthetic_direction: z.enum(['minimal', 'bold', 'organic', 'geometric', 'editorial', 'playful', 'corporate', 'no-preference']).optional().describe('Overall aesthetic direction'),
+
+        // Interaction & Motion
+        animation_preference: z.enum(['none', 'subtle', 'moderate', 'expressive', 'no-preference']).optional().describe('Level of animation and micro-interactions'),
+        interaction_density: z.enum(['spacious', 'balanced', 'compact']).optional().describe('Spacious (consumer) vs compact (power user)'),
+
+        // Component Preferences
+        card_style: z.enum(['elevated', 'outlined', 'flat', 'no-preference']).optional().describe('Card component style'),
+        form_style: z.enum(['floating-label', 'outlined', 'filled', 'underlined', 'no-preference']).optional().describe('Form input style'),
+        button_style: z.enum(['rounded', 'pill', 'square', 'no-preference']).optional().describe('Button style'),
+        modal_preference: z.enum(['modal', 'inline', 'drawer', 'no-preference']).optional().describe('Overlay interaction pattern'),
+        icon_style: z.enum(['outlined', 'filled', 'duotone', 'hand-drawn', 'no-preference']).optional().describe('Icon style'),
+        imagery_style: z.enum(['photography', 'illustration', 'abstract', 'icons-only', 'mixed', 'no-preference']).optional().describe('Visual imagery approach'),
+
+        // Platform & Device
+        primary_platform: z.enum(['web', 'ios', 'android', 'desktop', 'pwa', 'cross-platform']).optional().describe('Primary platform target'),
+        device_priority: z.enum(['mobile-first', 'desktop-first', 'responsive-parity', 'no-preference']).optional().describe('Device priority strategy'),
+        design_system_framework: z.enum(['tailwind', 'material-ui', 'chakra', 'ant-design', 'custom', 'none', 'no-preference']).optional().describe('Preferred design system or component framework'),
+
+        // Accessibility
+        wcag_target: z.enum(['A', 'AA', 'AAA', 'no-preference']).optional().describe('WCAG compliance target'),
+        accessibility_requirements: z.array(z.string()).optional().describe('Specific a11y needs: "screen reader support", "reduced motion", "high contrast"'),
+
+        // Competitor Intelligence
+        competitor_urls: z.array(z.string()).optional().describe('URLs of competitor sites to analyze'),
+        competitor_likes: z.array(z.string()).optional().describe('What user likes about competitor designs'),
+        competitor_dislikes: z.array(z.string()).optional().describe('What user wants to differentiate from'),
+
+        // Reference & Inspiration
+        reference_urls: z.array(z.string()).optional().describe('URLs of reference designs the user likes'),
+
+        // Screen Inventory
+        key_screens: z.array(z.string()).optional().describe('Key screens: "landing page", "dashboard", "settings", "onboarding"'),
+        critical_flows: z.array(z.string()).optional().describe('User journeys: "signup -> onboarding -> first value"'),
+        priority_screens: z.array(z.string()).optional().describe('Top 3 screens that matter most for design quality'),
+
+        // Freeform
+        additional_context: z.string().optional().describe('Any additional design context or preferences'),
       },
       annotations: {
         title: 'Design Intake Assessment',
@@ -105,36 +136,111 @@ export function registerDesignTools(server: McpServer): void {
         openWorldHint: true,
       },
     },
-    async ({
-      project_path,
-      competitor_urls,
-      reference_urls,
-      color_likes,
-      color_dislikes,
-      font_likes,
-      layout_preferences,
-      additional_context,
-    }) => {
+    async (args) => {
       try {
-        const prdContext = await loadPrdContext(project_path);
-        const { icpData } = await loadResearchContext(project_path);
+        const prdContext = await loadPrdContext(args.project_path);
+
+        // Validate PRD exists — design intake without a PRD produces low-quality results
+        if (prdContext.includes('No PRD found') || prdContext.includes('Could not load PRD')) {
+          return {
+            content: [{ type: 'text' as const, text: `Error: No PRD found at ${args.project_path}. Design intake requires a PRD to evaluate design preferences against product requirements. Run rc_define or rc_import_prerc first.` }],
+            isError: true,
+          };
+        }
+
+        const { icpData } = await loadResearchContext(args.project_path);
+
+        // Auto-load brand profile if brand_import was run previously
+        let brandProfile: import('../brand-types.js').BrandProfile | undefined;
+        const brandCandidate = path.join(args.project_path, 'rc-method', 'design', 'BRAND-PROFILE.json');
+        if (fs.existsSync(brandCandidate)) {
+          try {
+            brandProfile = JSON.parse(fs.readFileSync(brandCandidate, 'utf-8'));
+          } catch { /* continue without brand */ }
+        }
 
         const input: DesignIntakeInput = {
-          projectPath: project_path,
+          projectPath: args.project_path,
           mode: 'guided',
-          competitorUrls: competitor_urls,
-          referenceUrls: reference_urls,
+
+          // Brand Identity
+          brandGuidelinesUrl: args.brand_guidelines_url,
+          brandPersonality: args.brand_personality,
+          existingLogoPath: args.existing_logo_path,
+
+          // Colors
           colorPreferences:
-            color_likes || color_dislikes
-              ? { liked: color_likes, disliked: color_dislikes }
+            args.color_likes || args.color_dislikes
+              ? { liked: args.color_likes, disliked: args.color_dislikes }
               : undefined,
-          fontPreferences: font_likes ? { liked: font_likes } : undefined,
-          structuralPreferences: layout_preferences,
-          additionalContext: additional_context,
+
+          // Typography
+          fontPreferences:
+            args.font_likes || args.font_dislikes
+              ? { liked: args.font_likes, disliked: args.font_dislikes }
+              : undefined,
+
+          // Layout & Structure
+          structuralPreferences: args.layout_preferences,
+          navigationPattern: args.navigation_pattern,
+          contentDensity: args.content_density,
+
+          // Mood & Aesthetic
+          moodKeywords: args.mood_keywords,
+          aestheticDirection: args.aesthetic_direction,
+
+          // Interaction & Motion
+          animationPreference: args.animation_preference,
+          interactionDensity: args.interaction_density,
+
+          // Component Preferences
+          componentPreferences:
+            args.card_style || args.form_style || args.button_style || args.modal_preference
+              ? {
+                  cardStyle: args.card_style,
+                  formStyle: args.form_style,
+                  buttonStyle: args.button_style,
+                  modalPreference: args.modal_preference,
+                }
+              : undefined,
+          iconStyle: args.icon_style,
+          imageryStyle: args.imagery_style,
+
+          // Platform & Device
+          primaryPlatform: args.primary_platform,
+          devicePriority: args.device_priority,
+          designSystemFramework: args.design_system_framework,
+
+          // Accessibility
+          wcagTarget: args.wcag_target,
+          accessibilityRequirements: args.accessibility_requirements,
+
+          // Competitor Intelligence
+          competitorUrls: args.competitor_urls,
+          competitorLikes: args.competitor_likes,
+          competitorDislikes: args.competitor_dislikes,
+
+          // Reference & Inspiration
+          referenceUrls: args.reference_urls,
+
+          // Screen Inventory
+          keyScreens: args.key_screens,
+          criticalFlows: args.critical_flows,
+          priorityScreens: args.priority_screens,
+
+          // Freeform
+          additionalContext: args.additional_context,
         };
 
-        const result = await getOrchestrator().designIntake(input, prdContext, icpData);
-        return { content: [{ type: 'text' as const, text: result.text }] };
+        const result = await getOrchestrator().designIntake(input, prdContext, icpData, brandProfile);
+
+        // Show brand profile detection in output
+        let output = result.text;
+        if (brandProfile) {
+          output = `> **Brand profile detected:** \`rc-method/design/BRAND-PROFILE.json\` — brand constraints applied to evaluation.\n\n${output}`;
+        }
+
+        return { content: [{ type: 'text' as const, text: output }] };
       } catch (err) {
         return {
           content: [{ type: 'text' as const, text: `Error: ${(err as Error).message}` }],
@@ -239,7 +345,7 @@ export function registerDesignTools(server: McpServer): void {
     'design_pipeline',
     {
       description:
-        'Run the full Design Intelligence pipeline in sequence: brand_import → design_research_brief → ux_design → design_challenge. Requires PRD to exist (run rc_define first). Optional: provide design preferences for a design_intake step. Returns a combined report with all artifacts. This is a convenience tool — each step can also be called individually for more control.',
+        'Run the full Design Intelligence pipeline in sequence: brand_import → design_intake → design_research_brief → ux_design → design_challenge. Requires PRD to exist (run rc_define first). Captures user design preferences via design_intake, then generates research-backed design options with wireframes. Returns a combined report with all artifacts. Each step can also be called individually for more control.',
       inputSchema: {
         project_path: z.string().describe('Absolute path to the project directory'),
         option_count: z
@@ -254,6 +360,13 @@ export function registerDesignTools(server: McpServer): void {
           .boolean()
           .optional()
           .describe('Run the Design Challenger after generation (default: true)'),
+        // Design intake preferences (passed to design_intake step)
+        mood_keywords: z.array(z.string()).optional().describe('Design mood keywords for intake'),
+        aesthetic_direction: z.enum(['minimal', 'bold', 'organic', 'geometric', 'editorial', 'playful', 'corporate', 'no-preference']).optional(),
+        primary_platform: z.enum(['web', 'ios', 'android', 'desktop', 'pwa', 'cross-platform']).optional(),
+        wcag_target: z.enum(['A', 'AA', 'AAA', 'no-preference']).optional(),
+        key_screens: z.array(z.string()).optional().describe('Key screens to design'),
+        priority_screens: z.array(z.string()).optional().describe('Top 3 priority screens'),
       },
       annotations: {
         title: 'Design Pipeline',
@@ -263,11 +376,15 @@ export function registerDesignTools(server: McpServer): void {
         openWorldHint: true,
       },
     },
-    async ({ project_path, option_count, inspiration, run_challenge }) => {
+    async ({ project_path, option_count, inspiration, run_challenge, mood_keywords, aesthetic_direction, primary_platform, wcag_target, key_screens, priority_screens }) => {
       try {
         const orchestrator = getOrchestrator();
         const steps: string[] = [];
         const allArtifacts: string[] = [];
+
+        // Load PRD context early (needed by multiple steps)
+        const prdContext = await loadPrdContext(project_path);
+        const { icpData, competitorData } = await loadResearchContext(project_path);
 
         // Step 1: Brand Import
         steps.push('## Step 1: Brand Import');
@@ -282,14 +399,38 @@ export function registerDesignTools(server: McpServer): void {
           steps.push(`Skipped — ${(err as Error).message}`);
         }
 
-        // Step 2: Design Research Brief
-        steps.push('\n---\n\n## Step 2: Design Research Brief');
-        const prdContext = await loadPrdContext(project_path);
-        const { icpData, competitorData } = await loadResearchContext(project_path);
-
-        let brandProfilePath: string | undefined;
+        // Step 2: Design Intake
+        steps.push('\n---\n\n## Step 2: Design Intake');
+        let brandProfile: import('../brand-types.js').BrandProfile | undefined;
         const brandCandidate = path.join(project_path, 'rc-method', 'design', 'BRAND-PROFILE.json');
-        if (fs.existsSync(brandCandidate)) brandProfilePath = brandCandidate;
+        if (fs.existsSync(brandCandidate)) {
+          try { brandProfile = JSON.parse(fs.readFileSync(brandCandidate, 'utf-8')); } catch { /* continue */ }
+        }
+
+        try {
+          const intakeInput: DesignIntakeInput = {
+            projectPath: project_path,
+            mode: 'autonomous',
+            moodKeywords: mood_keywords,
+            aestheticDirection: aesthetic_direction,
+            primaryPlatform: primary_platform,
+            wcagTarget: wcag_target,
+            keyScreens: key_screens,
+            priorityScreens: priority_screens,
+          };
+          const intakeResult = await orchestrator.designIntake(intakeInput, prdContext, icpData, brandProfile);
+          steps.push(`Design Intake complete — verdict: ${intakeResult.text.match(/Verdict:\s*(\w+)/)?.[1] ?? 'see report'}`);
+          if (intakeResult.artifacts) allArtifacts.push(...intakeResult.artifacts);
+        } catch (err) {
+          steps.push(`Skipped — ${(err as Error).message}`);
+        }
+
+        // Step 3: Design Research Brief
+        steps.push('\n---\n\n## Step 3: Design Research Brief');
+        const brandProfilePath = fs.existsSync(brandCandidate) ? brandCandidate : undefined;
+        let designIntakePath: string | undefined;
+        const intakeCandidate = path.join(project_path, 'rc-method', 'design', 'DESIGN-INTAKE.md');
+        if (fs.existsSync(intakeCandidate)) designIntakePath = intakeCandidate;
 
         const researchResult = await orchestrator.designResearch({
           projectPath: project_path,
@@ -297,12 +438,13 @@ export function registerDesignTools(server: McpServer): void {
           icpData,
           competitorData,
           brandProfilePath,
+          designIntakePath,
         });
         steps.push(`Design Research Brief generated (${researchResult.text.length} chars)`);
         if (researchResult.artifacts) allArtifacts.push(...researchResult.artifacts);
 
-        // Step 3: Design Generation
-        steps.push('\n---\n\n## Step 3: Design Generation');
+        // Step 4: Design Generation
+        steps.push('\n---\n\n## Step 4: Design Generation');
         const designInput = {
           projectPath: project_path,
           optionCount: (option_count === '1' ? 1 : 3) as 1 | 3,
@@ -311,6 +453,7 @@ export function registerDesignTools(server: McpServer): void {
           competitorData,
           inspiration,
           brandProfilePath,
+          designIntakePath,
           copySystemPath: fs.existsSync(path.join(project_path, 'rc-method', 'copy', 'COPY-SYSTEM.md'))
             ? path.join(project_path, 'rc-method', 'copy', 'COPY-SYSTEM.md')
             : undefined,
@@ -319,9 +462,9 @@ export function registerDesignTools(server: McpServer): void {
         steps.push(designResult.text);
         if (designResult.artifacts) allArtifacts.push(...designResult.artifacts);
 
-        // Step 4: Design Challenge (optional, default true)
+        // Step 5: Design Challenge (optional, default true)
         if (run_challenge !== false) {
-          steps.push('\n---\n\n## Step 4: Design Challenge');
+          steps.push('\n---\n\n## Step 5: Design Challenge');
           try {
             const challengeResult = await orchestrator.designChallenge({
               projectPath: project_path,

@@ -292,6 +292,19 @@ function buildPersonaRegistry(): PersonaConfig[] {
       knowledgeFile: 'personas/ux-systems-designer.md',
     },
     {
+      id: PersonaId.VisualDesignResearcher,
+      name: 'Visual Design & Trend Researcher',
+      stage: ResearchStage.UXCognitive,
+      llmProvider: LLMProvider.Perplexity,
+      alwaysRuns: false,
+      activationConditions: [
+        { type: 'product-class', values: ['consumer', 'ui', 'web', 'mobile', 'dashboard', 'portal', 'saas', 'marketplace', 'b2c'] },
+      ],
+      tokenBudget: 4096,
+      knowledgeFile: 'personas/visual-design-researcher.md',
+      webGrounded: true,
+    },
+    {
       id: PersonaId.CognitiveLoadAnalyst,
       name: 'Cognitive Load & Behavioral Psychology Analyst',
       stage: ResearchStage.UXCognitive,

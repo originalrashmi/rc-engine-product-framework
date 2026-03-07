@@ -4,6 +4,7 @@ import { estimateDesignCost } from '../design-types.js';
 import type { DesignInput } from '../design-types.js';
 import type { ChallengeInput } from '../challenger-types.js';
 import { getOrchestrator, loadPrdContext, loadResearchContext } from './shared-loaders.js';
+import { resolveTierCapabilities, getUxDepthLabel } from '../../../shared/tier-capabilities.js';
 
 export function registerRcUxTools(server: McpServer): void {
   // ux_score - Score UX complexity and get routing recommendation
@@ -41,7 +42,7 @@ export function registerRcUxTools(server: McpServer): void {
     'ux_audit',
     {
       description:
-        'Audit UI code or a screen description against 42 core UX rules plus specialist modules. Call during or after Forge (Phase 6) to check implementation quality. task_type controls which specialist modules load: form, dashboard, onboarding, admin, payment, component_library, content, navigation, or "audit" to load all. Returns findings with severity, rule citations, and fix suggestions. Use this to catch UX issues before postrc_scan.',
+        'Audit UI code or a screen description against UX rules. Community tier uses 12 core rules; Pro tier uses 42 rules with 8 specialist modules. Call during or after Forge (Phase 6) to check implementation quality. task_type controls which specialist modules load (Pro only): form, dashboard, onboarding, admin, payment, component_library, content, navigation, or "audit" to load all. Returns findings with severity, rule citations, and fix suggestions. Pass project_path to enable tier-aware analysis depth.',
       inputSchema: {
         code_or_description: z.string().describe('UI code snippet or description to audit'),
         task_type: z
@@ -49,6 +50,7 @@ export function registerRcUxTools(server: McpServer): void {
           .describe(
             'Type of UI task for specialist routing: form, dashboard, onboarding, admin, payment, component_library, content, navigation, or audit (loads all)',
           ),
+        project_path: z.string().optional().describe('Optional project path to enable tier-aware analysis depth'),
       },
       annotations: {
         title: 'UX Audit',
@@ -58,10 +60,16 @@ export function registerRcUxTools(server: McpServer): void {
         openWorldHint: true,
       },
     },
-    async ({ code_or_description, task_type }) => {
+    async ({ code_or_description, task_type, project_path }) => {
       try {
+        const caps = typeof project_path === 'string'
+          ? resolveTierCapabilities(project_path)
+          : null;
         const result = await getOrchestrator().uxAudit(code_or_description, task_type);
-        return { content: [{ type: 'text' as const, text: result.text }] };
+        const depthNote = caps
+          ? `\n\n---\n*${getUxDepthLabel(caps)}*${caps.outputAnnotation}`
+          : '\n\n---\n*Analysis depth: community (12 core rules). Pass project_path for tier-aware depth.*';
+        return { content: [{ type: 'text' as const, text: result.text + depthNote }] };
       } catch (err) {
         return {
           content: [{ type: 'text' as const, text: `Error: ${(err as Error).message}` }],
@@ -152,6 +160,22 @@ export function registerRcUxTools(server: McpServer): void {
         const intakeCandidate = pathMod.join(project_path, 'rc-method', 'design', 'DESIGN-INTAKE.md');
         if (fs.existsSync(intakeCandidate)) designIntakePath = intakeCandidate;
 
+        // Auto-enrich inspiration with screen inventory from intake if available
+        let enrichedInspiration = inspiration;
+        const intakeJsonCandidate = pathMod.join(project_path, 'rc-method', 'design', 'DESIGN-INTAKE.json');
+        if (fs.existsSync(intakeJsonCandidate)) {
+          try {
+            const intakeAssessment = JSON.parse(fs.readFileSync(intakeJsonCandidate, 'utf-8'));
+            const screenInv = intakeAssessment.extractedConstraints?.screenInventory;
+            if (screenInv?.keyScreens?.length) {
+              const screenContext = `\n\n[From Design Intake] Key screens: ${screenInv.keyScreens.join(', ')}` +
+                (screenInv.priorityScreens?.length ? `\nPriority screens: ${screenInv.priorityScreens.join(', ')}` : '') +
+                (screenInv.criticalFlows?.length ? `\nCritical flows: ${screenInv.criticalFlows.join('; ')}` : '');
+              enrichedInspiration = (enrichedInspiration ?? '') + screenContext;
+            }
+          } catch { /* continue without intake enrichment */ }
+        }
+
         // Load font embed HTML from brand profile if available
         let fontEmbedHtml: string | undefined;
         if (brandProfilePath) {
@@ -169,7 +193,7 @@ export function registerRcUxTools(server: McpServer): void {
         const input: DesignInput = {
           projectPath: project_path,
           optionCount,
-          inspiration,
+          inspiration: enrichedInspiration,
           prdContext,
           icpData,
           competitorData,

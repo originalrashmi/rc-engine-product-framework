@@ -38,8 +38,17 @@ export class DesignIntakeAgent extends BaseAgent {
     brandProfile?: BrandProfile,
   ): Promise<AgentResult & { assessment: DesignDirectionAssessment }> {
     const hasCompetitors = input.competitorUrls && input.competitorUrls.length > 0;
-    const hasReferences = input.referenceUrls && input.referenceUrls.length > 0;
-    const hasPreferences = input.colorPreferences || input.fontPreferences;
+    const hasAnyPreferences = !!(
+      input.colorPreferences || input.fontPreferences || input.referenceUrls?.length ||
+      input.moodKeywords?.length || input.aestheticDirection || input.brandPersonality?.length ||
+      input.navigationPattern || input.contentDensity || input.animationPreference ||
+      input.interactionDensity || input.componentPreferences || input.iconStyle ||
+      input.imageryStyle || input.primaryPlatform || input.devicePriority ||
+      input.designSystemFramework || input.wcagTarget || input.accessibilityRequirements?.length ||
+      input.competitorLikes?.length || input.competitorDislikes?.length ||
+      input.keyScreens?.length || input.criticalFlows?.length || input.priorityScreens?.length ||
+      input.structuralPreferences?.length || input.additionalContext
+    );
     const isAutonomous = input.mode === 'autonomous';
 
     // Phase 1: Analyze competitors (if provided)
@@ -48,9 +57,9 @@ export class DesignIntakeAgent extends BaseAgent {
       competitiveLandscape = await this.analyzeCompetitors(input.competitorUrls!);
     }
 
-    // Phase 2: Analyze references and preferences
+    // Phase 2: Analyze all preferences and inputs into findings
     let referenceFindings: DesignDirectionFinding[] = [];
-    if (hasReferences || hasPreferences) {
+    if (hasAnyPreferences) {
       referenceFindings = await this.analyzeReferences(input, icpData);
     }
 
@@ -135,23 +144,22 @@ ${urls.map((u, i) => `${i + 1}. ${u}`).join('\n')}`;
     icpData?: string,
   ): Promise<DesignDirectionFinding[]> {
     const findings: DesignDirectionFinding[] = [];
+    const icpNote = icpData ? 'Evaluated against ICP data' : 'No ICP data available for comparison';
 
-    // Analyze color preferences against ICP
+    // Color preferences
     if (input.colorPreferences?.liked) {
       for (const color of input.colorPreferences.liked) {
         findings.push({
           category: 'color',
           userPreference: color,
-          icpExpectation: icpData
-            ? 'Evaluated against ICP data'
-            : 'No ICP data available for comparison',
-          alignment: 'neutral', // Will be refined by evaluator
+          icpExpectation: icpNote,
+          alignment: 'neutral',
           recommendation: `Color preference "${color}" noted for design direction`,
         });
       }
     }
 
-    // Analyze reference URLs
+    // Reference URLs
     if (input.referenceUrls) {
       for (const url of input.referenceUrls) {
         findings.push({
@@ -159,12 +167,12 @@ ${urls.map((u, i) => `${i + 1}. ${u}`).join('\n')}`;
           userPreference: `Reference: ${url}`,
           icpExpectation: 'To be evaluated against ICP alignment',
           alignment: 'neutral',
-          recommendation: `Reference design will be analyzed for visual patterns`,
+          recommendation: 'Reference design will be analyzed for visual patterns',
         });
       }
     }
 
-    // Analyze structural preferences
+    // Structural preferences
     if (input.structuralPreferences) {
       for (const pref of input.structuralPreferences) {
         findings.push({
@@ -175,6 +183,213 @@ ${urls.map((u, i) => `${i + 1}. ${u}`).join('\n')}`;
           recommendation: `Structural preference "${pref}" noted`,
         });
       }
+    }
+
+    // Mood & Aesthetic
+    if (input.moodKeywords) {
+      findings.push({
+        category: 'mood',
+        userPreference: input.moodKeywords.join(', '),
+        icpExpectation: 'Mood must resonate with target user expectations',
+        alignment: 'neutral',
+        recommendation: `Mood keywords captured: ${input.moodKeywords.join(', ')}`,
+      });
+    }
+    if (input.aestheticDirection && input.aestheticDirection !== 'no-preference') {
+      findings.push({
+        category: 'mood',
+        userPreference: `Aesthetic: ${input.aestheticDirection}`,
+        icpExpectation: 'Aesthetic direction must suit product category',
+        alignment: 'neutral',
+        recommendation: `Aesthetic direction "${input.aestheticDirection}" will inform design options`,
+      });
+    }
+
+    // Navigation & Content Density
+    if (input.navigationPattern && input.navigationPattern !== 'no-preference') {
+      findings.push({
+        category: 'layout',
+        userPreference: `Navigation: ${input.navigationPattern}`,
+        icpExpectation: 'Navigation pattern must support primary user flows',
+        alignment: 'neutral',
+        recommendation: `Navigation pattern "${input.navigationPattern}" noted`,
+      });
+    }
+    if (input.contentDensity) {
+      findings.push({
+        category: 'layout',
+        userPreference: `Content density: ${input.contentDensity}`,
+        icpExpectation: 'Density must match ICP technical sophistication',
+        alignment: 'neutral',
+        recommendation: `Content density "${input.contentDensity}" will guide spacing and information hierarchy`,
+      });
+    }
+
+    // Interaction & Motion
+    if (input.animationPreference && input.animationPreference !== 'no-preference') {
+      findings.push({
+        category: 'interaction',
+        userPreference: `Animation: ${input.animationPreference}`,
+        icpExpectation: 'Animation level must suit product type and a11y requirements',
+        alignment: 'neutral',
+        recommendation: `Animation level "${input.animationPreference}" noted for motion design`,
+      });
+    }
+    if (input.interactionDensity) {
+      findings.push({
+        category: 'interaction',
+        userPreference: `Interaction density: ${input.interactionDensity}`,
+        icpExpectation: 'Must match target user expertise level',
+        alignment: 'neutral',
+        recommendation: `"${input.interactionDensity}" interaction targets — affects touch/click areas and spacing`,
+      });
+    }
+
+    // Component Preferences
+    if (input.componentPreferences) {
+      const cp = input.componentPreferences;
+      const prefs = [
+        cp.cardStyle && cp.cardStyle !== 'no-preference' ? `cards: ${cp.cardStyle}` : null,
+        cp.formStyle && cp.formStyle !== 'no-preference' ? `forms: ${cp.formStyle}` : null,
+        cp.buttonStyle && cp.buttonStyle !== 'no-preference' ? `buttons: ${cp.buttonStyle}` : null,
+        cp.modalPreference && cp.modalPreference !== 'no-preference' ? `overlays: ${cp.modalPreference}` : null,
+      ].filter(Boolean);
+      if (prefs.length > 0) {
+        findings.push({
+          category: 'component',
+          userPreference: prefs.join(', '),
+          icpExpectation: 'Component styles must be consistent with overall aesthetic',
+          alignment: 'neutral',
+          recommendation: `Component style preferences: ${prefs.join(', ')}`,
+        });
+      }
+    }
+    if (input.iconStyle && input.iconStyle !== 'no-preference') {
+      findings.push({
+        category: 'component',
+        userPreference: `Icons: ${input.iconStyle}`,
+        icpExpectation: 'Icon style must complement typography and layout',
+        alignment: 'neutral',
+        recommendation: `Icon style "${input.iconStyle}" will inform icon library selection`,
+      });
+    }
+    if (input.imageryStyle && input.imageryStyle !== 'no-preference') {
+      findings.push({
+        category: 'component',
+        userPreference: `Imagery: ${input.imageryStyle}`,
+        icpExpectation: 'Imagery approach must suit brand and content strategy',
+        alignment: 'neutral',
+        recommendation: `Imagery style "${input.imageryStyle}" noted for visual content direction`,
+      });
+    }
+
+    // Platform & Device
+    if (input.primaryPlatform) {
+      findings.push({
+        category: 'platform',
+        userPreference: `Platform: ${input.primaryPlatform}`,
+        icpExpectation: 'Design must follow platform conventions (Material/HIG/Web)',
+        alignment: 'neutral',
+        recommendation: `Primary platform "${input.primaryPlatform}" — design patterns will follow platform guidelines`,
+      });
+    }
+    if (input.devicePriority && input.devicePriority !== 'no-preference') {
+      findings.push({
+        category: 'platform',
+        userPreference: `Device priority: ${input.devicePriority}`,
+        icpExpectation: 'Must match how ICP primarily accesses the product',
+        alignment: 'neutral',
+        recommendation: `"${input.devicePriority}" strategy will drive responsive breakpoint design`,
+      });
+    }
+    if (input.designSystemFramework && input.designSystemFramework !== 'no-preference') {
+      findings.push({
+        category: 'platform',
+        userPreference: `Framework: ${input.designSystemFramework}`,
+        icpExpectation: 'Framework must support required component patterns',
+        alignment: 'neutral',
+        recommendation: `Design system framework "${input.designSystemFramework}" — wireframes will align with its patterns`,
+      });
+    }
+
+    // Accessibility
+    if (input.wcagTarget && input.wcagTarget !== 'no-preference') {
+      findings.push({
+        category: 'accessibility',
+        userPreference: `WCAG ${input.wcagTarget}`,
+        icpExpectation: 'Compliance target drives contrast, touch targets, and interaction design',
+        alignment: 'aligned',
+        recommendation: `WCAG ${input.wcagTarget} compliance — all design decisions will be validated against this standard`,
+      });
+    }
+    if (input.accessibilityRequirements?.length) {
+      findings.push({
+        category: 'accessibility',
+        userPreference: input.accessibilityRequirements.join(', '),
+        icpExpectation: 'Accessibility requirements are non-negotiable constraints',
+        alignment: 'aligned',
+        recommendation: `A11y requirements: ${input.accessibilityRequirements.join(', ')}`,
+      });
+    }
+
+    // Competitor likes/dislikes (qualitative)
+    if (input.competitorLikes?.length) {
+      findings.push({
+        category: 'competitive',
+        userPreference: `Likes: ${input.competitorLikes.join('; ')}`,
+        icpExpectation: 'Elements to potentially adopt if ICP-aligned',
+        alignment: 'neutral',
+        recommendation: `User appreciates: ${input.competitorLikes.join('; ')}`,
+      });
+    }
+    if (input.competitorDislikes?.length) {
+      findings.push({
+        category: 'competitive',
+        userPreference: `Dislikes: ${input.competitorDislikes.join('; ')}`,
+        icpExpectation: 'Differentiation opportunities',
+        alignment: 'neutral',
+        recommendation: `User wants to avoid: ${input.competitorDislikes.join('; ')}`,
+      });
+    }
+
+    // Screen Inventory
+    if (input.keyScreens?.length) {
+      findings.push({
+        category: 'screen-inventory',
+        userPreference: `Key screens: ${input.keyScreens.join(', ')}`,
+        icpExpectation: 'Screen inventory drives design scope',
+        alignment: 'aligned',
+        recommendation: `${input.keyScreens.length} key screens identified for design`,
+      });
+    }
+    if (input.criticalFlows?.length) {
+      findings.push({
+        category: 'screen-inventory',
+        userPreference: `Critical flows: ${input.criticalFlows.join('; ')}`,
+        icpExpectation: 'User journeys must be optimized in design',
+        alignment: 'aligned',
+        recommendation: `${input.criticalFlows.length} critical user flow(s) to prioritize`,
+      });
+    }
+    if (input.priorityScreens?.length) {
+      findings.push({
+        category: 'screen-inventory',
+        userPreference: `Priority screens: ${input.priorityScreens.join(', ')}`,
+        icpExpectation: 'These screens get highest design fidelity',
+        alignment: 'aligned',
+        recommendation: `Top priority screens for design quality: ${input.priorityScreens.join(', ')}`,
+      });
+    }
+
+    // Brand personality
+    if (input.brandPersonality?.length) {
+      findings.push({
+        category: 'mood',
+        userPreference: `Brand personality: ${input.brandPersonality.join(', ')}`,
+        icpExpectation: 'Personality must resonate with target audience',
+        alignment: 'neutral',
+        recommendation: `Brand personality traits: ${input.brandPersonality.join(', ')}`,
+      });
     }
 
     return findings;
@@ -256,32 +471,99 @@ ${urls.map((u, i) => `${i + 1}. ${u}`).join('\n')}`;
         `Competitive Landscape:\n- Common: ${competitive.commonPatterns.join(', ')}\n- Gaps: ${competitive.gaps.join(', ')}`,
       );
 
+    // Build comprehensive user preferences section
     const userPrefs: string[] = [];
+
+    // Visual preferences
     if (input.colorPreferences?.liked) userPrefs.push(`Colors liked: ${input.colorPreferences.liked.join(', ')}`);
     if (input.colorPreferences?.disliked) userPrefs.push(`Colors disliked: ${input.colorPreferences.disliked.join(', ')}`);
+    if (input.colorPreferences?.semanticRequirements) {
+      const sem = input.colorPreferences.semanticRequirements;
+      const parts = [sem.success && `success=${sem.success}`, sem.warning && `warning=${sem.warning}`, sem.error && `error=${sem.error}`, sem.info && `info=${sem.info}`].filter(Boolean);
+      if (parts.length > 0) userPrefs.push(`Semantic colors: ${parts.join(', ')}`);
+    }
     if (input.fontPreferences?.liked) userPrefs.push(`Fonts liked: ${input.fontPreferences.liked.join(', ')}`);
+    if (input.fontPreferences?.disliked) userPrefs.push(`Fonts disliked: ${input.fontPreferences.disliked.join(', ')}`);
+
+    // Layout & structure
     if (input.structuralPreferences) userPrefs.push(`Layout: ${input.structuralPreferences.join(', ')}`);
+    if (input.navigationPattern && input.navigationPattern !== 'no-preference') userPrefs.push(`Navigation: ${input.navigationPattern}`);
+    if (input.contentDensity) userPrefs.push(`Content density: ${input.contentDensity}`);
+
+    // Mood & aesthetic
+    if (input.brandPersonality?.length) userPrefs.push(`Brand personality: ${input.brandPersonality.join(', ')}`);
+    if (input.moodKeywords?.length) userPrefs.push(`Mood: ${input.moodKeywords.join(', ')}`);
+    if (input.aestheticDirection && input.aestheticDirection !== 'no-preference') userPrefs.push(`Aesthetic: ${input.aestheticDirection}`);
+
+    // Interaction & motion
+    if (input.animationPreference && input.animationPreference !== 'no-preference') userPrefs.push(`Animation: ${input.animationPreference}`);
+    if (input.interactionDensity) userPrefs.push(`Interaction density: ${input.interactionDensity}`);
+
+    // Components
+    if (input.componentPreferences) {
+      const cp = input.componentPreferences;
+      const parts = [
+        cp.cardStyle && cp.cardStyle !== 'no-preference' ? `cards=${cp.cardStyle}` : null,
+        cp.formStyle && cp.formStyle !== 'no-preference' ? `forms=${cp.formStyle}` : null,
+        cp.buttonStyle && cp.buttonStyle !== 'no-preference' ? `buttons=${cp.buttonStyle}` : null,
+        cp.modalPreference && cp.modalPreference !== 'no-preference' ? `overlays=${cp.modalPreference}` : null,
+      ].filter(Boolean);
+      if (parts.length > 0) userPrefs.push(`Components: ${parts.join(', ')}`);
+    }
+    if (input.iconStyle && input.iconStyle !== 'no-preference') userPrefs.push(`Icons: ${input.iconStyle}`);
+    if (input.imageryStyle && input.imageryStyle !== 'no-preference') userPrefs.push(`Imagery: ${input.imageryStyle}`);
+
+    // Platform & device
+    if (input.primaryPlatform) userPrefs.push(`Platform: ${input.primaryPlatform}`);
+    if (input.devicePriority && input.devicePriority !== 'no-preference') userPrefs.push(`Device priority: ${input.devicePriority}`);
+    if (input.designSystemFramework && input.designSystemFramework !== 'no-preference') userPrefs.push(`Design system: ${input.designSystemFramework}`);
+
+    // Accessibility
+    if (input.wcagTarget && input.wcagTarget !== 'no-preference') userPrefs.push(`WCAG target: ${input.wcagTarget}`);
+    if (input.accessibilityRequirements?.length) userPrefs.push(`A11y requirements: ${input.accessibilityRequirements.join(', ')}`);
+
+    // Competitor qualitative
+    if (input.competitorLikes?.length) userPrefs.push(`Competitor likes: ${input.competitorLikes.join('; ')}`);
+    if (input.competitorDislikes?.length) userPrefs.push(`Competitor dislikes: ${input.competitorDislikes.join('; ')}`);
+
+    // Screen inventory
+    if (input.keyScreens?.length) userPrefs.push(`Key screens: ${input.keyScreens.join(', ')}`);
+    if (input.criticalFlows?.length) userPrefs.push(`Critical flows: ${input.criticalFlows.join('; ')}`);
+    if (input.priorityScreens?.length) userPrefs.push(`Priority screens: ${input.priorityScreens.join(', ')}`);
+
     if (input.additionalContext) userPrefs.push(`Context: ${input.additionalContext}`);
 
     if (userPrefs.length > 0) contextParts.push(`User Preferences:\n${userPrefs.join('\n')}`);
 
-    const instructions = `You are the Design Direction Evaluator. Assess whether the user's design preferences align with their ICP and product goals.
+    const instructions = `You are the Design Direction Evaluator — a senior UX engineer versed in Google Material Design, Apple HIG, and Amazon design principles. Assess whether the user's design preferences align with their ICP, product goals, and platform conventions.
 
 ${contextParts.join('\n\n---\n\n')}
 
 EVALUATE:
 1. Do the user's color/font/style preferences match what their ICP would expect?
-2. Do the structural preferences suit the product type?
-3. Are there conflicts between what the user wants and what would work?
-4. What competitive differentiators can we exploit visually?
+2. Do the structural and navigation preferences suit the product type?
+3. Does the mood/aesthetic direction align with brand personality and ICP?
+4. Are the animation and interaction density choices appropriate for the platform and audience?
+5. Do the component style preferences create a coherent visual language?
+6. Does the platform target require specific design conventions (Material Design for Android, HIG for iOS)?
+7. Are the accessibility requirements achievable with the chosen visual direction?
+8. Are there conflicts between what the user wants and what would work?
+9. What competitive differentiators can we exploit visually?
+10. Is the screen inventory sufficient for design scope estimation?
 
 RESPOND with:
 - Alignment score (0-100)
 - Verdict: "proceed" (70-100), "proceed_with_adjustments" (40-69), or "reconsider" (0-39)
 - Rationale for the verdict
-- Specific color direction (primary hex if determinable, palette direction, colors to avoid)
+- Color direction (primary hex if determinable, palette direction, semantic colors, colors to avoid)
 - Typography direction (heading/body style, specific fonts if determinable)
-- Layout direction (patterns to use, patterns to avoid)
+- Layout direction (patterns to use, navigation approach, content density rationale, patterns to avoid)
+- Mood direction (aesthetic rationale, personality alignment)
+- Interaction direction (animation level rationale, interaction density rationale)
+- Component direction (card/form/button/modal style rationale, icon and imagery approach)
+- Platform direction (platform conventions to follow, device priority rationale, framework recommendations)
+- Accessibility direction (WCAG compliance plan, specific requirements to enforce)
+- Screen inventory assessment (completeness, missing screens, flow gaps)
 - Competitive differentiators
 - Any open questions`;
 
@@ -328,9 +610,13 @@ RESPOND with:
     if (alignmentScore >= 70) verdict = 'proceed';
     else if (alignmentScore < 40) verdict = 'reconsider';
 
-    // Parse constraints
+    // Parse constraints — comprehensive extraction
     const extractedConstraints: ExtractedDesignConstraints = {
       colorDirection: {
+        primary: input.colorPreferences?.liked?.[0],
+        palette: input.colorPreferences?.liked,
+        avoid: input.colorPreferences?.disliked,
+        semanticColors: input.colorPreferences?.semanticRequirements,
         rationale: this.extractSectionFromText(text, 'color') ?? 'See analysis',
       },
       typographyDirection: {
@@ -340,15 +626,64 @@ RESPOND with:
       layoutDirection: {
         patterns: input.structuralPreferences ?? [],
         avoidPatterns: this.extractListFromText(text, 'avoid'),
+        navigationPattern: input.navigationPattern !== 'no-preference' ? input.navigationPattern : undefined,
+        contentDensity: input.contentDensity,
         rationale: this.extractSectionFromText(text, 'layout') ?? 'See analysis',
       },
+      moodDirection: {
+        keywords: [...(input.moodKeywords ?? []), ...(input.brandPersonality ?? [])],
+        aesthetic: input.aestheticDirection !== 'no-preference' ? input.aestheticDirection : undefined,
+        rationale: this.extractSectionFromText(text, 'mood') ?? this.extractSectionFromText(text, 'aesthetic') ?? 'See analysis',
+      },
+      interactionDirection: {
+        animationLevel: input.animationPreference !== 'no-preference' ? input.animationPreference : undefined,
+        interactionDensity: input.interactionDensity,
+        rationale: this.extractSectionFromText(text, 'interaction') ?? this.extractSectionFromText(text, 'animation') ?? 'See analysis',
+      },
+      componentDirection: {
+        cardStyle: input.componentPreferences?.cardStyle !== 'no-preference' ? input.componentPreferences?.cardStyle : undefined,
+        formStyle: input.componentPreferences?.formStyle !== 'no-preference' ? input.componentPreferences?.formStyle : undefined,
+        buttonStyle: input.componentPreferences?.buttonStyle !== 'no-preference' ? input.componentPreferences?.buttonStyle : undefined,
+        modalPreference: input.componentPreferences?.modalPreference !== 'no-preference' ? input.componentPreferences?.modalPreference : undefined,
+        iconStyle: input.iconStyle !== 'no-preference' ? input.iconStyle : undefined,
+        imageryStyle: input.imageryStyle !== 'no-preference' ? input.imageryStyle : undefined,
+        rationale: this.extractSectionFromText(text, 'component') ?? 'See analysis',
+      },
+      platformDirection: {
+        primaryPlatform: input.primaryPlatform,
+        devicePriority: input.devicePriority !== 'no-preference' ? input.devicePriority : undefined,
+        designSystemFramework: input.designSystemFramework !== 'no-preference' ? input.designSystemFramework : undefined,
+        rationale: this.extractSectionFromText(text, 'platform') ?? 'See analysis',
+      },
+      accessibilityDirection: {
+        wcagTarget: input.wcagTarget !== 'no-preference' ? input.wcagTarget : undefined,
+        requirements: input.accessibilityRequirements ?? [],
+        rationale: this.extractSectionFromText(text, 'accessibility') ?? 'See analysis',
+      },
+      screenInventory: {
+        keyScreens: input.keyScreens ?? [],
+        criticalFlows: input.criticalFlows ?? [],
+        priorityScreens: input.priorityScreens ?? [],
+      },
       competitiveDifferentiators: competitive?.gaps ?? [],
+      competitorInsights: {
+        likes: input.competitorLikes ?? [],
+        dislikes: input.competitorDislikes ?? [],
+      },
     };
 
     const prefsProvided: string[] = [];
     if (input.colorPreferences) prefsProvided.push('colors');
     if (input.fontPreferences) prefsProvided.push('fonts');
     if (input.structuralPreferences) prefsProvided.push('layout');
+    if (input.moodKeywords?.length || input.aestheticDirection) prefsProvided.push('mood');
+    if (input.brandPersonality?.length) prefsProvided.push('brand-personality');
+    if (input.animationPreference || input.interactionDensity) prefsProvided.push('interaction');
+    if (input.componentPreferences || input.iconStyle || input.imageryStyle) prefsProvided.push('components');
+    if (input.primaryPlatform || input.devicePriority) prefsProvided.push('platform');
+    if (input.wcagTarget || input.accessibilityRequirements?.length) prefsProvided.push('accessibility');
+    if (input.keyScreens?.length || input.criticalFlows?.length) prefsProvided.push('screen-inventory');
+    if (input.competitorLikes?.length || input.competitorDislikes?.length) prefsProvided.push('competitor-insights');
     if (input.referenceUrls?.length) prefsProvided.push('references');
     if (input.additionalContext) prefsProvided.push('context');
 
@@ -426,14 +761,79 @@ RESPOND with:
       lines.push('');
     }
 
-    // Extracted constraints
+    // Extracted constraints — comprehensive
     const ec = assessment.extractedConstraints;
     lines.push('## Design Constraints (for Design Agent)');
-    lines.push(`**Color direction:** ${ec.colorDirection.rationale}`);
-    lines.push(`**Typography direction:** ${ec.typographyDirection.rationale}`);
-    lines.push(`**Layout direction:** ${ec.layoutDirection.rationale}`);
+    lines.push('');
+
+    lines.push('### Visual Direction');
+    lines.push(`**Color:** ${ec.colorDirection.rationale}`);
+    if (ec.colorDirection.palette?.length) lines.push(`  Palette: ${ec.colorDirection.palette.join(', ')}`);
+    if (ec.colorDirection.avoid?.length) lines.push(`  Avoid: ${ec.colorDirection.avoid.join(', ')}`);
+    lines.push(`**Typography:** ${ec.typographyDirection.rationale}`);
+    if (ec.typographyDirection.pairingSuggestions.length > 0) lines.push(`  Pairings: ${ec.typographyDirection.pairingSuggestions.join(', ')}`);
+    lines.push('');
+
+    lines.push('### Layout & Structure');
+    lines.push(`**Layout:** ${ec.layoutDirection.rationale}`);
+    if (ec.layoutDirection.navigationPattern) lines.push(`  Navigation: ${ec.layoutDirection.navigationPattern}`);
+    if (ec.layoutDirection.contentDensity) lines.push(`  Density: ${ec.layoutDirection.contentDensity}`);
+    lines.push('');
+
+    lines.push('### Mood & Aesthetic');
+    lines.push(`**Mood:** ${ec.moodDirection.rationale}`);
+    if (ec.moodDirection.keywords.length > 0) lines.push(`  Keywords: ${ec.moodDirection.keywords.join(', ')}`);
+    if (ec.moodDirection.aesthetic) lines.push(`  Aesthetic: ${ec.moodDirection.aesthetic}`);
+    lines.push('');
+
+    lines.push('### Interaction & Motion');
+    lines.push(`**Interaction:** ${ec.interactionDirection.rationale}`);
+    if (ec.interactionDirection.animationLevel) lines.push(`  Animation: ${ec.interactionDirection.animationLevel}`);
+    if (ec.interactionDirection.interactionDensity) lines.push(`  Density: ${ec.interactionDirection.interactionDensity}`);
+    lines.push('');
+
+    lines.push('### Component Styles');
+    lines.push(`**Components:** ${ec.componentDirection.rationale}`);
+    const componentDetails = [
+      ec.componentDirection.cardStyle && `Cards: ${ec.componentDirection.cardStyle}`,
+      ec.componentDirection.formStyle && `Forms: ${ec.componentDirection.formStyle}`,
+      ec.componentDirection.buttonStyle && `Buttons: ${ec.componentDirection.buttonStyle}`,
+      ec.componentDirection.modalPreference && `Overlays: ${ec.componentDirection.modalPreference}`,
+      ec.componentDirection.iconStyle && `Icons: ${ec.componentDirection.iconStyle}`,
+      ec.componentDirection.imageryStyle && `Imagery: ${ec.componentDirection.imageryStyle}`,
+    ].filter(Boolean);
+    if (componentDetails.length > 0) lines.push(`  ${componentDetails.join(' | ')}`);
+    lines.push('');
+
+    lines.push('### Platform & Device');
+    lines.push(`**Platform:** ${ec.platformDirection.rationale}`);
+    if (ec.platformDirection.primaryPlatform) lines.push(`  Target: ${ec.platformDirection.primaryPlatform}`);
+    if (ec.platformDirection.devicePriority) lines.push(`  Device priority: ${ec.platformDirection.devicePriority}`);
+    if (ec.platformDirection.designSystemFramework) lines.push(`  Framework: ${ec.platformDirection.designSystemFramework}`);
+    lines.push('');
+
+    lines.push('### Accessibility');
+    lines.push(`**A11y:** ${ec.accessibilityDirection.rationale}`);
+    if (ec.accessibilityDirection.wcagTarget) lines.push(`  Target: WCAG ${ec.accessibilityDirection.wcagTarget}`);
+    if (ec.accessibilityDirection.requirements.length > 0) lines.push(`  Requirements: ${ec.accessibilityDirection.requirements.join(', ')}`);
+    lines.push('');
+
+    if (ec.screenInventory.keyScreens.length > 0) {
+      lines.push('### Screen Inventory');
+      lines.push(`**Key screens (${ec.screenInventory.keyScreens.length}):** ${ec.screenInventory.keyScreens.join(', ')}`);
+      if (ec.screenInventory.criticalFlows.length > 0) lines.push(`**Critical flows:** ${ec.screenInventory.criticalFlows.join('; ')}`);
+      if (ec.screenInventory.priorityScreens.length > 0) lines.push(`**Priority screens:** ${ec.screenInventory.priorityScreens.join(', ')}`);
+      lines.push('');
+    }
+
     if (ec.competitiveDifferentiators.length > 0) {
       lines.push(`**Differentiators:** ${ec.competitiveDifferentiators.join(', ')}`);
+    }
+    if (ec.competitorInsights.likes.length > 0) {
+      lines.push(`**Competitor likes:** ${ec.competitorInsights.likes.join('; ')}`);
+    }
+    if (ec.competitorInsights.dislikes.length > 0) {
+      lines.push(`**Competitor dislikes:** ${ec.competitorInsights.dislikes.join('; ')}`);
     }
     lines.push('');
 

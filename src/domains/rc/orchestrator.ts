@@ -37,6 +37,7 @@ import type { DesignResearchInput } from './agents/design-research-agent.js';
 import { GateStatus, PHASE_NAMES, GATED_PHASES } from './types.js';
 import { getProjectStore } from '../../shared/state/store-factory.js';
 import { NODE_IDS } from '../../shared/state/pipeline-id.js';
+import { stampVersion } from './artifact-versioning.js';
 import fs from 'node:fs';
 import path from 'node:path';
 
@@ -738,7 +739,8 @@ ${tokenTracker.getDomainSummary('rc')}${formatCostSummary()}${getLearningSummary
     // Save brand profile to project
     const profilePath = path.join(input.projectPath, 'rc-method', 'design', 'BRAND-PROFILE.json');
     fs.mkdirSync(path.dirname(profilePath), { recursive: true });
-    fs.writeFileSync(profilePath, JSON.stringify(result.profile, null, 2), 'utf-8');
+    const versionedProfile = stampVersion('brand-profile', result.profile as Record<string, unknown>);
+    fs.writeFileSync(profilePath, JSON.stringify(versionedProfile, null, 2), 'utf-8');
 
     // Update state
     state.brand = {
@@ -771,12 +773,13 @@ ${tokenTracker.getDomainSummary('rc')}${formatCostSummary()}${getLearningSummary
     input: DesignIntakeInput,
     prdContext: string,
     icpData?: string,
+    externalBrandProfile?: import('./brand-types.js').BrandProfile,
   ): Promise<AgentResult> {
     const state = this.stateManager.load(input.projectPath);
 
-    // Load brand profile if available
-    let brandProfile;
-    if (state.brand?.profilePath) {
+    // Load brand profile: prefer externally-provided, fall back to state
+    let brandProfile = externalBrandProfile;
+    if (!brandProfile && state.brand?.profilePath) {
       try {
         brandProfile = JSON.parse(fs.readFileSync(state.brand.profilePath, 'utf-8'));
       } catch { /* continue without brand */ }
@@ -784,23 +787,45 @@ ${tokenTracker.getDomainSummary('rc')}${formatCostSummary()}${getLearningSummary
 
     const result = await this.designIntakeAgent.analyze(input, prdContext, icpData, brandProfile);
 
-    // Save assessment
+    // Save assessment as markdown
     const assessmentPath = path.join(input.projectPath, 'rc-method', 'design', 'DESIGN-INTAKE.md');
     fs.mkdirSync(path.dirname(assessmentPath), { recursive: true });
     fs.writeFileSync(assessmentPath, result.text, 'utf-8');
 
+    // Save structured assessment as JSON for downstream consumption
+    const jsonPath = path.join(input.projectPath, 'rc-method', 'design', 'DESIGN-INTAKE.json');
+    const versionedAssessment = stampVersion('design-intake', result.assessment as unknown as Record<string, unknown>);
+    fs.writeFileSync(jsonPath, JSON.stringify(versionedAssessment, null, 2), 'utf-8');
+
+    const constraints = result.assessment.extractedConstraints;
     state.designIntake = {
       assessmentPath,
+      jsonPath,
       verdict: result.assessment.verdict,
+      alignmentScore: result.assessment.alignmentScore,
       completedAt: new Date().toISOString(),
+      // Key constraint fields for quick access without re-reading JSON
+      primaryPlatform: constraints.platformDirection.primaryPlatform,
+      devicePriority: constraints.platformDirection.devicePriority,
+      designSystemFramework: constraints.platformDirection.designSystemFramework,
+      wcagTarget: constraints.accessibilityDirection.wcagTarget,
+      aesthetic: constraints.moodDirection.aesthetic,
+      animationLevel: constraints.interactionDirection.animationLevel,
+      keyScreens: constraints.screenInventory.keyScreens,
+      priorityScreens: constraints.screenInventory.priorityScreens,
+      criticalFlows: constraints.screenInventory.criticalFlows,
     };
     const artifactRef = 'rc-method/design/DESIGN-INTAKE.md';
+    const jsonArtifactRef = 'rc-method/design/DESIGN-INTAKE.json';
     if (!state.artifacts.includes(artifactRef)) {
       state.artifacts.push(artifactRef);
     }
+    if (!state.artifacts.includes(jsonArtifactRef)) {
+      state.artifacts.push(jsonArtifactRef);
+    }
     this.stateManager.save(input.projectPath, state);
 
-    return { text: result.text, artifacts: [artifactRef] };
+    return { text: result.text, artifacts: [artifactRef, jsonArtifactRef] };
   }
 
   /** Generate design research brief */
