@@ -3,6 +3,7 @@ import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { Orchestrator } from '../orchestrator.js';
 import { estimateDesignCost } from '../design-types.js';
 import type { DesignInput } from '../design-types.js';
+import type { ChallengeInput } from '../challenger-types.js';
 
 let _orchestrator: Orchestrator | null = null;
 function getOrchestrator(): Orchestrator {
@@ -155,6 +156,66 @@ export function registerRcUxTools(server: McpServer): void {
         const costNote = `\n\n---\n**Estimated cost for this generation:** ~$${cost.estimatedUsd.toFixed(2)} (${cost.calls} AI calls, ~${cost.estimatedTokens.toLocaleString()} tokens)`;
 
         return { content: [{ type: 'text' as const, text: result.text + costNote }] };
+      } catch (err) {
+        return {
+          content: [{ type: 'text' as const, text: `Error: ${(err as Error).message}` }],
+          isError: true,
+        };
+      }
+    },
+  );
+
+  // design_challenge - Brutal multi-lens design review
+  server.registerTool(
+    'design_challenge',
+    {
+      description:
+        'Run the Design Challenger: a brutal, multi-lens review of the entire design output. 5 parallel sub-agents (Pro) or 3 (community) challenge the design from adversarial angles: ICP Alignment, Copy Quality, Design Decisions, Conversion Path, and Accessibility. Returns a Challenge Report with verdict (READY / NOT READY / CRITICAL FAILURES) and ranked findings. Call AFTER ux_design and copy_generate are complete. Optional — use when you want honest critique before shipping.',
+      inputSchema: {
+        project_path: z.string().describe('Absolute path to the project directory'),
+        screen_descriptions: z
+          .string()
+          .optional()
+          .describe(
+            'Optional: text descriptions of screens to review (if no wireframes exist yet)',
+          ),
+      },
+      annotations: {
+        title: 'Design Challenger',
+        readOnlyHint: false,
+        destructiveHint: false,
+        idempotentHint: false,
+        openWorldHint: true,
+      },
+    },
+    async ({ project_path, screen_descriptions }) => {
+      try {
+        const prdContext = await loadPrdContext(project_path);
+        const { icpData, competitorData } = await loadResearchContext(project_path);
+
+        // Auto-detect design spec and copy system paths
+        const fs = await import('node:fs');
+        const pathMod = await import('node:path');
+
+        let designSpecPath: string | undefined;
+        const specCandidate = pathMod.join(project_path, 'rc-method', 'design', 'DESIGN-SPEC.json');
+        if (fs.existsSync(specCandidate)) designSpecPath = specCandidate;
+
+        let copySystemPath: string | undefined;
+        const copyCandidate = pathMod.join(project_path, 'rc-method', 'copy', 'COPY-SYSTEM.md');
+        if (fs.existsSync(copyCandidate)) copySystemPath = copyCandidate;
+
+        const input: ChallengeInput = {
+          projectPath: project_path,
+          prdContext,
+          icpData,
+          designSpecPath,
+          copySystemPath,
+          screenDescriptions: screen_descriptions,
+        };
+
+        const result = await getOrchestrator().designChallenge(input);
+        return { content: [{ type: 'text' as const, text: result.text }] };
       } catch (err) {
         return {
           content: [{ type: 'text' as const, text: `Error: ${(err as Error).message}` }],

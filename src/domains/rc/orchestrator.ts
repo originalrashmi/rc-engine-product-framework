@@ -11,6 +11,7 @@ import { DesignAgent } from './agents/design-agent.js';
 import { DesignResearchAgent } from './agents/design-research-agent.js';
 import { CopyResearchAgent } from './agents/copy-research-agent.js';
 import { CopyAgent } from './agents/copy-agent.js';
+import { ChallengerAgent } from './agents/challenger-agent.js';
 import { PreRcBridgeAgent } from './agents/prerc-bridge-agent.js';
 import { llmFactory } from '../../shared/llm/factory.js';
 import type { LLMFactory } from '../../shared/llm/factory.js';
@@ -27,6 +28,7 @@ import { recordPipelineTimings } from '../../shared/benchmark.js';
 import type { AgentResult, ProjectState, Phase, TechStack } from './types.js';
 import type { DesignInput } from './design-types.js';
 import type { CopyResearchInput, CopyGenerateInput, CopyIterateInput } from './copy-types.js';
+import type { ChallengeInput } from './challenger-types.js';
 import type { DesignResearchInput } from './agents/design-research-agent.js';
 import { GateStatus, PHASE_NAMES, GATED_PHASES } from './types.js';
 import { getProjectStore } from '../../shared/state/store-factory.js';
@@ -49,6 +51,7 @@ export class Orchestrator {
   private designResearchAgent: DesignResearchAgent;
   private copyResearchAgent: CopyResearchAgent;
   private copyAgent: CopyAgent;
+  private challengerAgent: ChallengerAgent;
   private preRcBridgeAgent: PreRcBridgeAgent;
 
   constructor() {
@@ -66,6 +69,7 @@ export class Orchestrator {
     this.designResearchAgent = new DesignResearchAgent(this.contextLoader, this.llmFactory);
     this.copyResearchAgent = new CopyResearchAgent(this.contextLoader, this.llmFactory);
     this.copyAgent = new CopyAgent(this.contextLoader, this.llmFactory);
+    this.challengerAgent = new ChallengerAgent(this.contextLoader, this.llmFactory);
     this.preRcBridgeAgent = new PreRcBridgeAgent(this.contextLoader, this.llmFactory);
   }
 
@@ -750,6 +754,14 @@ ${tokenTracker.getDomainSummary('rc')}${formatCostSummary()}${getLearningSummary
   async copyIterate(input: CopyIterateInput): Promise<AgentResult> {
     const state = this.stateManager.load(input.projectPath);
     const result = await this.copyAgent.iterate(state, input);
+    this.stateManager.save(input.projectPath, state);
+    return result;
+  }
+
+  /** Run the Design Challenger — brutal multi-lens review */
+  async designChallenge(input: ChallengeInput): Promise<AgentResult> {
+    const state = this.stateManager.load(input.projectPath);
+    const result = await this.challengerAgent.challenge(state, input);
     this.stateManager.save(input.projectPath, state);
     return result;
   }
