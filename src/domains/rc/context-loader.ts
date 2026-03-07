@@ -5,19 +5,57 @@ import { UX_ROUTING_TABLE } from './types.js';
 
 export class ContextLoader {
   private basePath: string;
+  private proBasePath: string | null;
 
   constructor() {
-    // Knowledge base lives at <package-root>/knowledge/rc/
+    // Community knowledge base at <package-root>/knowledge/rc/
     this.basePath = resolveFromRoot('knowledge', 'rc');
+    // Pro knowledge overlay: RC_KNOWLEDGE_PATH env, or knowledge-pro/ directory
+    this.proBasePath = this.resolveProPath();
   }
 
-  /** Load a single knowledge file by relative path */
+  /** Resolve Pro knowledge path if available */
+  private resolveProPath(): string | null {
+    const envPath = process.env.RC_KNOWLEDGE_PATH;
+    if (envPath) {
+      const rcPath = path.join(envPath, 'rc');
+      if (fs.existsSync(rcPath)) return rcPath;
+      if (fs.existsSync(envPath)) return envPath;
+    }
+    const proPath = resolveFromRoot('knowledge-pro', 'rc');
+    if (fs.existsSync(proPath)) return proPath;
+    return null;
+  }
+
+  /** Load a single knowledge file by relative path. Pro files override community files. */
   loadFile(relativePath: string): string {
+    // Try Pro path first (overlay)
+    if (this.proBasePath) {
+      const proFullPath = path.join(this.proBasePath, relativePath);
+      if (fs.existsSync(proFullPath)) {
+        return fs.readFileSync(proFullPath, 'utf-8');
+      }
+    }
+    // Fall back to community path
     const fullPath = path.join(this.basePath, relativePath);
     if (!fs.existsSync(fullPath)) {
       throw new Error(`Knowledge file not found: ${fullPath}`);
     }
     return fs.readFileSync(fullPath, 'utf-8');
+  }
+
+  /** Try to load a knowledge file, returning null if not found */
+  tryLoadFile(relativePath: string): string | null {
+    try {
+      return this.loadFile(relativePath);
+    } catch {
+      return null;
+    }
+  }
+
+  /** Check if Pro knowledge is available */
+  isProMode(): boolean {
+    return this.proBasePath !== null;
   }
 
   /** Load multiple knowledge files, joined with separators */
