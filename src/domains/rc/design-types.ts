@@ -70,6 +70,10 @@ export interface DesignInput {
   prdContext: string; // PRD content for product understanding
   icpData?: string; // ICP/persona data from Pre-RC research
   competitorData?: string; // Competitor analysis from Pre-RC research
+  brandProfilePath?: string; // Path to BrandProfile JSON (constrains colors/typography/shape)
+  copySystemPath?: string; // Path to CopySystem JSON (real copy instead of placeholders)
+  designIntakePath?: string; // Path to DesignIntakeAssessment (user preferences + constraints)
+  fontEmbedHtml?: string; // Pre-generated <link> tags for Google Fonts (from FontService)
 }
 
 // ── Design Generation Result ──────────────────────────────────────────────

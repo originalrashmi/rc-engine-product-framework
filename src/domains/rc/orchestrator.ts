@@ -8,6 +8,9 @@ import { ConnectAgent } from './agents/connect-agent.js';
 import { CompoundAgent } from './agents/compound-agent.js';
 import { UxAgent } from './agents/ux-agent.js';
 import { DesignAgent } from './agents/design-agent.js';
+import { DesignResearchAgent } from './agents/design-research-agent.js';
+import { CopyResearchAgent } from './agents/copy-research-agent.js';
+import { CopyAgent } from './agents/copy-agent.js';
 import { PreRcBridgeAgent } from './agents/prerc-bridge-agent.js';
 import { llmFactory } from '../../shared/llm/factory.js';
 import type { LLMFactory } from '../../shared/llm/factory.js';
@@ -23,6 +26,8 @@ import { formatCostSummary } from '../../shared/cost-tracker.js';
 import { recordPipelineTimings } from '../../shared/benchmark.js';
 import type { AgentResult, ProjectState, Phase, TechStack } from './types.js';
 import type { DesignInput } from './design-types.js';
+import type { CopyResearchInput, CopyGenerateInput, CopyIterateInput } from './copy-types.js';
+import type { DesignResearchInput } from './agents/design-research-agent.js';
 import { GateStatus, PHASE_NAMES, GATED_PHASES } from './types.js';
 import { getProjectStore } from '../../shared/state/store-factory.js';
 import { NODE_IDS } from '../../shared/state/pipeline-id.js';
@@ -41,6 +46,9 @@ export class Orchestrator {
   private compoundAgent: CompoundAgent;
   private uxAgent: UxAgent;
   private designAgent: DesignAgent;
+  private designResearchAgent: DesignResearchAgent;
+  private copyResearchAgent: CopyResearchAgent;
+  private copyAgent: CopyAgent;
   private preRcBridgeAgent: PreRcBridgeAgent;
 
   constructor() {
@@ -55,6 +63,9 @@ export class Orchestrator {
     this.compoundAgent = new CompoundAgent(this.contextLoader, this.llmFactory);
     this.uxAgent = new UxAgent(this.contextLoader, this.llmFactory);
     this.designAgent = new DesignAgent(this.contextLoader, this.llmFactory);
+    this.designResearchAgent = new DesignResearchAgent(this.contextLoader, this.llmFactory);
+    this.copyResearchAgent = new CopyResearchAgent(this.contextLoader, this.llmFactory);
+    this.copyAgent = new CopyAgent(this.contextLoader, this.llmFactory);
     this.preRcBridgeAgent = new PreRcBridgeAgent(this.contextLoader, this.llmFactory);
   }
 
@@ -695,6 +706,50 @@ ${tokenTracker.getDomainSummary('rc')}${formatCostSummary()}${getLearningSummary
   async designGenerate(input: DesignInput): Promise<AgentResult> {
     const state = this.stateManager.load(input.projectPath);
     const result = await this.designAgent.generate(state, input);
+    this.stateManager.save(input.projectPath, state);
+    return result;
+  }
+
+  /** Generate design research brief */
+  async designResearch(input: DesignResearchInput): Promise<AgentResult> {
+    const state = this.stateManager.load(input.projectPath);
+    const result = await this.designResearchAgent.research(state, input);
+    this.stateManager.save(input.projectPath, state);
+    return result;
+  }
+
+  /** Generate copy research brief */
+  async copyResearch(input: CopyResearchInput): Promise<AgentResult> {
+    const state = this.stateManager.load(input.projectPath);
+    const result = await this.copyResearchAgent.research(state, input);
+    state.copyResearchBrief = {
+      path: path.join(input.projectPath, 'rc-method', 'copy', 'COPY-RESEARCH-BRIEF.md'),
+      generatedAt: new Date().toISOString(),
+    };
+    this.stateManager.save(input.projectPath, state);
+    return result;
+  }
+
+  /** Generate full copy system */
+  async copyGenerate(input: CopyGenerateInput): Promise<AgentResult> {
+    const state = this.stateManager.load(input.projectPath);
+    const result = await this.copyAgent.generate(state, input);
+    this.stateManager.save(input.projectPath, state);
+    return result;
+  }
+
+  /** Self-critique copy system */
+  async copyCritique(projectPath: string): Promise<AgentResult> {
+    const state = this.stateManager.load(projectPath);
+    const result = await this.copyAgent.critique(state);
+    this.stateManager.save(projectPath, state);
+    return result;
+  }
+
+  /** Iterate on copy system with feedback */
+  async copyIterate(input: CopyIterateInput): Promise<AgentResult> {
+    const state = this.stateManager.load(input.projectPath);
+    const result = await this.copyAgent.iterate(state, input);
     this.stateManager.save(input.projectPath, state);
     return result;
   }

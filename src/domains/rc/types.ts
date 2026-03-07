@@ -64,6 +64,29 @@ export interface TechStack {
   orm?: string; // e.g. 'prisma', 'sqlalchemy', 'activerecord', 'gorm'
 }
 
+export interface BrandSelection {
+  mode: 'constrained' | 'generation';
+  profilePath: string;
+  importedAt: string;
+}
+
+export interface CopyResearchBriefRef {
+  path: string;
+  generatedAt: string;
+}
+
+export interface CopySystemRef {
+  path: string;
+  generatedAt: string;
+  screenCount: number;
+}
+
+export interface DesignIntakeRef {
+  verdict: 'proceed' | 'proceed_with_adjustments' | 'reconsider';
+  assessmentPath: string;
+  completedAt: string;
+}
+
 export interface ProjectState {
   projectName: string;
   projectPath: string;
@@ -77,6 +100,14 @@ export interface ProjectState {
   selectedDesign?: DesignSelection;
   /** Tech stack for generated code. Set at rc_start, used by architect + forge. */
   techStack?: TechStack;
+  /** Brand profile. Set by brand_import or generated during design phase. */
+  brand?: BrandSelection;
+  /** Design intake assessment. Set by design_intake before design phase. */
+  designIntake?: DesignIntakeRef;
+  /** Copy research brief. Set by copy_research_brief in Phase 2. */
+  copyResearchBrief?: CopyResearchBriefRef;
+  /** Full copy system. Set by copy_generate in Phase 2. */
+  copySystem?: CopySystemRef;
   /** Transient: operator input for the current phase handler. Not persisted. */
   _pendingInput?: string;
   /** Transient: output text from the last phase handler. Not persisted. */

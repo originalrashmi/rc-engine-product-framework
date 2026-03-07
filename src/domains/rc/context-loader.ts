@@ -60,6 +60,72 @@ export class ContextLoader {
     return this.loadFile('ux/UX-TRIGGERS.md');
   }
 
+  /** Load design skill files for a specific phase */
+  loadDesignContext(phase: 'research' | 'generate' | 'critique'): string {
+    const files: Record<string, string[]> = {
+      research: [
+        'skills/design/rc-design-research.md',
+        'skills/design/rc-design-cognitive.md',
+        'skills/design/rc-design-patterns.md',
+        'skills/design/rc-design-trends-2026.md',
+      ],
+      generate: [
+        'skills/design/rc-design-patterns.md',
+        'skills/design/rc-design-emotional.md',
+        'skills/design/rc-design-accessibility.md',
+        'skills/design/rc-design-trends-2026.md',
+        'skills/design/rc-design-typography.md',
+      ],
+      critique: [
+        'skills/design/rc-design-critique.md',
+        'skills/design/rc-design-accessibility.md',
+      ],
+    };
+
+    return (files[phase] ?? [])
+      .map((f) => {
+        try {
+          return this.loadFile(f);
+        } catch {
+          console.error(`Warning: design skill file ${f} not found`);
+          return '';
+        }
+      })
+      .filter(Boolean)
+      .join('\n\n---\n\n');
+  }
+
+  /** Load copy skill files for a specific phase */
+  loadCopyContext(phase: 'research' | 'generate' | 'critique'): string {
+    const files: Record<string, string[]> = {
+      research: [
+        'skills/copy/rc-copy-research.md',
+        'skills/copy/rc-copy-frameworks.md',
+      ],
+      generate: [
+        'skills/copy/rc-copy-voice-tone.md',
+        'skills/copy/rc-copy-microcopy.md',
+        'skills/copy/rc-copy-frameworks.md',
+        'skills/copy/rc-copy-seo.md',
+      ],
+      critique: [
+        'skills/copy/rc-copy-critique.md',
+      ],
+    };
+
+    return (files[phase] ?? [])
+      .map((f) => {
+        try {
+          return this.loadFile(f);
+        } catch {
+          console.error(`Warning: copy skill file ${f} not found`);
+          return '';
+        }
+      })
+      .filter(Boolean)
+      .join('\n\n---\n\n');
+  }
+
   /** Read a project artifact file (PRD, task list, etc.) from the project directory */
   loadProjectFile(projectPath: string, relativePath: string): string {
     const fullPath = path.join(projectPath, relativePath);

@@ -12,6 +12,7 @@ import { registerPreRcTools } from './domains/pre-rc/tools.js';
 import { registerRcPhaseTools } from './domains/rc/tools/phase-tools.js';
 import { registerRcGateTools } from './domains/rc/tools/gate-tools.js';
 import { registerRcUxTools } from './domains/rc/tools/ux-tools.js';
+import { registerCopyTools } from './domains/rc/tools/copy-tools.js';
 import { registerPostRcTools } from './domains/post-rc/tools.js';
 import { registerTraceabilityTools } from './domains/traceability/tools.js';
 import { formatCostSummary } from './shared/cost-tracker.js';
@@ -66,7 +67,8 @@ registerInitTool(server); // 1 tool: rc_init (unified entry point — start here
 registerPreRcTools(server); // 7 tools: prc_*
 registerRcPhaseTools(server); // 8 tools: rc_start, rc_illuminate, rc_define, rc_import_prerc, rc_architect, rc_sequence, rc_validate, rc_forge_task
 registerRcGateTools(server); // 4 tools: rc_gate, rc_save, rc_status, rc_reset
-registerRcUxTools(server); // 3 tools: ux_score, ux_audit, ux_generate
+registerRcUxTools(server); // 4 tools: ux_score, ux_audit, ux_generate, ux_design
+registerCopyTools(server); // 3 tools: copy_research_brief, copy_generate, copy_iterate
 registerPostRcTools(server); // 7 tools: postrc_*
 registerTraceabilityTools(server); // 3 tools: trace_*
 
