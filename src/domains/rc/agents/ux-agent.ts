@@ -112,6 +112,7 @@ RULES:
     // Save the UX child PRD
     const prdFilename = `PRD-${this.sanitizeName(state.projectName)}-ux.md`;
     const prdPath = path.join(state.projectPath, 'rc-method', 'prds', prdFilename);
+    fs.mkdirSync(path.dirname(prdPath), { recursive: true });
     fs.writeFileSync(prdPath, text, 'utf-8');
 
     const artifactRef = `rc-method/prds/${prdFilename}`;

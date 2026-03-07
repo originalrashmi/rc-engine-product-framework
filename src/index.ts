@@ -28,6 +28,7 @@ import { calculateValue, formatValueSummary } from './shared/value.js';
 import { getTraceProgress } from './shared/tracer.js';
 import { checkForUpdate } from './shared/version-check.js';
 import { initTelemetry } from './shared/telemetry.js';
+import { closeAllStores } from './shared/state/store-factory.js';
 
 // Create the RC Engine MCP server
 const server = new McpServer({
@@ -64,7 +65,7 @@ server.registerTool = ((...toolArgs: unknown[]) => {
 registerInitTool(server); // 1 tool: rc_init (unified entry point — start here)
 registerPreRcTools(server); // 7 tools: prc_*
 registerRcPhaseTools(server); // 8 tools: rc_start, rc_illuminate, rc_define, rc_import_prerc, rc_architect, rc_sequence, rc_validate, rc_forge_task
-registerRcGateTools(server); // 3 tools: rc_gate, rc_save, rc_status
+registerRcGateTools(server); // 4 tools: rc_gate, rc_save, rc_status, rc_reset
 registerRcUxTools(server); // 3 tools: ux_score, ux_audit, ux_generate
 registerPostRcTools(server); // 7 tools: postrc_*
 registerTraceabilityTools(server); // 3 tools: trace_*
@@ -154,7 +155,7 @@ ${summary}
   REGISTERED DOMAINS:
     Gateway ........ 1 tool  (rc_init — start here)
     Pre-RC ......... 7 tools (prc_*)
-    RC ............. 14 tools (rc_*, ux_*)
+    RC ............. 15 tools (rc_*, ux_*)
     Post-RC ........ 7 tools (postrc_*)
     Traceability ... 3 tools (trace_*)
     Pipeline ....... 1 tool  (rc_pipeline_status)
@@ -182,6 +183,14 @@ ${costSection}${circuitSection}${learnSection}${pluginSection}${benchSection}${d
   },
 );
 
+// Graceful shutdown: close SQLite connections before exit
+function shutdown() {
+  closeAllStores();
+  process.exit(0);
+}
+process.on('SIGTERM', shutdown);
+process.on('SIGINT', shutdown);
+
 // Connect via stdio transport
 async function main() {
   logStartupDiagnostics();
@@ -195,10 +204,13 @@ async function main() {
 
   const knowledgeMode = manifest.mode === 'pro' ? 'pro' : 'community';
   const execMode = hasAnyApiKey ? 'autonomous' : 'passthrough';
-  console.error(`[rc-engine] Connected v${version} - 33 tools - knowledge: ${knowledgeMode} - execution: ${execMode}`);
+import { checkForUpdate } from './shared/version-check.js';
+import { initTelemetry } from './shared/telemetry.js';
+import { closeAllStores } from './shared/state/store-factory.js';
 }
 
 main().catch((err) => {
   console.error('[rc-engine] Fatal error:', err);
+  closeAllStores();
   process.exit(1);
 });

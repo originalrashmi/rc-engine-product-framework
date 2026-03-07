@@ -109,6 +109,29 @@ export function registerRcGateTools(server: McpServer): void {
     },
   );
 
+  // rc_reset - Clear project state for a fresh start
+  server.registerTool(
+    'rc_reset',
+    {
+      description:
+        'Reset RC Method state for a project. Deletes the checkpoint from SQLite and the RC-STATE.md file, allowing rc_start to create a fresh project. Use when: (1) state is corrupted or stuck, (2) user wants to start over, (3) previous run left stale state. WARNING: This does NOT delete generated artifacts (PRDs, tasks, forge files) — only the pipeline state tracking. After reset: call rc_start to begin a new project.',
+      inputSchema: {
+        project_path: z.string().describe('Absolute path to the project directory'),
+      },
+    },
+    async ({ project_path }) => {
+      try {
+        const result = getOrchestrator().reset(project_path);
+        return { content: [{ type: 'text' as const, text: result.text }] };
+      } catch (err) {
+        return {
+          content: [{ type: 'text' as const, text: `Error: ${(err as Error).message}` }],
+          isError: true,
+        };
+      }
+    },
+  );
+
   // rc_status - Get project status
   server.registerTool(
     'rc_status',

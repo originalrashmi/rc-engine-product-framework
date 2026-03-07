@@ -110,11 +110,11 @@ async function migrateFromMarkdown(projectPath: string): Promise<PostRCState> {
     store.save(pipelineId, NODE_IDS.POST_RC_STATE, validated);
     return validated;
   } catch (err) {
-    console.error(
-      `[post-rc] WARNING: Failed to migrate state from ${statePath}. ` +
-        `Returning default state. Error: ${(err as Error).message}`,
+    throw new Error(
+      `Post-RC state migration failed for ${statePath}: ${(err as Error).message}. ` +
+        `Delete or fix the state file and retry.`,
+      { cause: err },
     );
-    return createDefaultState(projectPath, '');
   }
 }
 

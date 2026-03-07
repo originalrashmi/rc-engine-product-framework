@@ -75,6 +75,7 @@ ${preRcTaskNote}
     // Save task list
     const taskFilename = `TASKS-${this.sanitizeName(state.projectName)}-master.md`;
     const taskPath = path.join(state.projectPath, 'rc-method', 'tasks', taskFilename);
+    fs.mkdirSync(path.dirname(taskPath), { recursive: true });
     fs.writeFileSync(taskPath, text, 'utf-8');
 
     const artifactRef = `rc-method/tasks/${taskFilename}`;

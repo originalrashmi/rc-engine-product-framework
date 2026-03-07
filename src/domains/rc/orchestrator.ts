@@ -24,6 +24,8 @@ import { recordPipelineTimings } from '../../shared/benchmark.js';
 import type { AgentResult, ProjectState, Phase, TechStack } from './types.js';
 import type { DesignInput } from './design-types.js';
 import { GateStatus, PHASE_NAMES, GATED_PHASES } from './types.js';
+import { getProjectStore } from '../../shared/state/store-factory.js';
+import { NODE_IDS } from '../../shared/state/pipeline-id.js';
 import fs from 'node:fs';
 import path from 'node:path';
 
@@ -171,7 +173,7 @@ export class Orchestrator {
     if (this.stateManager.exists(projectPath)) {
       const state = this.stateManager.load(projectPath);
       return {
-        text: `Project "${state.projectName}" already exists at this path. Current phase: ${state.currentPhase} - ${PHASE_NAMES[state.currentPhase]}.\n\nUse rc_status to see full status, or use the appropriate phase tool to continue.`,
+        text: `Project "${state.projectName}" already exists at this path. Current phase: ${state.currentPhase} - ${PHASE_NAMES[state.currentPhase]}.\n\nOptions:\n- Use **rc_status** to see full progress\n- Use the appropriate phase tool to continue (e.g. rc_illuminate, rc_define, rc_architect)\n- Use **rc_reset** to clear state and start fresh with rc_start`,
       };
     }
 
@@ -736,6 +738,7 @@ ${tokenTracker.getDomainSummary('rc')}${formatCostSummary()}${getLearningSummary
     }
 
     const filePath = path.join(projectPath, 'rc-method', dir, filename);
+    fs.mkdirSync(path.dirname(filePath), { recursive: true });
     fs.writeFileSync(filePath, content, 'utf-8');
 
     const artifactRef = `rc-method/${dir}/${filename}`;
@@ -749,6 +752,30 @@ ${tokenTracker.getDomainSummary('rc')}${formatCostSummary()}${getLearningSummary
     return {
       text: `Artifact saved: ${artifactRef}`,
       artifacts: [artifactRef],
+    };
+  }
+
+  /** Reset project state — deletes checkpoint and markdown, allowing a fresh rc_start */
+  reset(projectPath: string): AgentResult {
+    // Delete RC checkpoint from SQLite
+    try {
+      const { store, pipelineId } = getProjectStore(projectPath);
+      store.deleteNode(pipelineId, NODE_IDS.RC_STATE);
+      store.deleteNode(pipelineId, NODE_IDS.RC_INTERRUPT);
+    } catch {
+      // Checkpoint may not exist yet — that's fine
+    }
+
+    // Delete markdown state file
+    const stateFile = path.join(projectPath, 'rc-method', 'state', 'RC-STATE.md');
+    if (fs.existsSync(stateFile)) {
+      fs.unlinkSync(stateFile);
+    }
+
+    audit('project.reset', 'rc', projectPath, {});
+
+    return {
+      text: `RC Method state reset for ${projectPath}. You can now run rc_start to begin a fresh project.`,
     };
   }
 

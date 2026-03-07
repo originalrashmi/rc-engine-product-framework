@@ -249,6 +249,16 @@ export class CheckpointStore {
   }
 
   /**
+   * Delete all checkpoints for a specific pipeline+node.
+   */
+  deleteNode(pipelineId: string, nodeId: string): number {
+    const result = this.db
+      .prepare('DELETE FROM checkpoints WHERE pipeline_id = ? AND node_id = ?')
+      .run(pipelineId, nodeId);
+    return result.changes;
+  }
+
+  /**
    * Get the current schema version.
    */
   getSchemaVersion(): number {
