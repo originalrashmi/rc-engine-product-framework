@@ -27,7 +27,7 @@ import { recordGateOutcome, recordModelPerformance, getLearningSummary } from '.
 import { recordProjectUsage } from '../../shared/usage-meter.js';
 import { formatCostSummary } from '../../shared/cost-tracker.js';
 import { recordPipelineTimings } from '../../shared/benchmark.js';
-import type { AgentResult, ProjectState, Phase, TechStack } from './types.js';
+import type { AgentResult, ProjectState, Phase, TechStack, UxMode } from './types.js';
 import type { DesignInput, DesignIterateInput } from './design-types.js';
 import type { CopyResearchInput, CopyGenerateInput, CopyIterateInput } from './copy-types.js';
 import type { ChallengeInput } from './challenger-types.js';
@@ -355,7 +355,35 @@ ${result.text.substring(0, 500)}...`;
 
     const result = await this.prdAgent.run(state, operatorInputs);
 
-    return this.finalizePhase(projectPath, state, result.text, result.artifacts);
+    // Auto-run UX scoring on the PRD output to populate state.uxScore/uxMode
+    try {
+      const uxResult = await this.uxAgent.score(result.text);
+      const scoreMatch = uxResult.text.match(/Score:\s*(\d+)/i);
+      if (scoreMatch) {
+        const score = parseInt(scoreMatch[1], 10);
+        state.uxScore = score;
+        state.uxMode = score < 4 ? 'standard' : score <= 6 ? 'selective' : 'deep_dive';
+        audit('artifact.create', 'rc', projectPath, { type: 'ux-score', score, mode: state.uxMode }, '2');
+      }
+    } catch {
+      // UX scoring is non-fatal — pipeline continues without it
+      console.error('Warning: Auto UX scoring failed during Define phase');
+    }
+
+    // If UX score indicates deep_dive or selective, append recommendation to output
+    let phaseOutput = result.text;
+    if (state.uxScore !== null && state.uxScore >= 4) {
+      const modeLabel = state.uxMode === 'deep_dive' ? 'Deep Dive' : 'Selective';
+      phaseOutput += `\n\n---\n\n**UX Trigger Score: ${state.uxScore} (${modeLabel} Mode)**\n\n`;
+      if (state.uxScore >= 7) {
+        phaseOutput += `⚠ UX Child PRD Required — run \`ux_generate\` before approving this gate to produce screen inventory, state contracts, and accessibility checklist.\n`;
+        phaseOutput += `Then consider \`ux_design\` for wireframes and visual design options.`;
+      } else {
+        phaseOutput += `Consider running \`ux_generate\` for a UX child PRD, or proceed to Architect if UX scope is manageable.`;
+      }
+    }
+
+    return this.finalizePhase(projectPath, state, phaseOutput, result.artifacts);
   }
 
   /** Run Architect phase (Phase 3) */
@@ -700,9 +728,22 @@ ${tokenTracker.getDomainSummary('rc')}${formatCostSummary()}${getLearningSummary
     return { text };
   }
 
-  /** UX scoring */
-  async uxScore(featureList: string): Promise<AgentResult> {
-    return this.uxAgent.score(featureList);
+  /** UX scoring — optionally persists score to project state */
+  async uxScore(featureList: string, projectPath?: string): Promise<AgentResult> {
+    const result = await this.uxAgent.score(featureList);
+
+    // Persist score to state if project path is provided
+    if (projectPath) {
+      const state = this.stateManager.load(projectPath);
+      const scoreMatch = result.text.match(/Score:\s*(\d+)/i);
+      if (scoreMatch) {
+        state.uxScore = parseInt(scoreMatch[1], 10);
+        state.uxMode = state.uxScore < 4 ? 'standard' : state.uxScore <= 6 ? 'selective' : 'deep_dive';
+        this.stateManager.save(projectPath, state);
+      }
+    }
+
+    return result;
   }
 
   /** UX audit */

@@ -168,7 +168,7 @@ export function registerRcPhaseTools(server: McpServer): void {
     'rc_define',
     {
       description:
-        '[Starter+] Phase 2 (Define). Generates a Product Requirements Document from user-provided feature descriptions, user stories, and requirements. Produces an 11-section PRD saved to rc-method/prds/. Returns PRD content + gate prompt. Present the PRD to the user for review. Prerequisites: Phase 1 gate approved. After gate approval: moves to Phase 3 (Architect). Consider running ux_score on the feature list and ux_generate for UX-heavy products.',
+        '[Starter+] Phase 2 (Define). Generates a Product Requirements Document from user-provided feature descriptions, user stories, and requirements. Produces an 11-section PRD saved to rc-method/prds/. Auto-runs UX scoring after PRD generation — if score >= 7 (Deep Dive), recommends running ux_generate before gate approval. Returns PRD content + UX score + gate prompt. Prerequisites: Phase 1 gate approved. After gate approval: moves to Phase 3 (Architect).',
       inputSchema: {
         project_path: z.string().describe('Absolute path to the project directory'),
         operator_inputs: z.string().describe('Feature descriptions, user stories, and requirements from the operator'),

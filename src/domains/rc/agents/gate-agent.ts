@@ -8,12 +8,24 @@ export class GateAgent extends BaseAgent {
     const phase = state.currentPhase;
     const phaseName = PHASE_NAMES[phase];
 
+    // Build UX-aware gate guidance for Phase 2
+    let uxGateNote = '';
+    if (phase === 2 && state.uxScore !== null) {
+      const modeLabel = state.uxMode === 'deep_dive' ? 'Deep Dive' : state.uxMode === 'selective' ? 'Selective' : 'Standard';
+      uxGateNote = `\n- UX Trigger Score: ${state.uxScore} (${modeLabel} mode)`;
+      if (state.uxScore >= 7) {
+        uxGateNote += `\n- IMPORTANT: UX score is high (${state.uxScore}). Recommend running ux_generate for a UX child PRD before approving this gate. Then consider ux_design for wireframes.`;
+      } else if (state.uxScore >= 4) {
+        uxGateNote += `\n- UX score is moderate (${state.uxScore}). Consider running ux_generate for a UX child PRD, or proceed if UX scope is manageable.`;
+      }
+    }
+
     const instructions = `You are the RC Method Gate Agent. Your job is to present a gate summary to the non-technical product owner.
 
 RULES:
 - Write in plain business language - no technical jargon
 - Summarize what was accomplished in this phase
-- List key deliverables and any risks
+- List key deliverables and any risks${uxGateNote}
 - End with a clear decision question
 - Use the exact gate format from the knowledge file
 

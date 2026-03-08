@@ -12,21 +12,22 @@ export function registerRcUxTools(server: McpServer): void {
     'ux_score',
     {
       description:
-        'OPTIONAL — call during Phase 2 (Define) to assess UX complexity. Pass the feature list from the PRD. Returns: numeric score, mode (standard/selective/deep_dive), and which UX specialist modules to load. Use the result to decide whether to call ux_generate (for deep_dive/selective) or skip UX child PRD (for standard). Does NOT require project_path — works on any feature list. Read-only analysis.',
+        'Score UX complexity for a feature list. Auto-called during rc_define, but can also be called manually. Pass the feature list from the PRD. Returns: numeric score, mode (standard/selective/deep_dive), and which UX specialist modules to load. If project_path is provided, persists score to project state. Use the result to decide whether to call ux_generate (for deep_dive/selective) or skip UX child PRD (for standard).',
       inputSchema: {
         feature_list: z.string().describe('List of features/screens to score for UX complexity'),
+        project_path: z.string().optional().describe('Optional project path to persist score to state'),
       },
       annotations: {
         title: 'UX Complexity Score',
-        readOnlyHint: true,
+        readOnlyHint: false,
         destructiveHint: false,
         idempotentHint: true,
         openWorldHint: true,
       },
     },
-    async ({ feature_list }) => {
+    async ({ feature_list, project_path }) => {
       try {
-        const result = await getOrchestrator().uxScore(feature_list);
+        const result = await getOrchestrator().uxScore(feature_list, project_path);
         return { content: [{ type: 'text' as const, text: result.text }] };
       } catch (err) {
         return {
