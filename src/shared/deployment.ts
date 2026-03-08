@@ -1,7 +1,7 @@
 /**
  * Thin wrapper for deployment readiness checks and CI/CD generation.
  *
- * Pure functions -- no singletons needed.
+ * Pure functions - no singletons needed.
  */
 
 import { checkDeployReadiness, formatReadinessReport } from '../core/deployment/readiness.js';

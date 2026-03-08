@@ -1,5 +1,5 @@
 /**
- * MCP Bridge -- Creates an in-process MCP server + client pair.
+ * MCP Bridge - Creates an in-process MCP server + client pair.
  *
  * This lets the web server call any of the 31 RC Engine tools
  * without reimplementing the tool handlers. It works by:

@@ -2,9 +2,9 @@
  * Benchmark Runner
  *
  * Measures pipeline performance across three dimensions:
- * 1. Speed -- wall-clock time for each phase and the full pipeline
- * 2. Cost -- token usage and estimated USD cost per phase
- * 3. Quality -- gate approval rates, scan pass rates, coverage metrics
+ * 1. Speed - wall-clock time for each phase and the full pipeline
+ * 2. Cost - token usage and estimated USD cost per phase
+ * 3. Quality - gate approval rates, scan pass rates, coverage metrics
  *
  * Results are stored in SQLite for historical comparison and regression detection.
  */

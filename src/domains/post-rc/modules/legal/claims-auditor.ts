@@ -1,5 +1,5 @@
 /**
- * Claims Auditor Module (Agent 1) -- "Dirty Lawyer"
+ * Claims Auditor Module (Agent 1) - "Dirty Lawyer"
  *
  * Scans the RC Engine framework repository itself for marketing claims
  * that do not match the actual implementation. Two layers:
@@ -153,7 +153,7 @@ const CLAIM_PATTERNS: ClaimPattern[] = [
     description:
       'Claims OWASP scanning/coverage. Static analysis covers 11 CWE patterns; missing SSRF, prototype pollution, open redirects, XXE, insecure deserialization, clickjacking, session fixation.',
     remediation:
-      'Add: "covers common OWASP patterns; not a replacement for professional security auditing" (SECURITY.md already has this -- propagate to README).',
+      'Add: "covers common OWASP patterns; not a replacement for professional security auditing" (SECURITY.md already has this - propagate to README).',
   },
 
   // Capability: "enterprise-grade" without definition
@@ -320,7 +320,7 @@ Return ONLY the JSON array, no other text.`;
 
     return parseLlmLegalFindings(response.content, ValidationModule.LegalClaims, 'LGL-CLM-LLM');
   } catch (err) {
-    // LLM failure is non-fatal -- return info finding
+    // LLM failure is non-fatal - return info finding
     return [
       {
         id: 'LGL-CLM-LLM-000',

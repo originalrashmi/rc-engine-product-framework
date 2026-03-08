@@ -57,7 +57,7 @@ const PHASE_DEFS: PhaseDef[] = [
     number: 2,
     name: 'Research Stages',
     domain: 'Pre-RC',
-    description: 'Run 20 AI research specialists across 6 stages -- user intelligence, market, technical, UX, and validation.',
+    description: 'Run 20 AI research specialists across 6 stages - user intelligence, market, technical, UX, and validation.',
     tools: ['prc_run_stage', 'prc_status'],
   },
   {
@@ -217,7 +217,7 @@ export function Pipeline({ projectPath, activity, onBack }: PipelineProps) {
         const gateStatuses = preRc.gates.map((g) => g.status);
 
         if (phaseDef.number === 1) {
-          // Start & Classify -- complete if classification exists
+          // Start & Classify - complete if classification exists
           if (preRc.classification) return 'complete';
           if (stageStatuses.length > 0) return 'active';
           return 'pending';
@@ -312,7 +312,7 @@ export function Pipeline({ projectPath, activity, onBack }: PipelineProps) {
   }
 
   async function executeTool(toolName: string) {
-    // Check if this is a gate tool -- require confirmation
+    // Check if this is a gate tool - require confirmation
     const isGateTool = toolName.includes('gate') && toolArgs.decision === 'approve';
     if (isGateTool && !confirmAction) {
       setConfirmAction({
@@ -426,7 +426,7 @@ export function Pipeline({ projectPath, activity, onBack }: PipelineProps) {
           label="RC Method"
           icon={<FileText size={14} />}
           color="text-gold-light"
-          stats={rc ? `Phase ${rc.currentPhase} -- ${rc.phaseName}` : 'Not started'}
+          stats={rc ? `Phase ${rc.currentPhase} - ${rc.phaseName}` : 'Not started'}
           detail={rc ? `${rc.gatesPassed}/${rc.totalGates} gates passed` : ''}
         />
         <DomainCard

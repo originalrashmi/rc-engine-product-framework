@@ -1,5 +1,5 @@
 /**
- * Role Registry -- Maps pipeline phases and personas to human professional equivalents.
+ * Role Registry - Maps pipeline phases and personas to human professional equivalents.
  *
  * Each entry represents the human role that RC Engine replaces for that specific
  * pipeline step, with industry-standard time and salary benchmarks (2025 US market).
@@ -54,7 +54,7 @@ const PERSONA_ROLES: Record<string, RoleEquivalent> = {
     hourlyRateUsd: 0,
     estimatedHours: 0,
     category: 'engineering',
-    description: 'Internal optimization -- no direct human equivalent.',
+    description: 'Internal optimization - no direct human equivalent.',
   },
   'primary-user-researcher': {
     roleTitle: 'UX Researcher',

@@ -10,7 +10,7 @@ Software agents work reliably now. Claude Code demonstrated that an LLM with acc
 
 The surprising discovery: **a really good coding agent is actually a really good general-purpose agent.** The same architecture that lets Claude Code refactor a codebase can let an agent organize your files, manage your reading list, or automate your workflows.
 
-The Claude Code SDK makes this accessible. You can build applications where features aren't code you write—they're outcomes you describe, achieved by an agent with tools, operating in a loop until the outcome is reached.
+The Claude Code SDK makes this accessible. You can build applications where features aren't code you write--they're outcomes you describe, achieved by an agent with tools, operating in a loop until the outcome is reached.
 
 This opens up a new field: software that works the way Claude Code works, applied to categories far beyond coding.
 </why_now>
@@ -26,7 +26,7 @@ This is the foundational principle. Without it, nothing else matters.
 
 Imagine you build a notes app with a beautiful interface for creating, organizing, and tagging notes. A user asks the agent: "Create a note summarizing my meeting and tag it as urgent."
 
-If you built UI for creating notes but no agent capability to do the same, the agent is stuck. It might apologize or ask clarifying questions, but it can't help—even though the action is trivial for a human using the interface.
+If you built UI for creating notes but no agent capability to do the same, the agent is stuck. It might apologize or ask clarifying questions, but it can't help--even though the action is trivial for a human using the interface.
 
 **The fix:** Ensure the agent has tools (or combinations of tools) that can accomplish anything the UI can do.
 
@@ -69,8 +69,8 @@ Tools: read_file, write_file, move_file, list_directory, bash
 Prompt: "Organize the user's downloads folder. Analyze each file,
         determine appropriate locations based on content and recency,
         and move them there."
-Agent: Operates in a loop—reads files, makes judgments, moves things,
-       checks results—until the folder is organized.
+Agent: Operates in a loop--reads files, makes judgments, moves things,
+       checks results--until the folder is organized.
 → Agent makes the decisions
 → To change behavior, you edit the prompt
 ```
@@ -115,9 +115,9 @@ When tools are atomic, parity is maintained, and prompts are composable, users w
 
 *"Cross-reference my meeting notes with my task list and tell me what I've committed to but haven't scheduled."*
 
-You didn't build a "commitment tracker" feature. But if the agent can read notes, read tasks, and reason about them—operating in a loop until it has an answer—it can accomplish this.
+You didn't build a "commitment tracker" feature. But if the agent can read notes, read tasks, and reason about them--operating in a loop until it has an answer--it can accomplish this.
 
-**This reveals latent demand.** Instead of guessing what features users want, you observe what they're asking the agent to do. When patterns emerge, you can optimize them with domain-specific tools or dedicated prompts. But you didn't have to anticipate them—you discovered them.
+**This reveals latent demand.** Instead of guessing what features users want, you observe what they're asking the agent to do. When patterns emerge, you can optimize them with domain-specific tools or dedicated prompts. But you didn't have to anticipate them--you discovered them.
 
 **The flywheel:**
 1. Build with atomic tools and parity
@@ -139,14 +139,14 @@ This changes how you build products. You're not trying to imagine every feature 
 
 Unlike traditional software, agent-native applications can improve without shipping code:
 
-**Accumulated context:** The agent can maintain state across sessions—what exists, what the user has done, what worked, what didn't. A `context.md` file the agent reads and updates is layer one. More sophisticated approaches involve structured memory and learned preferences.
+**Accumulated context:** The agent can maintain state across sessions--what exists, what the user has done, what worked, what didn't. A `context.md` file the agent reads and updates is layer one. More sophisticated approaches involve structured memory and learned preferences.
 
 **Prompt refinement at multiple levels:**
 - **Developer level:** You ship updated prompts that change agent behavior for all users
 - **User level:** Users customize prompts for their workflow
 - **Agent level:** The agent modifies its own prompts based on feedback (advanced)
 
-**Self-modification (advanced):** Agents that can edit their own prompts or even their own code. For production use cases, consider adding safety rails—approval gates, automatic checkpoints for rollback, health checks. This is where things are heading.
+**Self-modification (advanced):** Agents that can edit their own prompts or even their own code. For production use cases, consider adding safety rails--approval gates, automatic checkpoints for rollback, health checks. This is where things are heading.
 
 The improvement mechanisms are still being discovered. Context and prompt refinement are proven. Self-modification is emerging. What's clear: the architecture supports getting better in ways traditional software doesn't.
 
@@ -306,17 +306,17 @@ All references in `references/`:
 
 ### Common Approaches That Aren't Fully Agent-Native
 
-These aren't necessarily wrong—they may be appropriate for your use case. But they're worth recognizing as different from the architecture this document describes.
+These aren't necessarily wrong--they may be appropriate for your use case. But they're worth recognizing as different from the architecture this document describes.
 
-**Agent as router** — The agent figures out what the user wants, then calls the right function. The agent's intelligence is used to route, not to act. This can work, but you're using a fraction of what agents can do.
+**Agent as router** - The agent figures out what the user wants, then calls the right function. The agent's intelligence is used to route, not to act. This can work, but you're using a fraction of what agents can do.
 
-**Build the app, then add agent** — You build features the traditional way (as code), then expose them to an agent. The agent can only do what your features already do. You won't get emergent capability.
+**Build the app, then add agent** - You build features the traditional way (as code), then expose them to an agent. The agent can only do what your features already do. You won't get emergent capability.
 
-**Request/response thinking** — Agent gets input, does one thing, returns output. This misses the loop: agent gets an outcome to achieve, operates until it's done, handles unexpected situations along the way.
+**Request/response thinking** - Agent gets input, does one thing, returns output. This misses the loop: agent gets an outcome to achieve, operates until it's done, handles unexpected situations along the way.
 
-**Defensive tool design** — You over-constrain tool inputs because you're used to defensive programming. Strict enums, validation at every layer. This is safe, but it prevents the agent from doing things you didn't anticipate.
+**Defensive tool design** - You over-constrain tool inputs because you're used to defensive programming. Strict enums, validation at every layer. This is safe, but it prevents the agent from doing things you didn't anticipate.
 
-**Happy path in code, agent just executes** — Traditional software handles edge cases in code—you write the logic for what happens when X goes wrong. Agent-native lets the agent handle edge cases with judgment. If your code handles all the edge cases, the agent is just a caller.
+**Happy path in code, agent just executes** - Traditional software handles edge cases in code--you write the logic for what happens when X goes wrong. Agent-native lets the agent handle edge cases with judgment. If your code handles all the edge cases, the agent is just a caller.
 
 ---
 
@@ -338,22 +338,22 @@ tools: store_item, send_message  // Primitives
 prompt: "Rate importance 1-5 based on actionability, store feedback, notify if >= 4"
 ```
 
-**Workflow-shaped tools** — `analyze_and_organize` bundles judgment into the tool. Break it into primitives and let the agent compose them.
+**Workflow-shaped tools** - `analyze_and_organize` bundles judgment into the tool. Break it into primitives and let the agent compose them.
 
-**Context starvation** — Agent doesn't know what resources exist in the app.
+**Context starvation** - Agent doesn't know what resources exist in the app.
 ```
 User: "Write something about Catherine the Great in my feed"
 Agent: "What feed? I don't understand what system you're referring to."
 ```
 Fix: Inject available resources, capabilities, and vocabulary into system prompt.
 
-**Orphan UI actions** — User can do something through the UI that the agent can't achieve. Fix: maintain parity.
+**Orphan UI actions** - User can do something through the UI that the agent can't achieve. Fix: maintain parity.
 
-**Silent actions** — Agent changes state but UI doesn't update. Fix: Use shared data stores with reactive binding, or file system observation.
+**Silent actions** - Agent changes state but UI doesn't update. Fix: Use shared data stores with reactive binding, or file system observation.
 
-**Heuristic completion detection** — Detecting agent completion through heuristics (consecutive iterations without tool calls, checking for expected output files). This is fragile. Fix: Require agents to explicitly signal completion through a `complete_task` tool.
+**Heuristic completion detection** - Detecting agent completion through heuristics (consecutive iterations without tool calls, checking for expected output files). This is fragile. Fix: Require agents to explicitly signal completion through a `complete_task` tool.
 
-**Static tool mapping for dynamic APIs** — Building 50 tools for 50 API endpoints when a `discover` + `access` pattern would give more flexibility.
+**Static tool mapping for dynamic APIs** - Building 50 tools for 50 API endpoints when a `discover` + `access` pattern would give more flexibility.
 ```typescript
 // WRONG - Every API type needs a hardcoded tool
 tool("read_steps", ...)
@@ -366,7 +366,7 @@ tool("list_available_types", ...)  // Discover what's available
 tool("read_health_data", { dataType: z.string() }, ...)  // Access any type
 ```
 
-**Incomplete CRUD** — Agent can create but not update or delete.
+**Incomplete CRUD** - Agent can create but not update or delete.
 ```typescript
 // User: "Delete that journal entry"
 // Agent: "I don't have a tool for that"
@@ -374,7 +374,7 @@ tool("create_journal_entry", ...)  // Missing: update, delete
 ```
 Fix: Every entity needs full CRUD.
 
-**Sandbox isolation** — Agent works in separate data space from user.
+**Sandbox isolation** - Agent works in separate data space from user.
 ```
 Documents/
 ├── user_files/        ← User's space
@@ -382,9 +382,9 @@ Documents/
 ```
 Fix: Use shared workspace where both operate on same files.
 
-**Gates without reason** — Domain tool is the only way to do something, and you didn't intend to restrict access. The default is open. Keep primitives available unless there's a specific reason to gate.
+**Gates without reason** - Domain tool is the only way to do something, and you didn't intend to restrict access. The default is open. Keep primitives available unless there's a specific reason to gate.
 
-**Artificial capability limits** — Restricting what the agent can do out of vague safety concerns rather than specific risks. Be thoughtful about restricting capabilities. The agent should generally be able to do what users can do.
+**Artificial capability limits** - Restricting what the agent can do out of vague safety concerns rather than specific risks. Be thoughtful about restricting capabilities. The agent should generally be able to do what users can do.
 </anti_patterns>
 
 <success_criteria>
@@ -431,5 +431,5 @@ Can it figure out how to accomplish it, operating in a loop until it succeeds?
 
 If yes, you've built something agent-native.
 
-If it says "I don't have a feature for that"—your architecture is still too constrained.
+If it says "I don't have a feature for that"--your architecture is still too constrained.
 </success_criteria>

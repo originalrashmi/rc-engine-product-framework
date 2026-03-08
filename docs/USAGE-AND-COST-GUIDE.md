@@ -1,4 +1,4 @@
-# RC Engine -- Usage & Cost Guide
+# RC Engine - Usage & Cost Guide
 
 How much does it cost to run a product through the RC Engine pipeline? This guide breaks down the two layers of cost, recommends a Claude Code plan for your use case, and gives concrete token/dollar estimates for each pipeline phase.
 
@@ -10,7 +10,7 @@ RC Engine has two separate cost layers. Understanding both prevents surprises.
 
 ### Layer 1: Claude Code Subscription (Monthly)
 
-Your Claude Code plan (Pro, Max 5x, Max 20x) covers the **interactive conversation** -- the alpha agent that orchestrates your pipeline, presents checkpoints, asks questions, and formats results. This is your Anthropic subscription.
+Your Claude Code plan (Pro, Max 5x, Max 20x) covers the **interactive conversation** - the alpha agent that orchestrates your pipeline, presents checkpoints, asks questions, and formats results. This is your Anthropic subscription.
 
 ### Layer 2: API Keys (Pay-Per-Use)
 
@@ -123,31 +123,31 @@ Phase 6 (Forge) dominates because it runs once per task:
 
 **Biggest cost drivers (in order):**
 
-1. **Number of forge tasks** -- Phase 6 scales linearly. Each additional task adds ~5-8K tokens (~$0.10-0.15). The difference between 15 tasks and 50 tasks is $3-5.
+1. **Number of forge tasks** - Phase 6 scales linearly. Each additional task adds ~5-8K tokens (~$0.10-0.15). The difference between 15 tasks and 50 tasks is $3-5.
 
-2. **Number of research specialists** -- Complexity classification determines how many of the 20 specialists activate. A "clear" product activates 3-6; a "complex" product activates 15-20.
+2. **Number of research specialists** - Complexity classification determines how many of the 20 specialists activate. A "clear" product activates 3-6; a "complex" product activates 15-20.
 
-3. **Which API keys you configure** -- Gemini handles classification tasks at 10-20x less cost than Claude. Without Gemini, Claude does the same work at higher cost.
+3. **Which API keys you configure** - Gemini handles classification tasks at 10-20x less cost than Claude. Without Gemini, Claude does the same work at higher cost.
 
-4. **Extended thinking** -- If using Claude Code with Opus 4.6, extended thinking can use 2-5x more tokens per request. Use `/effort low` for simple tasks like approving checkpoints.
+4. **Extended thinking** - If using Claude Code with Opus 4.6, extended thinking can use 2-5x more tokens per request. Use `/effort low` for simple tasks like approving checkpoints.
 
-5. **Passthrough mode** -- If you configure zero API keys, RC Engine generates structured prompts for you to run in any AI tool. API cost: $0. Trade-off: more manual work.
+5. **Passthrough mode** - If you configure zero API keys, RC Engine generates structured prompts for you to run in any AI tool. API cost: $0. Trade-off: more manual work.
 
 ---
 
 ## Cost Optimization Tips
 
-1. **Configure a Gemini API key** -- Free tier covers most classification tasks, saving ~60% on those calls. Get one at https://aistudio.google.com/apikey
+1. **Configure a Gemini API key** - Free tier covers most classification tasks, saving ~60% on those calls. Get one at https://aistudio.google.com/apikey
 
-2. **Use `/effort low` in Claude Code** -- For routine interactions (approving checkpoints, checking status), reduce thinking effort to save subscription quota.
+2. **Use `/effort low` in Claude Code** - For routine interactions (approving checkpoints, checking status), reduce thinking effort to save subscription quota.
 
-3. **Skip Pre-RC for simple products** -- If you already know what you're building, go straight to RC Method. Saves $5-12 in API costs.
+3. **Skip Pre-RC for simple products** - If you already know what you're building, go straight to RC Method. Saves $5-12 in API costs.
 
-4. **Monitor costs with `rc_pipeline_status`** -- Shows cumulative token usage and cost breakdown by provider and domain.
+4. **Monitor costs with `rc_pipeline_status`** - Shows cumulative token usage and cost breakdown by provider and domain.
 
-5. **Start with fewer tasks** -- You can always add forge tasks later. Starting with 15 high-priority tasks instead of 50 saves $3-5 and lets you validate the approach.
+5. **Start with fewer tasks** - You can always add forge tasks later. Starting with 15 high-priority tasks instead of 50 saves $3-5 and lets you validate the approach.
 
-6. **Use Sonnet for routine work** -- Reserve Opus for complex reasoning (architecture, security analysis). Sonnet is 40% cheaper per token.
+6. **Use Sonnet for routine work** - Reserve Opus for complex reasoning (architecture, security analysis). Sonnet is 40% cheaper per token.
 
 ---
 

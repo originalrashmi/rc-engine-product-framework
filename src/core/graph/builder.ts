@@ -1,5 +1,5 @@
 /**
- * Graph Builder -- Fluent API for constructing validated GraphDefinitions.
+ * Graph Builder - Fluent API for constructing validated GraphDefinitions.
  *
  * Usage:
  *   const graph = new GraphBuilder<MyState>('my-pipeline', 'My Pipeline')

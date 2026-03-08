@@ -37,8 +37,8 @@ prc_start → prc_classify → Gate 1 → prc_run_stage (stages 1-6) → Gates 2
 
 ## Guardrails
 
-- NEVER mark a stage complete if specialists failed -- report partial completion
-- NEVER skip a gate -- all 3 gates require user approval
+- NEVER mark a stage complete if specialists failed - report partial completion
+- NEVER skip a gate - all 3 gates require user approval
 - NEVER auto-approve a gate decision
 - Track which specialists succeeded and which failed per stage
 - If Gate 2 or 3 is rejected, identify which stages need re-running based on feedback

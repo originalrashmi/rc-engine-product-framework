@@ -59,7 +59,7 @@ Claude performs better with pure XML because:
 - Consistent structure across skills reduces cognitive load
 - Progressive disclosure works more reliably
 
-Pure XML structure is not just a style preference—it's a performance optimization.
+Pure XML structure is not just a style preference--it's a performance optimization.
 </claude_performance>
 </why_xml>
 

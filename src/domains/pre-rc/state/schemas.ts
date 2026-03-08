@@ -1,7 +1,7 @@
 /**
  * Zod schemas for Pre-RC domain state validation.
  *
- * Used by CheckpointStore to validate state on read -- corruption throws
+ * Used by CheckpointStore to validate state on read - corruption throws
  * instead of silently degrading. Mirrors the ResearchState interface in types.ts.
  */
 

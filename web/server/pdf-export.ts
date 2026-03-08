@@ -1,5 +1,5 @@
 /**
- * PDF Export -- Converts markdown artifacts to print-ready HTML.
+ * PDF Export - Converts markdown artifacts to print-ready HTML.
  *
  * Users open the HTML in a new tab and use Cmd+P / Ctrl+P to print to PDF.
  * Each document gets a professional cover page, table of contents, and

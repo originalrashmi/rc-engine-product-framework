@@ -1,17 +1,17 @@
-# RC Engine -- Agent Instructions
+# RC Engine - Agent Instructions
 
 This file provides agent orchestration instructions for IDEs that support the AGENTS.md standard (Cursor, GitHub Copilot, Gemini CLI, Windsurf, and others).
 
 ## Overview
 
-RC Engine is a structured software development pipeline with 35 MCP tools across 4 domains. The agent should orchestrate these tools automatically -- users should never need to know tool names.
+RC Engine is a structured software development pipeline with 35 MCP tools across 4 domains. The agent should orchestrate these tools automatically - users should never need to know tool names.
 
 ## Pipeline
 
-1. **Pre-RC Research** (tools: `prc_*`) -- 20 AI specialists analyze the product idea
-2. **RC Method Build** (tools: `rc_*`, `ux_*`) -- 8-phase structured development
-3. **Post-RC Validation** (tools: `postrc_*`) -- Security scanning and ship gate
-4. **Traceability** (tools: `trace_*`) -- Requirements-to-code coverage tracking
+1. **Pre-RC Research** (tools: `prc_*`) - 20 AI specialists analyze the product idea
+2. **RC Method Build** (tools: `rc_*`, `ux_*`) - 8-phase structured development
+3. **Post-RC Validation** (tools: `postrc_*`) - Security scanning and ship gate
+4. **Traceability** (tools: `trace_*`) - Requirements-to-code coverage tracking
 
 ## Tool Calling Order
 
@@ -28,7 +28,7 @@ When a user says "build me [product]":
 
 - NEVER read or modify `.env` files, credentials, or secret files
 - NEVER include API keys in any output
-- NEVER skip gate approvals -- all gates require explicit user consent
+- NEVER skip gate approvals - all gates require explicit user consent
 - NEVER write files outside the project directory
 - NEVER execute destructive commands (`rm -rf`, `sudo`, etc.)
 

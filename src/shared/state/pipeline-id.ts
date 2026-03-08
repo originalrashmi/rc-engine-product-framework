@@ -19,7 +19,7 @@ export function derivePipelineId(projectPath: string): string {
 }
 
 /**
- * Node IDs -- one per domain concept stored in the CheckpointStore.
+ * Node IDs - one per domain concept stored in the CheckpointStore.
  * These are the canonical keys used by all domain state adapters.
  */
 export const NODE_IDS = {

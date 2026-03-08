@@ -2,7 +2,7 @@ import { BaseAgent } from './base-agent.js';
 import type { AgentResult, ProjectState } from '../types.js';
 
 /**
- * Phase 8: Compound -- Production Hardening.
+ * Phase 8: Compound - Production Hardening.
  *
  * Cross-domain agent: loads the integration report from Phase 7,
  * the PRD's non-functional requirements, and (optionally) Post-RC

@@ -1,5 +1,5 @@
 /**
- * Cost Tracker -- Per-model cost calculation with input/output token split.
+ * Cost Tracker - Per-model cost calculation with input/output token split.
  *
  * Replaces the existing TokenTracker which only tracks total token counts
  * with no cost awareness. This module:

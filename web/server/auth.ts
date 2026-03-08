@@ -1,5 +1,5 @@
 /**
- * Auth Layer -- Simple session-based authentication for RC Engine Web UI.
+ * Auth Layer - Simple session-based authentication for RC Engine Web UI.
  *
  * MVP approach: email + magic link (no password).
  * Sessions stored in SQLite for persistence across server restarts.
@@ -152,7 +152,7 @@ const DEV_USER: User = {
 
 /** Check if auth bypass is enabled (for local development). */
 export function isAuthBypassed(): boolean {
-  // Only bypass when explicitly set -- NODE_ENV=development alone is not enough
+  // Only bypass when explicitly set - NODE_ENV=development alone is not enough
   return process.env.RC_AUTH_BYPASS === 'true';
 }
 
@@ -278,7 +278,7 @@ declare global {
 }
 
 /**
- * Auth middleware -- attaches user to request if session exists.
+ * Auth middleware - attaches user to request if session exists.
  * Does NOT block unauthenticated requests (use requireAuth for that).
  */
 export function authMiddleware(req: Request, _res: Response, next: NextFunction): void {
@@ -301,7 +301,7 @@ export function authMiddleware(req: Request, _res: Response, next: NextFunction)
 }
 
 /**
- * Require authentication -- returns 401 if no valid session.
+ * Require authentication - returns 401 if no valid session.
  */
 export function requireAuth(req: Request, res: Response, next: NextFunction): void {
   if (isAuthBypassed()) {

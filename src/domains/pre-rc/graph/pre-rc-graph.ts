@@ -1,5 +1,5 @@
 /**
- * Pre-RC Graph Definition -- dynamic research pipeline.
+ * Pre-RC Graph Definition - dynamic research pipeline.
  *
  * Built after classification from the persisted personaSelection.
  * Topology: classify -> gate-1 -> [stage-1..6 with gates 2,3] -> synthesize

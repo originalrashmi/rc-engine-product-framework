@@ -36,7 +36,7 @@ ls -la docs/brainstorms/*.md 2>/dev/null | head -10
 - If multiple candidates match, use the most recent one
 
 **If a relevant brainstorm exists:**
-1. Read the brainstorm document **thoroughly** — every section matters
+1. Read the brainstorm document **thoroughly** - every section matters
 2. Announce: "Found brainstorm from [date]: [topic]. Using as foundation for planning."
 3. Extract and carry forward **ALL** of the following into the plan:
    - Key decisions and their rationale
@@ -45,10 +45,10 @@ ls -la docs/brainstorms/*.md 2>/dev/null | head -10
    - Open questions (flag these for resolution during planning)
    - Success criteria and scope boundaries
    - Any specific technical choices or patterns discussed
-4. **Skip the idea refinement questions below** — the brainstorm already answered WHAT to build
+4. **Skip the idea refinement questions below** - the brainstorm already answered WHAT to build
 5. Use brainstorm content as the **primary input** to research and planning phases
-6. **Critical: The brainstorm is the origin document.** Throughout the plan, reference specific decisions with `(see brainstorm: docs/brainstorms/<filename>)` when carrying forward conclusions. Do not paraphrase decisions in a way that loses their original context — link back to the source.
-7. **Do not omit brainstorm content** — if the brainstorm discussed it, the plan must address it (even if briefly). Scan each brainstorm section before finalizing the plan to verify nothing was dropped.
+6. **Critical: The brainstorm is the origin document.** Throughout the plan, reference specific decisions with `(see brainstorm: docs/brainstorms/<filename>)` when carrying forward conclusions. Do not paraphrase decisions in a way that loses their original context - link back to the source.
+7. **Do not omit brainstorm content** - if the brainstorm discussed it, the plan must address it (even if briefly). Scan each brainstorm section before finalizing the plan to verify nothing was dropped.
 
 **If multiple brainstorms could match:**
 Use **AskUserQuestion tool** to ask which brainstorm to use, or whether to proceed without one.
@@ -218,7 +218,7 @@ end
 
 ## Sources
 
-- **Origin brainstorm:** [docs/brainstorms/YYYY-MM-DD-<topic>-brainstorm.md](path) — include if plan originated from a brainstorm
+- **Origin brainstorm:** [docs/brainstorms/YYYY-MM-DD-<topic>-brainstorm.md](path) - include if plan originated from a brainstorm
 - Related issue: #[issue_number]
 - Documentation: [relevant_docs_url]
 ````
@@ -290,7 +290,7 @@ origin: docs/brainstorms/YYYY-MM-DD-<topic>-brainstorm.md  # if originated from 
 
 ## Sources & References
 
-- **Origin brainstorm:** [docs/brainstorms/YYYY-MM-DD-<topic>-brainstorm.md](path) — include if plan originated from a brainstorm
+- **Origin brainstorm:** [docs/brainstorms/YYYY-MM-DD-<topic>-brainstorm.md](path) - include if plan originated from a brainstorm
 - Similar implementations: [file_path:line_number]
 - Best practices: [documentation_url]
 - Related PRs: #[pr_number]
@@ -433,7 +433,7 @@ origin: docs/brainstorms/YYYY-MM-DD-<topic>-brainstorm.md  # if originated from 
 
 ### Origin
 
-- **Brainstorm document:** [docs/brainstorms/YYYY-MM-DD-<topic>-brainstorm.md](path) — include if plan originated from a brainstorm. Key decisions carried forward: [list 2-3 major decisions from brainstorm]
+- **Brainstorm document:** [docs/brainstorms/YYYY-MM-DD-<topic>-brainstorm.md](path) - include if plan originated from a brainstorm. Key decisions carried forward: [list 2-3 major decisions from brainstorm]
 
 ### Internal References
 
@@ -540,7 +540,7 @@ Before finalizing, re-read the brainstorm document and verify:
 mkdir -p docs/plans/
 ```
 
-Use the Write tool to save the complete plan to `docs/plans/YYYY-MM-DD-<type>-<descriptive-name>-plan.md`. This step is mandatory and cannot be skipped — even when running as part of LFG/SLFG or other automated pipelines.
+Use the Write tool to save the complete plan to `docs/plans/YYYY-MM-DD-<type>-<descriptive-name>-plan.md`. This step is mandatory and cannot be skipped - even when running as part of LFG/SLFG or other automated pipelines.
 
 Confirm: "Plan written to docs/plans/[filename]"
 

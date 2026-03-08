@@ -36,8 +36,8 @@ If Pre-RC research exists, call `rc_import_prerc` instead of `rc_start` + `rc_il
 
 ## Guardrails
 
-- NEVER skip phases -- phases must execute in order (1 through 6)
-- NEVER auto-approve gates -- every gate requires explicit user approval
+- NEVER skip phases - phases must execute in order (1 through 6)
+- NEVER auto-approve gates - every gate requires explicit user approval
 - NEVER advance past a gate without an approval record
 - If a gate is rejected, stay at current phase and incorporate feedback
 - Track task completion status: not-started, in-progress, completed, failed

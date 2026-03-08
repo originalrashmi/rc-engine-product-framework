@@ -1,4 +1,4 @@
-# RC Engine -- Agent Memory
+# RC Engine - Agent Memory
 
 This file is loaded at the start of every Claude Code session (first 200 lines).
 It contains stable patterns, conventions, and lessons learned across sessions.
@@ -8,7 +8,7 @@ It contains stable patterns, conventions, and lessons learned across sessions.
 - **Name:** RC Engine
 - **Author:** Toerana
 - **Purpose:** AI-native structured software development pipeline
-- **Architecture:** MCP server with 32 tools across 4 domains
+- **Architecture:** MCP server with 35 tools across 4 domains
 - **Language:** TypeScript (strict mode)
 - **Build:** `tsc` -> `dist/`
 
@@ -18,10 +18,10 @@ It contains stable patterns, conventions, and lessons learned across sessions.
 src/
   core/         -> v2 infrastructure (graph, checkpoint, sandbox, llm, budget, observability, value, plugins, learning, deployment, docs, benchmark, pricing)
   domains/
-    pre-rc/     -> 6 tools (prc_*) -- 20-persona research pipeline
-    rc/         -> 14 tools (rc_*, ux_*) -- 8-phase build method
-    post-rc/    -> 7 tools (postrc_*) -- security scan + ship gate
-    traceability/ -> 3 tools (trace_*) -- requirement coverage
+    pre-rc/     -> 6 tools (prc_*) - 20-persona research pipeline
+    rc/         -> 14 tools (rc_*, ux_*) - 8-phase build method
+    post-rc/    -> 7 tools (postrc_*) - security scan + ship gate
+    traceability/ -> 3 tools (trace_*) - requirement coverage
   shared/
     llm/        -> 4 LLM clients (Claude, OpenAI, Gemini, Perplexity)
     config.ts   -> API keys from env
@@ -45,11 +45,11 @@ docs/           -> Workshop deck, architecture diagrams, roadmap
 
 - All state persistence goes through domain-specific state managers
 - Pre-RC and Post-RC use JSON-in-HTML-comment serialization (async fs)
-- RC Method uses regex-parsed markdown (sync fs) -- KNOWN FRAGILE
-- Gates require explicit user approval -- never auto-approve
+- RC Method uses regex-parsed markdown (sync fs) - KNOWN FRAGILE
+- Gates require explicit user approval - never auto-approve
 - Each domain writes ONLY to its designated directory
 - LLM calls use shared `llmFactory` singleton with provider routing
-- All 31 tools guarded: path validation + input size limits (tool-guard.ts)
+- All 35 tools guarded: path validation + input size limits (tool-guard.ts)
 - **No em-dashes or emojis in UI/UX/docs/agent messages** (user preference)
 - Use double-dashes (--) instead of em-dashes everywhere user-facing
 
@@ -60,15 +60,14 @@ docs/           -> Workshop deck, architecture diagrams, roadmap
 
 ## Git Strategy
 
-- `main` -- stable releases (DO NOT push directly, user may move to new repo)
-- `v2` -- active development branch
+- `main` - stable releases (DO NOT push directly, user may move to new repo)
+- `v2` - active development branch
 - All new work goes to `v2` only
 
 ## Pricing Model (Hybrid)
 
-4 tiers defined in `src/core/pricing/tiers.ts`:
+3 tiers defined in `src/core/pricing/tiers.ts`:
 - Free: $0, 1 project/mo, research only, hard limit
-- Starter: $29/mo ($24 annual), 5 projects/mo, full pipeline, $0.50 overage
 - Pro: $79/mo ($66 annual), unlimited, 3 design options, playbook, API
 - Enterprise: custom, team seats, SSO, webhooks
 Users bring their own API keys (no markup on LLM costs).
@@ -76,7 +75,7 @@ Users bring their own API keys (no markup on LLM costs).
 
 ## Auth Layer
 
-- `web/server/auth.ts` -- magic link auth (email + token), SQLite-backed
+- `web/server/auth.ts` - magic link auth (email + token), SQLite-backed
 - Dev bypass: `RC_AUTH_BYPASS=true` ONLY (NODE_ENV check removed for security)
 - Session cookie: `rc_session` (30-day expiry, secure flag in production)
 - Middleware: `authMiddleware` (attaches user), `requireAuth` (blocks 401)
@@ -85,14 +84,14 @@ Users bring their own API keys (no markup on LLM costs).
 
 ## Billing
 
-- `web/server/billing.ts` -- Stripe integration
-- Checkout sessions for tier upgrades (Starter/Pro)
+- `web/server/billing.ts` - Stripe integration
+- Checkout sessions for tier upgrades (Pro)
 - Webhook handler for subscription lifecycle events
 - Env vars: `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`, `STRIPE_PRICE_*`
 
 ## Email
 
-- `web/server/email.ts` -- magic link email transport
+- `web/server/email.ts` - magic link email transport
 - Providers: Resend (RESEND_API_KEY), SMTP (SMTP_HOST), console fallback
 - Branded HTML template matching navy/gold design
 
@@ -114,16 +113,16 @@ Users bring their own API keys (no markup on LLM costs).
 
 ## Tier Enforcement
 
-- `web/server/index.ts` -- tool-level tier check before MCP call
+- `web/server/index.ts` - tool-level tier check before MCP call
 - TOOL_FEATURE_REQUIREMENTS maps tool names to required TierFeatures
 - Free tier: research only (prc_* tools), no build/design/security
 - Skipped in dev bypass mode
 
 ## Docker
 
-- `Dockerfile` -- multi-stage (build + production), non-root user, healthcheck
-- `docker-compose.yml` -- single service, `./data` volume for persistence
-- `.dockerignore` -- excludes node_modules, .git, secrets
+- `Dockerfile` - multi-stage (build + production), non-root user, healthcheck
+- `docker-compose.yml` - single service, `./data` volume for persistence
+- `.dockerignore` - excludes node_modules, .git, secrets
 
 ## Wizard Bug Fixes Applied
 
@@ -147,12 +146,12 @@ Users bring their own API keys (no markup on LLM costs).
 ## Repository
 
 - **GitHub:** `originalrashmi/rc-engine-product-framework` (origin remote)
-- `main` -- stable releases
-- `v2` -- active development
+- `main` - stable releases
+- `v2` - active development
 
 ## Current State
 
-- 536 tests passing, 28 test files, 31 MCP tools
+- 578 tests passing, 31 test files, 35 MCP tools
 - All 13 shared wrappers fully connected (zero dead code)
 - dist/ built and ready for MCP
 

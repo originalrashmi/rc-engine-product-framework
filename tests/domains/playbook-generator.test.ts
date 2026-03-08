@@ -17,7 +17,7 @@ describe('Playbook Generator', () => {
 
   it('generates a playbook for an empty project', () => {
     const result = generatePlaybook({ projectPath: tmpDir, projectName: 'Empty Project' });
-    expect(result.markdown).toContain('# Empty Project -- Project Playbook');
+    expect(result.markdown).toContain('# Empty Project - Project Playbook');
     expect(result.markdown).toContain('## 1. Executive Summary');
     expect(result.markdown).toContain('No Pre-RC research was conducted');
     expect(result.markdown).toContain('No PRD was generated');

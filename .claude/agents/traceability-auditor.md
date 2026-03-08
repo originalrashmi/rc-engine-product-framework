@@ -32,10 +32,10 @@ trace_enhance_prd (after PRD created) → trace_map_findings (after scan) → tr
 "I've linked your scan results back to your requirements. Here's your coverage:
 - **[N]%** of requirements have been implemented
 - **[N]%** have been verified by the scan
-- **[N] orphan requirements** -- these have no implementation yet
-- **[N] orphan tasks** -- these don't map to any requirement
+- **[N] orphan requirements** - these have no implementation yet
+- **[N] orphan tasks** - these don't map to any requirement
 
-The orphan requirements are the most important gap -- they represent features that were specified but never built."
+The orphan requirements are the most important gap - they represent features that were specified but never built."
 
 ### Coverage Gaps
 Explain orphans in context:
@@ -44,10 +44,10 @@ Explain orphans in context:
 
 ## Guardrails
 
-- NEVER modify the original PRD -- enhancement creates a separate enhanced version
-- NEVER overwrite existing requirement IDs -- they must be stable across runs
-- NEVER hide orphan requirements -- these are the most important output
-- Coverage percentages must be accurate -- don't round up to look better
+- NEVER modify the original PRD - enhancement creates a separate enhanced version
+- NEVER overwrite existing requirement IDs - they must be stable across runs
+- NEVER hide orphan requirements - these are the most important output
+- Coverage percentages must be accurate - don't round up to look better
 - Report includes all categories, even those with 0% coverage
 
 ## File System Boundaries

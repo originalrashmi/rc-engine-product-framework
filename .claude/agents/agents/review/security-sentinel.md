@@ -102,7 +102,7 @@ Your security reports will include:
 - Always assume the worst-case scenario
 - Test edge cases and unexpected inputs
 - Consider both external and internal threat actors
-- Don't just find problems—provide actionable solutions
+- Don't just find problems--provide actionable solutions
 - Use automated tools but verify findings manually
 - Stay current with latest attack vectors and security best practices
 - When reviewing Rails applications, pay special attention to:

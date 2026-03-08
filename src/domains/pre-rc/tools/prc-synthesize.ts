@@ -488,7 +488,7 @@ export async function prcSynthesize(
       if (content) {
         assembledSections.push(content);
       } else {
-        assembledSections.push(`## ${i}. [Section generation failed -- group did not produce this section]`);
+        assembledSections.push(`## ${i}. [Section generation failed - group did not produce this section]`);
       }
     }
 
@@ -638,7 +638,7 @@ Output ONLY the markdown task list, nothing else.`;
     });
     console.error(`[prc_synthesize] Task list generation succeeded: ${taskTokens} tokens`);
   } catch (err) {
-    // Autonomous synthesis failed -- fall back to passthrough with clear reason.
+    // Autonomous synthesis failed - fall back to passthrough with clear reason.
     // Build the monolithic prompt lazily here (only needed for passthrough).
     const errMsg = err instanceof Error ? err.message : String(err);
     console.error(`[prc_synthesize] PASSTHROUGH TRIGGERED - Autonomous synthesis failed: ${errMsg}`);
@@ -885,7 +885,7 @@ Return ONLY the JSON object. No explanation, no markdown fences.`;
       ? `All 19 sections present`
       : `${finalSectionCount}/19 sections (missing: ${finalMissing.join(', ')})`;
 
-  // Estimate cost from token usage (rough: $0.003/1K input, $0.015/1K output -- blended ~$0.008/1K)
+  // Estimate cost from token usage (rough: $0.003/1K input, $0.015/1K output - blended ~$0.008/1K)
   const totalTokens = researchTokens + prdTokens + taskTokens;
   const estimatedCost = (totalTokens / 1000) * 0.008;
 
@@ -897,10 +897,10 @@ Return ONLY the JSON object. No explanation, no markdown fences.`;
 
   return `**Research complete!** Here are your deliverables:
 
-1. **Requirements Document** -- ${sectionStatus} covering your users, market, security, and UX
-2. **Visual Presentation** -- ${htmlDeckPath ? 'HTML deck ready for stakeholders' : 'Markdown format available'}
-3. **Task Breakdown** -- Prioritized implementation tasks with effort estimates
-4. **Research Index** -- Full breakdown of specialist contributions
+1. **Requirements Document** - ${sectionStatus} covering your users, market, security, and UX
+2. **Visual Presentation** - ${htmlDeckPath ? 'HTML deck ready for stakeholders' : 'Markdown format available'}
+3. **Task Breakdown** - Prioritized implementation tasks with effort estimates
+4. **Research Index** - Full breakdown of specialist contributions
 
 ### Research Summary
 
@@ -910,9 +910,9 @@ Return ONLY the JSON object. No explanation, no markdown fences.`;
 ### What's next?
 
 You can:
-- **Continue to build** -- I'll convert this research into a build plan with architecture and task planning
-- **Review first** -- Take time to read through the deliverables
-- **Stop here** -- The requirements document is a complete standalone document`;
+- **Continue to build** - I'll convert this research into a build plan with architecture and task planning
+- **Review first** - Take time to read through the deliverables
+- **Stop here** - The requirements document is a complete standalone document`;
 }
 
 /**

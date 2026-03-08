@@ -51,7 +51,7 @@ Tell the user:
 Please install the XcodeBuildMCP server first:
 
 \`\`\`bash
-claude mcp add XcodeBuildMCP -- npx xcodebuildmcp@latest
+claude mcp add XcodeBuildMCP - npx xcodebuildmcp@latest
 \`\`\`
 
 Then restart Claude Code and run `/xcode-test` again.

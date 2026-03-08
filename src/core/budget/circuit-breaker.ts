@@ -1,5 +1,5 @@
 /**
- * Circuit Breaker -- Prevents cascading failures when LLM providers are down.
+ * Circuit Breaker - Prevents cascading failures when LLM providers are down.
  *
  * Implements the circuit breaker pattern with three states:
  * - CLOSED: Normal operation, requests pass through

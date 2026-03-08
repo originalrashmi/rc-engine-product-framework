@@ -2,7 +2,7 @@
  * Run a single research stage via the shared Pre-RC handler.
  *
  * Delegates to the same handler used by the graph coordinator.
- * This eliminates duplicate persona execution logic -- there is ONE
+ * This eliminates duplicate persona execution logic - there is ONE
  * implementation of stage execution (in prc-coordinator-factory.ts).
  *
  * Use cases:
@@ -101,7 +101,7 @@ export async function prcRunStage(deps: PreRcDependencies, projectPath: string, 
   const totalStages = Object.keys(updatedState.stageStatus).length;
 
   if (stageStatus === StageStatus.Skipped) {
-    return `**${stageLabel} -- Skipped**\n\nNo active specialists for this area based on your project's complexity.`;
+    return `**${stageLabel} - Skipped**\n\nNo active specialists for this area based on your project's complexity.`;
   }
 
   // Check for failed personas by comparing expected vs actual
@@ -113,7 +113,7 @@ export async function prcRunStage(deps: PreRcDependencies, projectPath: string, 
   const failedCount = expectedCount - succeededCount;
 
   // Format specialist results in plain language
-  const specialistResults = newArtifacts.map((a: ResearchArtifact) => `- ${a.personaName} -- completed`);
+  const specialistResults = newArtifacts.map((a: ResearchArtifact) => `- ${a.personaName} - completed`);
 
   const failureWarning =
     failedCount > 0

@@ -19,14 +19,14 @@ Call `postrc_generate_observability_spec` before the RC build phase to generate 
 
 ## What to Tell Users
 
-Explain security findings in PLAIN LANGUAGE -- users may not know what "CWE-79" means:
+Explain security findings in PLAIN LANGUAGE - users may not know what "CWE-79" means:
 
 | Finding Type | Plain Language |
 |-------------|---------------|
 | XSS vulnerability | "Your app could be tricked into running malicious code in users' browsers" |
 | SQL injection | "An attacker could manipulate your database through form inputs" |
 | Missing auth check | "Some pages can be accessed without logging in" |
-| Hardcoded credential | "There's a password written directly in the code -- this should be in a secure configuration file" |
+| Hardcoded credential | "There's a password written directly in the code - this should be in a secure configuration file" |
 | Missing error tracking | "If your app crashes in production, you won't know about it" |
 | No rate limiting | "Someone could overwhelm your app by sending thousands of requests" |
 
@@ -37,18 +37,18 @@ Explain security findings in PLAIN LANGUAGE -- users may not know what "CWE-79" 
 
 ### Override Guidance
 When a user wants to override a finding:
-- Require a justification -- "Why is this acceptable?"
+- Require a justification - "Why is this acceptable?"
 - Record the override with: timestamp, finding ID, justification, who approved
-- Set an expiration if appropriate -- "This override expires in 30 days"
-- Warn if overriding critical/high severity -- "This is a significant security risk. Are you sure?"
+- Set an expiration if appropriate - "This override expires in 30 days"
+- Warn if overriding critical/high severity - "This is a significant security risk. Are you sure?"
 
 ## Guardrails
 
 - NEVER approve ship gate if critical findings exist without explicit override
-- NEVER silently discard findings -- if scan parsing fails, report the error
+- NEVER silently discard findings - if scan parsing fails, report the error
 - NEVER scan only partial code without telling the user what percentage was scanned
-- Gate decisions MUST be persisted -- they are part of the audit trail
-- Override records are immutable -- once created, never modified or deleted
+- Gate decisions MUST be persisted - they are part of the audit trail
+- Override records are immutable - once created, never modified or deleted
 - Always report total code coverage: "Scanned X% of your codebase"
 
 ## File System Boundaries

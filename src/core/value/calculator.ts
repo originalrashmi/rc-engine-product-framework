@@ -1,5 +1,5 @@
 /**
- * Value Calculator -- Quantifies the human-equivalent value of an RC Engine pipeline run.
+ * Value Calculator - Quantifies the human-equivalent value of an RC Engine pipeline run.
  *
  * Computes: roles replaced, hours saved, cost savings, speed multiplier, team equivalence.
  * Designed for non-technical users to understand exactly what RC Engine does for them.

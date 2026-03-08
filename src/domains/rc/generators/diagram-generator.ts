@@ -150,12 +150,12 @@ export function generateDependencyDiagram(tasks: DiagramTask[], projectName: str
     lines.push(`    style ${task.id} ${style}`);
   }
 
-  return `---\ntitle: ${projectName} -- Task Dependencies\n---\n${lines.join('\n')}`;
+  return `---\ntitle: ${projectName} - Task Dependencies\n---\n${lines.join('\n')}`;
 }
 
 /** Generate a Gantt chart from tasks */
 export function generateGanttDiagram(tasks: DiagramTask[], projectName: string): string {
-  const lines: string[] = ['gantt', `    title ${projectName} -- Build Plan`, '    dateFormat X', '    axisFormat %s'];
+  const lines: string[] = ['gantt', `    title ${projectName} - Build Plan`, '    dateFormat X', '    axisFormat %s'];
 
   // Group by layer
   const layers = ['Foundation', 'Core', 'Integration', 'Polish'];
@@ -221,7 +221,7 @@ export function generateLayerDiagram(tasks: DiagramTask[], projectName: string):
     }
   }
 
-  return `---\ntitle: ${projectName} -- Architecture Layers\n---\n${lines.join('\n')}`;
+  return `---\ntitle: ${projectName} - Architecture Layers\n---\n${lines.join('\n')}`;
 }
 
 // ── HTML Generation ──────────────────────────────────────────────────────────
@@ -342,7 +342,7 @@ export async function generateDiagrams(projectPath: string, projectName: string)
 
   // 1. Dependency DAG
   const depMermaid = generateDependencyDiagram(tasks, projectName);
-  const depHtml = mermaidToHtml(depMermaid, `${projectName} -- Task Dependencies`);
+  const depHtml = mermaidToHtml(depMermaid, `${projectName} - Task Dependencies`);
   const depPath = join(diagramsDir, 'dependency-graph.html');
   await writeFile(depPath, depHtml, 'utf-8');
   results.push({
@@ -353,7 +353,7 @@ export async function generateDiagrams(projectPath: string, projectName: string)
 
   // 2. Gantt chart
   const ganttMermaid = generateGanttDiagram(tasks, projectName);
-  const ganttHtml = mermaidToHtml(ganttMermaid, `${projectName} -- Build Timeline`);
+  const ganttHtml = mermaidToHtml(ganttMermaid, `${projectName} - Build Timeline`);
   const ganttPath = join(diagramsDir, 'build-timeline.html');
   await writeFile(ganttPath, ganttHtml, 'utf-8');
   results.push({
@@ -364,7 +364,7 @@ export async function generateDiagrams(projectPath: string, projectName: string)
 
   // 3. Layer swimlane
   const layerMermaid = generateLayerDiagram(tasks, projectName);
-  const layerHtml = mermaidToHtml(layerMermaid, `${projectName} -- Architecture Layers`);
+  const layerHtml = mermaidToHtml(layerMermaid, `${projectName} - Architecture Layers`);
   const layerPath = join(diagramsDir, 'architecture-layers.html');
   await writeFile(layerPath, layerHtml, 'utf-8');
   results.push({

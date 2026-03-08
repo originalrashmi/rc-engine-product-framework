@@ -81,7 +81,7 @@ export function registerRcPhaseTools(server: McpServer): void {
     'rc_start',
     {
       description:
-        'Start RC Method WITHOUT Pre-RC research. Use when user wants to go straight to building without the 20-persona research phase. Creates rc-method/ directory and project state, begins Phase 1 (Illuminate) with discovery questions. Returns discovery questions — present these to the user and collect their answers. After success: call rc_illuminate with user answers. Do NOT use this if Pre-RC was run — use rc_import_prerc instead.',
+        'Start RC Method WITHOUT Pre-RC research. Use when user wants to go straight to building without the 20-persona research phase. Creates rc-method/ directory and project state, begins Phase 1 (Illuminate) with discovery questions. Returns discovery questions - present these to the user and collect their answers. After success: call rc_illuminate with user answers. Do NOT use this if Pre-RC was run - use rc_import_prerc instead.',
       inputSchema: {
         project_path: z.string().describe('Absolute path to the project directory'),
         project_name: z.string().describe('Name of the project'),
@@ -180,7 +180,7 @@ export function registerRcPhaseTools(server: McpServer): void {
     'rc_sequence',
     {
       description:
-        'Phase 4 (Sequence). Auto-generates a sequenced, dependency-ordered task list from the approved PRD and architecture. Each task gets an ID (TASK-001, TASK-002...) with estimated effort and dependencies. Saved to rc-method/tasks/. No user input needed — reads PRD artifacts automatically. Present the task list to user for approval. Prerequisites: Phase 3 gate approved. After gate approval: moves to Phase 5 (Validate).',
+        'Phase 4 (Sequence). Auto-generates a sequenced, dependency-ordered task list from the approved PRD and architecture. Each task gets an ID (TASK-001, TASK-002...) with estimated effort and dependencies. Saved to rc-method/tasks/. No user input needed - reads PRD artifacts automatically. Present the task list to user for approval. Prerequisites: Phase 3 gate approved. After gate approval: moves to Phase 5 (Validate).',
       inputSchema: {
         project_path: z.string().describe('Absolute path to the project directory'),
       },
@@ -203,7 +203,7 @@ export function registerRcPhaseTools(server: McpServer): void {
     'rc_validate',
     {
       description:
-        'Phase 5 (Validate). QUALITY GATE before building. Runs 4 automated checks: anti-pattern scan, token budget audit, scope drift detection, and UX quality assessment. This catches problems BEFORE code is written — saving significant rework. No user input needed. Present findings to user with severity ratings. Prerequisites: Phase 4 gate approved. After gate approval: moves to Phase 6 (Forge) — begin building with rc_forge_task.',
+        'Phase 5 (Validate). QUALITY GATE before building. Runs 4 automated checks: anti-pattern scan, token budget audit, scope drift detection, and UX quality assessment. This catches problems BEFORE code is written - saving significant rework. No user input needed. Present findings to user with severity ratings. Prerequisites: Phase 4 gate approved. After gate approval: moves to Phase 6 (Forge) - begin building with rc_forge_task.',
       inputSchema: {
         project_path: z.string().describe('Absolute path to the project directory'),
       },
@@ -250,7 +250,7 @@ export function registerRcPhaseTools(server: McpServer): void {
     'rc_connect',
     {
       description:
-        'Phase 7 (Connect). Verifies that all built components integrate correctly. Reviews forge outputs for API wiring, authentication flows, data model alignment, and cross-component dependencies. Generates an integration report with gaps and recommended integration tests. No user input needed -- reads forge artifacts automatically. Prerequisites: Phase 6 gate approved. After gate approval: moves to Phase 8 (Compound).',
+        'Phase 7 (Connect). Verifies that all built components integrate correctly. Reviews forge outputs for API wiring, authentication flows, data model alignment, and cross-component dependencies. Generates an integration report with gaps and recommended integration tests. No user input needed - reads forge artifacts automatically. Prerequisites: Phase 6 gate approved. After gate approval: moves to Phase 8 (Compound).',
       inputSchema: {
         project_path: z.string().describe('Absolute path to the project directory'),
       },

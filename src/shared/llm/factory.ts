@@ -59,5 +59,5 @@ export class LLMFactory {
   }
 }
 
-/** Shared singleton -- use this instead of `new LLMFactory()`. */
+/** Shared singleton - use this instead of `new LLMFactory()`. */
 export const llmFactory = new LLMFactory();

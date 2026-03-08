@@ -1,5 +1,5 @@
 /**
- * User-Facing Vocabulary -- Single Source of Truth
+ * User-Facing Vocabulary - Single Source of Truth
  *
  * Internal code can use whatever names it wants (gate, persona, forge, etc).
  * But all user-facing strings MUST go through this module.

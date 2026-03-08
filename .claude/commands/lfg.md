@@ -5,7 +5,7 @@ argument-hint: "[feature description]"
 disable-model-invocation: true
 ---
 
-Run these slash commands in order. Do not do anything else. Do not stop between steps — complete every step through to the end.
+Run these slash commands in order. Do not do anything else. Do not stop between steps - complete every step through to the end.
 
 1. **Optional:** If the `ralph-wiggum` skill is available, run `/ralph-wiggum:ralph-loop "finish all slash commands" --completion-promise "DONE"`. If not available or it fails, skip and continue to step 2 immediately.
 2. `/workflows:plan $ARGUMENTS`

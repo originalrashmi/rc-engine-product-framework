@@ -35,7 +35,7 @@ export function Login({ onBack, onVerified }: LoginProps) {
         return;
       }
 
-      // Dev mode: token returned directly -- auto-verify
+      // Dev mode: token returned directly - auto-verify
       if (data.token) {
         setToken(data.token);
         await verifyToken(data.token);

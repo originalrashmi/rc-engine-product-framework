@@ -1,5 +1,5 @@
 /**
- * Graph Runner -- Executes a GraphDefinition.
+ * Graph Runner - Executes a GraphDefinition.
  *
  * Supports:
  * - Sequential execution in topological order
@@ -101,7 +101,7 @@ export class GraphRunner<S> {
       notify();
     });
 
-    // Run the graph concurrently -- events flow into the queue
+    // Run the graph concurrently - events flow into the queue
     const runPromise = (async () => {
       try {
         result = await this.run(graph, initialState, options);
@@ -194,7 +194,7 @@ export class GraphRunner<S> {
       });
 
       if (options.gateResume.decision === 'reject') {
-        // On rejection, stop execution -- caller should re-run preceding nodes
+        // On rejection, stop execution - caller should re-run preceding nodes
         const trace: ExecutionTrace = {
           runId,
           graphId: graph.id,
@@ -234,7 +234,7 @@ export class GraphRunner<S> {
       // Check if all incoming edges have conditions met
       const incomingEdges = graph.edges.filter((e) => e.to === nodeId);
       if (incomingEdges.length > 0 && incomingEdges.every((e) => e.condition !== undefined)) {
-        // All edges are conditional -- check if at least one condition is met
+        // All edges are conditional - check if at least one condition is met
         const anyConditionMet = incomingEdges.some((e) => e.condition!(state));
         if (!anyConditionMet) {
           nodeExecutions.push({ nodeId, status: 'skipped' });
@@ -258,7 +258,7 @@ export class GraphRunner<S> {
         return { state, trace, gateInterrupt: { gateNodeId: nodeId, state } };
       }
 
-      // Handle fan-out nodes -- execute all successor nodes in parallel
+      // Handle fan-out nodes - execute all successor nodes in parallel
       if (node.type === 'fan-out') {
         const successorIds = adjacency.get(nodeId) ?? [];
         const successorNodes = successorIds.map((id) => nodeMap.get(id)).filter((n): n is GraphNode<S> => n != null);
@@ -331,7 +331,7 @@ export class GraphRunner<S> {
         continue;
       }
 
-      // Handle fan-in nodes (reached outside of fan-out context -- just pass through)
+      // Handle fan-in nodes (reached outside of fan-out context - just pass through)
       if (node.type === 'fan-in') {
         nodeExecutions.push({ nodeId, status: 'completed' });
         continue;
@@ -386,7 +386,7 @@ export class GraphRunner<S> {
             sendSkipSet.add(fanInNodeId);
           }
         } else if (successfulStates.length > 0) {
-          // No fan-in -- use the last successful state
+          // No fan-in - use the last successful state
           state = successfulStates[successfulStates.length - 1];
         }
 
@@ -489,7 +489,7 @@ export class GraphRunner<S> {
     }
 
     if (errorStrategy === 'fallback' && node.fallbackNodeId) {
-      // Fallback is handled by the caller (runner) -- for now, mark as failed
+      // Fallback is handled by the caller (runner) - for now, mark as failed
       nodeExecutions.push({
         nodeId: node.id,
         status: 'failed',

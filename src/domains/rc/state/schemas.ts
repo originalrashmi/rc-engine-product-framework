@@ -58,7 +58,7 @@ export const ProjectStateSchema = z.object({
   preRcSource: PreRcSourceSchema.optional(),
   forgeTasks: z.record(z.string(), ForgeTaskRecordSchema).optional(),
   selectedDesign: DesignSelectionSchema.optional(),
-  // Transient fields -- used for inter-node communication within a graph run.
+  // Transient fields - used for inter-node communication within a graph run.
   // Optional so existing persisted state without them still validates.
   _pendingInput: z.string().optional(),
   _lastOutput: z.string().optional(),

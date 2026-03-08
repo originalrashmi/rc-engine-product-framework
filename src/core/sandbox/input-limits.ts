@@ -1,5 +1,5 @@
 /**
- * Input Limits -- Prevents unbounded inputs from reaching LLM calls or state.
+ * Input Limits - Prevents unbounded inputs from reaching LLM calls or state.
  *
  * Every tool that accepts user text (brief, code_context, operator_inputs, etc.)
  * should validate input size before processing. This prevents:
@@ -79,7 +79,7 @@ export function checkInputSize(
   const limit = typeof config === 'string' ? DEFAULT_LIMITS[config] : config;
 
   if (!limit) {
-    // Unknown preset -- use generic
+    // Unknown preset - use generic
     return checkInputSize(value, DEFAULT_LIMITS.generic, truncate);
   }
 

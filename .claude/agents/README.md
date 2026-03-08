@@ -1,4 +1,4 @@
-# RC Engine -- Agent Delegation Protocol
+# RC Engine - Agent Delegation Protocol
 
 ## Agent Architecture
 
@@ -19,7 +19,7 @@ RC Engine uses a parent-child agent model. The **alpha agent** (defined in `/CLA
 
 1. The alpha agent decides WHICH domain to invoke based on pipeline stage and user intent
 2. Tool calls are routed to the owning agent based on prefix
-3. Each agent operates independently within its domain -- it does NOT call tools from other domains
+3. Each agent operates independently within its domain - it does NOT call tools from other domains
 4. When an agent completes its work, it returns control to the alpha with a structured summary
 
 ## Handoff Protocol
@@ -63,7 +63,7 @@ These are initiated by the alpha agent (never by child agents):
 | Gate rejected | Child stays at current phase, incorporates feedback |
 | LLM provider unavailable | Fall back to passthrough mode (structured prompts) |
 | State corruption detected | Alpha stops, reports to user, offers recovery options |
-| Cross-domain trigger fails | Alpha logs the gap and continues -- does not block pipeline |
+| Cross-domain trigger fails | Alpha logs the gap and continues - does not block pipeline |
 
 ## Tool Count Verification
 

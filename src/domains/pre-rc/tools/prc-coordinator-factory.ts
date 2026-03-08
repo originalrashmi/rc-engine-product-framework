@@ -88,7 +88,7 @@ export function createPreRcHandlers(deps: PreRcDependencies): PreRcNodeHandlers 
       const activeConfigs = stageConfigs.filter((c) => c.alwaysRuns || activeIds.includes(c.id));
 
       if (activeConfigs.length === 0) {
-        // Skip stage -- no active personas
+        // Skip stage - no active personas
         return {
           state: {
             ...state,
@@ -258,7 +258,7 @@ export function createPreRcHandlers(deps: PreRcDependencies): PreRcNodeHandlers 
 /**
  * Create a PreRcCoordinator with real handlers that wrap domain logic.
  *
- * The handlers modify ResearchState directly -- the coordinator persists
+ * The handlers modify ResearchState directly - the coordinator persists
  * state through CheckpointStore after each node completes (via onNodeComplete).
  */
 export function createPreRcCoordinator(deps: PreRcDependencies): PreRcCoordinator {

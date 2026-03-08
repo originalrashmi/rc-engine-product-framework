@@ -28,7 +28,7 @@ export function audit(
     });
   } catch {
     // Audit logging must never break the pipeline.
-    // Silently swallow -- the primary operation already succeeded.
+    // Silently swallow - the primary operation already succeeded.
   }
 }
 

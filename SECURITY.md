@@ -44,7 +44,7 @@ RC Engine requires API keys for LLM providers. These keys are handled securely:
 ### Authentication (Web UI)
 
 - The Web UI uses magic link email authentication by default
-- `RC_AUTH_BYPASS=true` disables auth entirely -- use only for local development
+- `RC_AUTH_BYPASS=true` disables auth entirely - use only for local development
 - Rate limiting is applied to all API endpoints via `express-rate-limit`
 - CORS is configurable via `ALLOWED_ORIGINS`
 - Security headers are applied via `helmet`

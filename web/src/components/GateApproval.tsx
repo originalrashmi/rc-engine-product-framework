@@ -27,7 +27,7 @@ export function GateApproval({
         </div>
         <div>
           <h3 className="text-lg font-semibold text-slate-100">{title}</h3>
-          <p className="text-sm text-slate-400">Checkpoint -- your approval is needed to continue</p>
+          <p className="text-sm text-slate-400">Checkpoint - your approval is needed to continue</p>
         </div>
       </div>
 

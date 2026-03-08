@@ -40,7 +40,7 @@ export async function prcGate(
     feedbackText = feedbackText || decisionLower.replace('reject', '').trim() || 'Rejected without reason';
   } else if (decisionLower.startsWith('question')) {
     const questionText = decisionLower.replace('question', '').trim() || feedbackText;
-    return `**Checkpoint ${pendingGate} -- Question Received**
+    return `**Checkpoint ${pendingGate} - Question Received**
 
 **Question:** ${questionText}
 
@@ -94,7 +94,7 @@ Please provide the answer and I'll continue with the checkpoint.`;
     }
     return buildApprovalMessage(pendingGate, resumeResult);
   } else {
-    return `**Checkpoint ${pendingGate} -- Changes Requested**
+    return `**Checkpoint ${pendingGate} - Changes Requested**
 
 **Feedback:** ${feedbackText}
 
@@ -136,7 +136,7 @@ I'll pause at the final checkpoint when all research is complete.`,
 ${resultState?._synthesisOutput ? 'Your requirements document is ready for review.' : 'This combines all specialist findings into a comprehensive requirements document.'}`,
   };
 
-  return `**Checkpoint ${gateNumber} -- Approved**
+  return `**Checkpoint ${gateNumber} - Approved**
 
 ${nextSteps[gateNumber]}`;
 }

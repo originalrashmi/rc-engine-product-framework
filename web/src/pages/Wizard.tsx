@@ -379,7 +379,7 @@ export function Wizard({ onComplete, onBack }: WizardProps) {
       const safeStep = [0, 1, 3, 4, 6, 7, 8].includes(session.step) ? session.step : session.step - 1;
       if (safeStep > 0) setStep(Math.max(0, safeStep));
     } catch {
-      // Corrupt session -- ignore
+      // Corrupt session - ignore
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -489,7 +489,7 @@ export function Wizard({ onComplete, onBack }: WizardProps) {
     const startTime = Date.now();
 
     try {
-      // Apply persona toggles -- disable unchecked personas
+      // Apply persona toggles - disable unchecked personas
       const disabledIds = personas.filter((p) => !p.enabled).map((p) => p.id);
       if (disabledIds.length > 0) {
         setProgress('Configuring research team...');
@@ -546,7 +546,7 @@ export function Wizard({ onComplete, onBack }: WizardProps) {
         const arts = await listArtifacts(projectPath);
         setArtifacts(arts);
       } catch {
-        // Non-fatal -- downloads just won't show
+        // Non-fatal - downloads just won't show
       }
 
       const elapsedMin = (Date.now() - startTime) / 60000;
@@ -636,7 +636,7 @@ export function Wizard({ onComplete, onBack }: WizardProps) {
           }
         }
       } catch {
-        // Non-fatal -- raw text display is still available
+        // Non-fatal - raw text display is still available
       }
 
       // Run UX scoring on the design
@@ -704,7 +704,7 @@ export function Wizard({ onComplete, onBack }: WizardProps) {
         const diagrams = await generateDiagrams(projectPath);
         setDiagramUrls(diagrams);
       } catch {
-        // Non-fatal -- diagrams are optional
+        // Non-fatal - diagrams are optional
       }
 
       const elapsedMin = (Date.now() - startTime) / 60000;
@@ -764,7 +764,7 @@ export function Wizard({ onComplete, onBack }: WizardProps) {
       try {
         await callTool('rc_gate', { project_path: projectPath, decision: 'approve' });
       } catch {
-        // Non-fatal -- gate may already be at the right phase
+        // Non-fatal - gate may already be at the right phase
       }
 
       // Phase 7: Integration verification
@@ -773,7 +773,7 @@ export function Wizard({ onComplete, onBack }: WizardProps) {
         await callTool('rc_connect', { project_path: projectPath });
         await callTool('rc_gate', { project_path: projectPath, decision: 'approve' });
       } catch {
-        // Non-fatal -- continue even if integration check has issues
+        // Non-fatal - continue even if integration check has issues
       }
 
       // Phase 8: Production hardening assessment
@@ -782,7 +782,7 @@ export function Wizard({ onComplete, onBack }: WizardProps) {
         await callTool('rc_compound', { project_path: projectPath });
         await callTool('rc_gate', { project_path: projectPath, decision: 'approve' });
       } catch {
-        // Non-fatal -- continue to security scan
+        // Non-fatal - continue to security scan
       }
 
       const elapsedMin = (Date.now() - startTime) / 60000;
@@ -1194,7 +1194,7 @@ export function Wizard({ onComplete, onBack }: WizardProps) {
               className="flex w-full items-center justify-center gap-2 rounded bg-emerald-600 px-6 py-3 text-lg font-semibold text-white transition-colors hover:bg-emerald-500"
             >
               <Trophy size={18} />
-              Finish -- Download Deliverables
+              Finish - Download Deliverables
             </button>
           )}
         </div>
@@ -1206,7 +1206,7 @@ export function Wizard({ onComplete, onBack }: WizardProps) {
           <div className="rounded-lg border border-navy-lighter bg-navy-light p-6">
             <h3 className="mb-2 text-lg font-semibold text-slate-100">Design Your Product</h3>
             <p className="mb-4 text-sm text-slate-400">
-              I'll generate visual design options based on your research -- target users, competitor gaps, and current
+              I'll generate visual design options based on your research - target users, competitor gaps, and current
               design trends. You can provide inspiration or let the AI design from scratch.
             </p>
 
@@ -1341,7 +1341,7 @@ export function Wizard({ onComplete, onBack }: WizardProps) {
                 </div>
               )}
 
-              {/* Wireframe preview -- scoped to selected option */}
+              {/* Wireframe preview - scoped to selected option */}
               {designWireframeUrls.length > 0 && (
                 <DesignPreview
                   wireframes={

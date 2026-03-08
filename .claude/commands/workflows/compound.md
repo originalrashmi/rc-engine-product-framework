@@ -197,7 +197,7 @@ Build → Test → Find Issue → Research → Improve → Document → Validate
     └──────────────────────────────────────────────────────────────────────┘
 ```
 
-**Each unit of engineering work should make subsequent units of work easier—not harder.**
+**Each unit of engineering work should make subsequent units of work easier--not harder.**
 
 ## Auto-Invoke
 

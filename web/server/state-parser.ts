@@ -1,5 +1,5 @@
 /**
- * State Parser -- Parses text output from domain status tools into structured data.
+ * State Parser - Parses text output from domain status tools into structured data.
  *
  * The MCP tools return formatted text. This module extracts structured data
  * so the React frontend gets clean JSON instead of parsing text client-side.

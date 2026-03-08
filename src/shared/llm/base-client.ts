@@ -31,9 +31,9 @@ export abstract class BaseLLMClient {
    * EventBus (llm:start/complete/error events for Tracer).
    */
   async chatWithRetry(request: LLMRequest, maxRetries: number = 1): Promise<LLMResponse> {
-    // Circuit breaker check -- fail fast if provider is down
+    // Circuit breaker check - fail fast if provider is down
     if (!canRequest(this.provider)) {
-      throw new Error(`${this.provider} circuit is open -- provider temporarily unavailable`);
+      throw new Error(`${this.provider} circuit is open - provider temporarily unavailable`);
     }
 
     let lastError: Error | null = null;

@@ -1,5 +1,5 @@
 /**
- * Tracer -- Structured pipeline execution tracing.
+ * Tracer - Structured pipeline execution tracing.
  *
  * Creates a hierarchical trace of a pipeline execution:
  *   Pipeline Span

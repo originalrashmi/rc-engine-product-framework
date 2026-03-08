@@ -23,9 +23,9 @@ function getPipelineProgress(stageStatus: Record<string, string>): string {
   const analysisDone = analysisStages.every(([, s]) => s === StageStatus.Completed);
 
   if (analysisDone && researchDone) {
-    return 'Research complete -- ready to continue to the build phase';
+    return 'Research complete - ready to continue to the build phase';
   } else if (researchDone) {
-    return 'Research complete -- final analysis in progress';
+    return 'Research complete - final analysis in progress';
   } else {
     const researchCompleted = researchStages.filter(([, s]) => s === StageStatus.Completed).length;
     return `Research in progress (${researchCompleted}/${researchStages.length} stages done)`;

@@ -16,7 +16,7 @@ export async function parsePostRcState(projectPath: string): Promise<ParsedFindi
     const checkpoint = store.load(pipelineId, NODE_IDS.POST_RC_STATE, PostRCStateSchema);
     return extractFindings(checkpoint.state);
   } catch {
-    // No Post-RC state yet or validation failed -- no findings to map
+    // No Post-RC state yet or validation failed - no findings to map
     return [];
   }
 }

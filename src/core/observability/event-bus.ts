@@ -1,5 +1,5 @@
 /**
- * EventBus -- Cross-module event streaming for observability.
+ * EventBus - Cross-module event streaming for observability.
  *
  * Provides a typed, decoupled event system that all core modules can
  * publish to and subscribe from. Replaces the ad-hoc console.error

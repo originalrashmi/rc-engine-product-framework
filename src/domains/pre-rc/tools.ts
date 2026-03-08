@@ -52,7 +52,7 @@ export function registerPreRcTools(server: McpServer): void {
   // ─── prc_start ─────────────────────────────────────────────────────
   server.tool(
     'prc_start',
-    'FIRST STEP of Pre-RC research. Call when the user describes a product idea and you want deep research before building. Creates the pre-rc-research/ directory and initializes project state. Prerequisites: none — this is the entry point. After success: MUST call prc_classify next. Never skip to prc_run_stage without classifying first.',
+    'FIRST STEP of Pre-RC research. Call when the user describes a product idea and you want deep research before building. Creates the pre-rc-research/ directory and initializes project state. Prerequisites: none - this is the entry point. After success: MUST call prc_classify next. Never skip to prc_run_stage without classifying first.',
     PrcStartSchema.shape,
     async (args) => {
       try {
@@ -70,7 +70,7 @@ export function registerPreRcTools(server: McpServer): void {
   // ─── prc_classify ──────────────────────────────────────────────────
   server.tool(
     'prc_classify',
-    'Call AFTER prc_start. Classifies the product idea using Cynefin framework (Clear/Complicated/Complex/Chaotic) and activates the appropriate subset of 20 research specialists. Returns: complexity domain, activated specialist list, estimated cost budget, and which stages to run. After success: present the classification to the user as Checkpoint 1 -- call prc_gate with their decision. Read-only analysis, no side effects beyond state update.',
+    'Call AFTER prc_start. Classifies the product idea using Cynefin framework (Clear/Complicated/Complex/Chaotic) and activates the appropriate subset of 20 research specialists. Returns: complexity domain, activated specialist list, estimated cost budget, and which stages to run. After success: present the classification to the user as Checkpoint 1 - call prc_gate with their decision. Read-only analysis, no side effects beyond state update.',
     PrcClassifySchema.shape,
     async (args) => {
       try {
@@ -96,7 +96,7 @@ export function registerPreRcTools(server: McpServer): void {
   // ─── prc_gate ──────────────────────────────────────────────────────
   server.tool(
     'prc_gate',
-    'Submit a checkpoint decision for the current Pre-RC research stage. NEVER call without presenting the checkpoint context to the user first and getting their explicit decision. Three checkpoints exist: Checkpoint 1 (after classify -- is research scope right?), Checkpoint 2 (after stages 1-4 -- is research accurate?), Checkpoint 3 (after all stages -- ready to build?). Valid decisions: "approve" to proceed, "reject" with feedback to revise, "question" to pause for clarification. After approve: proceed to next stage or prc_synthesize (after Checkpoint 3). After reject: re-run the relevant stage with user feedback.',
+    'Submit a checkpoint decision for the current Pre-RC research stage. NEVER call without presenting the checkpoint context to the user first and getting their explicit decision. Three checkpoints exist: Checkpoint 1 (after classify - is research scope right?), Checkpoint 2 (after stages 1-4 - is research accurate?), Checkpoint 3 (after all stages - ready to build?). Valid decisions: "approve" to proceed, "reject" with feedback to revise, "question" to pause for clarification. After approve: proceed to next stage or prc_synthesize (after Checkpoint 3). After reject: re-run the relevant stage with user feedback.',
     PrcGateSchema.shape,
     async (args) => {
       try {
@@ -150,7 +150,7 @@ export function registerPreRcTools(server: McpServer): void {
   // ─── prc_synthesize ────────────────────────────────────────────────
   server.tool(
     'prc_synthesize',
-    'FINAL STEP of Pre-RC. Call ONLY after Gate 3 is approved (all 6 stages complete). Synthesizes all persona research into deliverables: 19-section PRD (markdown), HTML consulting deck, task list, DOCX document, and research index. LONG-RUNNING: involves multiple LLM calls for synthesis. Set include_task_deck=true to also generate a visual task breakdown deck. After success: present deliverables to user. To continue into RC Method, call rc_import_prerc. This is a natural stopping point — user may choose to stop here with just the PRD.',
+    'FINAL STEP of Pre-RC. Call ONLY after Gate 3 is approved (all 6 stages complete). Synthesizes all persona research into deliverables: 19-section PRD (markdown), HTML consulting deck, task list, DOCX document, and research index. LONG-RUNNING: involves multiple LLM calls for synthesis. Set include_task_deck=true to also generate a visual task breakdown deck. After success: present deliverables to user. To continue into RC Method, call rc_import_prerc. This is a natural stopping point - user may choose to stop here with just the PRD.',
     PrcSynthesizeSchema.shape,
     async (args) => {
       try {

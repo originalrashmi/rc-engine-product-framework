@@ -1,5 +1,5 @@
 /**
- * Graph Coordinator -- bridges GraphRunner + CheckpointStore.
+ * Graph Coordinator - bridges GraphRunner + CheckpointStore.
  *
  * Provides persistent gate interrupts: when the graph pauses at a gate,
  * the state and interrupt metadata are saved to SQLite. On resume, the
@@ -155,7 +155,7 @@ export class GraphCoordinator<S> {
     const { store, pipelineId } = this.storeFactory(projectPath);
     try {
       const checkpoint = store.load(pipelineId, this.interruptNodeId, PersistedInterruptSchema);
-      // Empty gateNodeId is our tombstone -- means interrupt was cleared
+      // Empty gateNodeId is our tombstone - means interrupt was cleared
       if (!checkpoint.state.gateNodeId) return null;
       return checkpoint.state;
     } catch {
@@ -194,7 +194,7 @@ export class GraphCoordinator<S> {
         lastCheckpointedNodeId = nodeId;
         lastState = checkpoint.state;
       } catch {
-        // No checkpoint for this node -- this is where we stopped
+        // No checkpoint for this node - this is where we stopped
         break;
       }
     }
@@ -204,7 +204,7 @@ export class GraphCoordinator<S> {
     // Resume from the node AFTER the last completed one
     const lastIndex = executionOrder.indexOf(lastCheckpointedNodeId);
     if (lastIndex >= executionOrder.length - 1) {
-      // All nodes were completed -- nothing to resume
+      // All nodes were completed - nothing to resume
       return null;
     }
 
@@ -235,7 +235,7 @@ export class GraphCoordinator<S> {
       };
       store.save(pipelineId, this.interruptNodeId, interrupt);
     } else {
-      // Execution complete -- clear any interrupt
+      // Execution complete - clear any interrupt
       this.clearInterrupt(projectPath);
     }
   }

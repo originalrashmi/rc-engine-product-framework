@@ -168,7 +168,7 @@ export function parseLlmLegalFindings(raw: string, module: ValidationModule, idP
       });
     }
   } catch {
-    // LLM response was not valid JSON -- return empty
+    // LLM response was not valid JSON - return empty
   }
 
   return findings;

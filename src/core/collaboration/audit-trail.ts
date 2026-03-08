@@ -1,5 +1,5 @@
 /**
- * Audit Trail -- Append-only log of all pipeline actions.
+ * Audit Trail - Append-only log of all pipeline actions.
  *
  * Tracks every significant event in the pipeline with:
  * - Who performed the action (user identity)
@@ -67,7 +67,7 @@ export interface AuditQuery {
   userId?: string;
   action?: AuditAction;
   domain?: string;
-  /** ISO timestamp -- only entries after this time. */
+  /** ISO timestamp - only entries after this time. */
   after?: string;
   /** Maximum results (default: 50). */
   limit?: number;

@@ -1,12 +1,12 @@
 /**
- * Tool Guard -- Shared validation middleware for all MCP tool handlers.
+ * Tool Guard - Shared validation middleware for all MCP tool handlers.
  *
  * Validates:
  *   1. project_path is safe (canonicalized, no traversal, no system paths)
  *   2. String inputs are within size limits
  *
  * Wired in src/index.ts by patching both server.tool() and server.registerTool()
- * -- all tools get validation automatically without modifying individual handlers.
+ * - all tools get validation automatically without modifying individual handlers.
  */
 
 import { PathValidator } from '../core/sandbox/path-validator.js';
@@ -14,7 +14,7 @@ import { checkInputs, DEFAULT_LIMITS } from '../core/sandbox/input-limits.js';
 import type { InputLimitConfig } from '../core/sandbox/input-limits.js';
 import { recordToolCall } from './usage-meter.js';
 
-// Shared PathValidator instance -- root "/" means basic safety checks only.
+// Shared PathValidator instance - root "/" means basic safety checks only.
 // Domain-specific write restrictions are enforced separately.
 const validator = new PathValidator('/');
 
@@ -69,12 +69,12 @@ export function guardedTool(handler: ToolHandler): ToolHandler {
 function validatePath(projectPath: string): string | null {
   // Must be an absolute path
   if (!projectPath.startsWith('/')) {
-    return `Invalid project_path: "${projectPath}" -- must be an absolute path starting with /.`;
+    return `Invalid project_path: "${projectPath}" - must be an absolute path starting with /.`;
   }
 
   // Must not point to system directories
   if (validator.isBlocked(projectPath)) {
-    return `Invalid project_path: "${projectPath}" -- points to a protected system directory.`;
+    return `Invalid project_path: "${projectPath}" - points to a protected system directory.`;
   }
 
   return null;

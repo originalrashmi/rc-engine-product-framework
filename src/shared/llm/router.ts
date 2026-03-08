@@ -1,5 +1,5 @@
 /**
- * Model Router -- Intelligent LLM selection based on task type, budget, and quality history.
+ * Model Router - Intelligent LLM selection based on task type, budget, and quality history.
  *
  * Replaces the simple "fall back to Claude" pattern with:
  * 1. Task-type routing: Use the best historical model for each task type
@@ -44,7 +44,7 @@ export interface RouteRequest {
  * These are used when no historical data exists.
  */
 const DEFAULT_TASK_TIERS: Record<string, CostTier> = {
-  // Cheap tier -- simple classification, formatting, extraction
+  // Cheap tier - simple classification, formatting, extraction
   prc_classify: 'cheap',
   prc_gate: 'cheap',
   rc_gate: 'cheap',
@@ -52,7 +52,7 @@ const DEFAULT_TASK_TIERS: Record<string, CostTier> = {
   postrc_configure: 'cheap',
   ux_score: 'cheap',
 
-  // Standard tier -- research, content generation
+  // Standard tier - research, content generation
   prc_run_stage: 'standard',
   prc_synthesize: 'standard',
   rc_illuminate: 'standard',
@@ -62,7 +62,7 @@ const DEFAULT_TASK_TIERS: Record<string, CostTier> = {
   ux_generate: 'standard',
   ux_audit: 'standard',
 
-  // Premium tier -- architecture, security, code generation
+  // Premium tier - architecture, security, code generation
   rc_architect: 'premium',
   rc_forge_task: 'premium',
   postrc_scan: 'premium',

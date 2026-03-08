@@ -1,5 +1,5 @@
 /**
- * Learning Store -- SQLite-backed cross-project intelligence.
+ * Learning Store - SQLite-backed cross-project intelligence.
  *
  * Tracks:
  * - Gate outcomes (approved/rejected, with feedback and context)
@@ -547,7 +547,7 @@ export class LearningStore {
   }
 }
 
-/** Lazy singleton -- created on first access. */
+/** Lazy singleton - created on first access. */
 let _instance: LearningStore | null = null;
 
 export function getLearningStore(): LearningStore {

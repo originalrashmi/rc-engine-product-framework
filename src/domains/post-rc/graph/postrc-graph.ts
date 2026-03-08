@@ -1,5 +1,5 @@
 /**
- * Post-RC Graph Definition -- validation pipeline.
+ * Post-RC Graph Definition - validation pipeline.
  *
  * Topology: scan-fanout -> [security, monitoring, legal-claims, legal-product] -> scan-fanin ->
  * ship-gate

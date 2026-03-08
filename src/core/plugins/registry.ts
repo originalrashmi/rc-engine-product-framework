@@ -1,5 +1,5 @@
 /**
- * Plugin Registry -- Load, manage, and invoke RC Engine plugins.
+ * Plugin Registry - Load, manage, and invoke RC Engine plugins.
  *
  * Plugins are loaded from:
  * 1. Project-local: .rc-engine/plugins/ directory

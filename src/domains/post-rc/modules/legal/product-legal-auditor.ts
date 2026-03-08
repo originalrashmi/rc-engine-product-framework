@@ -1,5 +1,5 @@
 /**
- * Product Legal Auditor Module (Agent 2) -- "Hostile Attorney for Your Product"
+ * Product Legal Auditor Module (Agent 2) - "Hostile Attorney for Your Product"
  *
  * Scans the user's product output (PRD, architecture, code, tasks) through
  * a hostile-attorney lens for legal and regulatory compliance gaps.

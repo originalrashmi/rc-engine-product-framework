@@ -23,7 +23,7 @@ Read through the document and ask:
 - What assumptions are unstated?
 - Where could scope accidentally expand?
 
-These questions surface issues. Don't fix yet—just note what you find.
+These questions surface issues. Don't fix yet--just note what you find.
 
 ## Step 3: Evaluate
 
@@ -37,7 +37,7 @@ Score the document against these criteria:
 | **YAGNI** | No hypothetical features, simplest approach chosen |
 
 If invoked within a workflow (after `/workflows:brainstorm` or `/workflows:plan`), also check:
-- **User intent fidelity** — Document reflects what was discussed, assumptions validated
+- **User intent fidelity** - Document reflects what was discussed, assumptions validated
 
 ## Step 4: Identify the Critical Improvement
 
@@ -49,7 +49,7 @@ Present your findings, then:
 
 1. **Auto-fix** minor issues (vague language, formatting) without asking
 2. **Ask approval** before substantive changes (restructuring, removing sections, changing meaning)
-3. **Update** the document inline—no separate files, no metadata sections
+3. **Update** the document inline--no separate files, no metadata sections
 
 ### Simplification Guidance
 
@@ -75,7 +75,7 @@ After changes are complete, ask:
 
 ### Iteration Guidance
 
-After 2 refinement passes, recommend completion—diminishing returns are likely. But if the user wants to continue, allow it.
+After 2 refinement passes, recommend completion--diminishing returns are likely. But if the user wants to continue, allow it.
 
 Return control to the caller (workflow or user) after selection.
 

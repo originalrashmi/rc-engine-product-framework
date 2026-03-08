@@ -393,7 +393,7 @@ ${result.text.substring(0, 500)}...`;
     return this.finalizePhase(projectPath, state, result.text);
   }
 
-  /** Execute a specific task during Forge phase (Phase 6) -- generates actual code files */
+  /** Execute a specific task during Forge phase (Phase 6) - generates actual code files */
   async forgeTask(projectPath: string, taskId: string): Promise<AgentResult> {
     const state = this.stateManager.load(projectPath);
     this.enforcePhase(state, 6, 'rc_forge_task');
@@ -458,11 +458,11 @@ Generate ALL files needed for this task. Include:
 Rules:
 - Follow the approved task list exactly
 - Reference the active PRD for context and requirements
-- Generate complete, runnable code -- not pseudocode or guidance
+- Generate complete, runnable code - not pseudocode or guidance
 - Use the tech stack and patterns from the architecture document
 - If the task is a [UI] task, apply rc-ux-core.md core rules${designTokens ? '\n- For UI tasks, use the design tokens (colors, typography, spacing) from the selected design spec below' : ''}
 - If the task is a [UI], [API], or [INTEGRATION] task, generate a test file with the implementation
-- If scope questions arise, STOP and flag them -- do NOT guess
+- If scope questions arise, STOP and flag them - do NOT guess
 - Every generated file must be self-contained and importable
 - The project is "${state.projectName}"
 
@@ -499,14 +499,14 @@ ${testScriptKnowledge}`;
     const filesSummary =
       generatedFiles.length > 0
         ? `\n\n### Generated Files (${generatedFiles.length})\n\n${generatedFiles.map((f) => `- \`${f}\``).join('\n')}\n\nFiles written to \`rc-method/forge/${taskId}/\`. Review and integrate into your project.`
-        : '\n\n*No file blocks detected in output. The response contains implementation guidance -- use it to write the code manually or re-run the task.*';
+        : '\n\n*No file blocks detected in output. The response contains implementation guidance - use it to write the code manually or re-run the task.*';
 
     // Task completion stats
     const totalTasks = Object.keys(state.forgeTasks).length;
     const completedTasks = Object.values(state.forgeTasks).filter((t) => t.status === 'complete').length;
 
     return {
-      text: `## Forge: ${taskId} -- Complete\n\nProgress: ${completedTasks}/${totalTasks} tasks executed${filesSummary}\n\n---\n\n${text}`,
+      text: `## Forge: ${taskId} - Complete\n\nProgress: ${completedTasks}/${totalTasks} tasks executed${filesSummary}\n\n---\n\n${text}`,
       artifacts: generatedFiles.map((f) => `rc-method/forge/${taskId}/${f}`),
     };
   }

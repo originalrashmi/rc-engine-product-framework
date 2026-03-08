@@ -16,7 +16,7 @@ export function registerRcUxTools(server: McpServer): void {
     'ux_score',
     {
       description:
-        'OPTIONAL — call during Phase 2 (Define) to assess UX complexity. Pass the feature list from the PRD. Returns: numeric score, mode (standard/selective/deep_dive), and which UX specialist modules to load. Use the result to decide whether to call ux_generate (for deep_dive/selective) or skip UX child PRD (for standard). Does NOT require project_path — works on any feature list. Read-only analysis.',
+        'OPTIONAL - call during Phase 2 (Define) to assess UX complexity. Pass the feature list from the PRD. Returns: numeric score, mode (standard/selective/deep_dive), and which UX specialist modules to load. Use the result to decide whether to call ux_generate (for deep_dive/selective) or skip UX child PRD (for standard). Does NOT require project_path - works on any feature list. Read-only analysis.',
       inputSchema: {
         feature_list: z.string().describe('List of features/screens to score for UX complexity'),
       },

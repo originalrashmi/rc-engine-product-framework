@@ -16,7 +16,7 @@ let _router: ModelRouter | null = null;
 export function getModelRouter(): ModelRouter {
   if (!_router) {
     // ModelRouter accepts optional LearningStore and CostTracker.
-    // We pass null for both -- they integrate through their own wrappers.
+    // We pass null for both - they integrate through their own wrappers.
     // The router still provides task-type routing and tier-based selection.
     _router = new ModelRouter(llmFactory, null, null);
   }

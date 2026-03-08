@@ -1,5 +1,5 @@
 /**
- * RC Method Graph Definition -- 8-phase build pipeline.
+ * RC Method Graph Definition - 8-phase build pipeline.
  *
  * Static topology: illuminate -> gate-1 -> define -> gate-2 -> architect ->
  * gate-3 -> sequence -> gate-4 -> validate -> gate-5 -> forge -> gate-6 ->
@@ -44,7 +44,7 @@ const PHASES = [
  * Build the RC Method pipeline graph.
  *
  * Every phase is an action node followed by a gate node.
- * The graph is static -- same topology for every project.
+ * The graph is static - same topology for every project.
  */
 export function buildRcGraph(handlers: RcNodeHandlers): GraphDefinition<ProjectState> {
   const builder = new GraphBuilder<ProjectState>('rc-method', 'RC Method Pipeline');

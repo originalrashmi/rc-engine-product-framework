@@ -37,17 +37,17 @@ This pollutes PRs with unrelated changes and can cause merge conflicts or confus
 
 ```bash
 # List all migration files changed in the PR
-git diff main --name-only -- db/migrate/
+git diff main --name-only - db/migrate/
 
 # Get the migration version numbers
-git diff main --name-only -- db/migrate/ | grep -oE '[0-9]{14}'
+git diff main --name-only - db/migrate/ | grep -oE '[0-9]{14}'
 ```
 
 ### Step 2: Analyze Schema Changes
 
 ```bash
 # Show all schema.rb changes
-git diff main -- db/schema.rb
+git diff main - db/schema.rb
 ```
 
 ### Step 3: Cross-Reference
@@ -99,11 +99,11 @@ For each change in schema.rb, verify it corresponds to a migration in the PR:
 
 ```bash
 # Option 1: Reset schema to main and re-run only PR migrations
-git checkout main -- db/schema.rb
+git checkout main - db/schema.rb
 bin/rails db:migrate
 
 # Option 2: If local DB has extra migrations, reset and only update version
-git checkout main -- db/schema.rb
+git checkout main - db/schema.rb
 # Manually edit the version line to match PR's migration
 ```
 
@@ -140,7 +140,7 @@ Unrelated schema changes found:
    - `index_users_on_complimentary_access`
 
 **Action Required:**
-Run `git checkout main -- db/schema.rb` and then `bin/rails db:migrate`
+Run `git checkout main - db/schema.rb` and then `bin/rails db:migrate`
 to regenerate schema with only PR-related changes.
 ```
 

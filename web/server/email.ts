@@ -1,10 +1,10 @@
 /**
- * Email Transport -- Sends magic link emails for RC Engine authentication.
+ * Email Transport - Sends magic link emails for RC Engine authentication.
  *
  * Supports multiple providers via environment variables:
- *   1. Console (default) -- logs to console for development
- *   2. SMTP -- generic SMTP via nodemailer (set SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASS)
- *   3. Resend -- modern email API (set RESEND_API_KEY)
+ *   1. Console (default) - logs to console for development
+ *   2. SMTP - generic SMTP via nodemailer (set SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASS)
+ *   3. Resend - modern email API (set RESEND_API_KEY)
  *
  * Usage:
  *   import { sendMagicLinkEmail } from './email.js';

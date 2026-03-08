@@ -77,7 +77,7 @@ function createScanHandlers(codeContext: string | undefined, state: PostRCState)
         findings: activeFindings,
         summary,
         gateDecision,
-        duration_ms: 0, // Approximate -- real timing is in the execution trace
+        duration_ms: 0, // Approximate - real timing is in the execution trace
       };
 
       return {

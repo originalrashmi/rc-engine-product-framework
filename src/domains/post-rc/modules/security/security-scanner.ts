@@ -114,7 +114,7 @@ export async function runSecurityModule(
         id: 'SEC-PASSTHROUGH',
         module: ValidationModule.Security,
         severity: Severity.Info,
-        title: 'LLM analysis skipped -- no API key',
+        title: 'LLM analysis skipped - no API key',
         description:
           'Static pattern scan and npm audit ran, but LLM-based analysis was skipped. Configure ANTHROPIC_API_KEY for deeper analysis.',
         remediation: 'Set ANTHROPIC_API_KEY in .env for full scanning.',
@@ -179,7 +179,7 @@ const STATIC_PATTERNS: PatternRule[] = [
   // eval() usage
   {
     pattern: /\beval\s*\(/g,
-    title: 'Use of eval() -- code injection risk',
+    title: 'Use of eval() - code injection risk',
     severity: Severity.High,
     cweId: 'CWE-95',
     category: 'injection',
@@ -188,7 +188,7 @@ const STATIC_PATTERNS: PatternRule[] = [
   // innerHTML / dangerouslySetInnerHTML
   {
     pattern: /(?:innerHTML\s*=|dangerouslySetInnerHTML)/g,
-    title: 'Direct HTML injection -- XSS risk',
+    title: 'Direct HTML injection - XSS risk',
     severity: Severity.High,
     cweId: 'CWE-79',
     category: 'xss',
@@ -215,7 +215,7 @@ const STATIC_PATTERNS: PatternRule[] = [
   // Insecure randomness
   {
     pattern: /Math\.random\(\)/g,
-    title: 'Math.random() used -- not cryptographically secure',
+    title: 'Math.random() used - not cryptographically secure',
     severity: Severity.Low,
     cweId: 'CWE-338',
     category: 'crypto',
@@ -251,7 +251,7 @@ const STATIC_PATTERNS: PatternRule[] = [
   // Path traversal
   {
     pattern: /path\.join\s*\([^)]*(?:req\.|params\.|query\.|body\.)/g,
-    title: 'User input in path.join -- path traversal risk',
+    title: 'User input in path.join - path traversal risk',
     severity: Severity.High,
     cweId: 'CWE-22',
     category: 'path-traversal',
@@ -294,7 +294,7 @@ function runStaticPatternScan(code: string, policy: SecurityPolicy): Finding[] {
 // ── Layer 2: npm audit ──────────────────────────────────────────────────────
 
 async function runNpmAudit(projectPath: string, policy: SecurityPolicy): Promise<Finding[]> {
-  // Check for package.json -- npm audit only works in Node.js projects
+  // Check for package.json - npm audit only works in Node.js projects
   const pkgJsonPath = join(projectPath, 'package.json');
   if (!existsSync(pkgJsonPath)) return [];
 
@@ -310,7 +310,7 @@ async function runNpmAudit(projectPath: string, policy: SecurityPolicy): Promise
 
     return parseNpmAuditOutput(stdout, policy);
   } catch (err: unknown) {
-    // npm audit exits with non-zero when vulnerabilities found -- parse stdout from the error
+    // npm audit exits with non-zero when vulnerabilities found - parse stdout from the error
     const execError = err as { stdout?: string; stderr?: string; code?: number };
     if (execError.stdout) {
       return parseNpmAuditOutput(execError.stdout, policy);
@@ -370,7 +370,7 @@ function parseNpmAuditOutput(stdout: string, policy: SecurityPolicy): Finding[] 
           ? `Update to ${vuln.fixAvailable.name}@${vuln.fixAvailable.version}`
           : vuln.fixAvailable
             ? 'Run npm audit fix'
-            : 'No fix available -- consider replacing this dependency';
+            : 'No fix available - consider replacing this dependency';
 
       findings.push({
         id: 'SEC-DEP',
@@ -525,7 +525,7 @@ function parseFindings(text: string, policy: SecurityPolicy): Finding[] {
   }
 }
 
-/** Normalize lineRange from LLM output -- may arrive as string "45-50" or object { start, end }. */
+/** Normalize lineRange from LLM output - may arrive as string "45-50" or object { start, end }. */
 function normalizeLineRange(raw: unknown): { start: number; end: number } | undefined {
   if (!raw) return undefined;
   if (typeof raw === 'object' && raw !== null) {

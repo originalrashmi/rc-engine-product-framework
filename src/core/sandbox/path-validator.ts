@@ -1,9 +1,9 @@
 /**
- * Path Validator -- Prevents directory traversal and enforces write boundaries.
+ * Path Validator - Prevents directory traversal and enforces write boundaries.
  *
  * Every tool that accepts a path must validate it through this module before
  * performing any filesystem operation. This is the single choke-point for
- * path security -- no tool should do its own path validation.
+ * path security - no tool should do its own path validation.
  *
  * Protections:
  * - Canonicalization via path.resolve (eliminates .., symlink tricks)

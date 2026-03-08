@@ -2,7 +2,7 @@ import { BaseAgent } from './base-agent.js';
 import type { AgentResult, ProjectState } from '../types.js';
 
 /**
- * Phase 7: Connect -- Integration Wiring.
+ * Phase 7: Connect - Integration Wiring.
  *
  * Loads all forge artifacts plus the architecture doc, then generates
  * an integration report covering API wiring, service boundaries,

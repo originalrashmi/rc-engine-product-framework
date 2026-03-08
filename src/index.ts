@@ -35,7 +35,7 @@ const server = new McpServer({
 // Patch both server.tool() and server.registerTool() to wrap every handler with
 // path validation + input size checks. This protects all tools regardless of which
 // registration method is used. server.tool() is deprecated; server.registerTool()
-// is the current API -- both must be guarded.
+// is the current API - both must be guarded.
 function wrapLastArgWithGuard(toolArgs: unknown[]): void {
   const handler = toolArgs[toolArgs.length - 1];
   if (typeof handler === 'function') {

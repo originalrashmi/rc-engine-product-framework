@@ -70,10 +70,10 @@ The project is "${state.projectName}".`;
 
       const nextStepLabel = phase < 8 ? STEP_LABELS[(phase + 1) as Phase] || PHASE_NAMES[(phase + 1) as Phase] : '';
 
-      // Phase 8 (Compound) is the final RC phase -- bridge to Post-RC validation
+      // Phase 8 (Compound) is the final RC phase - bridge to Post-RC validation
       if (phase === 8) {
         return {
-          text: `**Checkpoint ${phase} (${stepLabel}) -- Approved**
+          text: `**Checkpoint ${phase} (${stepLabel}) - Approved**
 
 All 8 build steps are complete!
 
@@ -81,14 +81,14 @@ All 8 build steps are complete!
 I'll run a security and monitoring scan to verify your project is ready to ship. This checks for common vulnerabilities, missing error handling, and monitoring gaps.
 
 Ready to run the security scan?
-- **Yes** -- Start the scan
-- **Not yet** -- I want to review the deliverables first`,
+- **Yes** - Start the scan
+- **Not yet** - I want to review the deliverables first`,
           phaseComplete: true,
         };
       }
 
       return {
-        text: `**Checkpoint ${phase} (${stepLabel}) -- Approved**
+        text: `**Checkpoint ${phase} (${stepLabel}) - Approved**
 
 Moving to Step ${phase + 1}: ${nextStepLabel}.`,
         phaseComplete: true,
@@ -103,7 +103,7 @@ Moving to Step ${phase + 1}: ${nextStepLabel}.`,
       };
 
       return {
-        text: `**Checkpoint ${phase} (${stepLabel}) -- Changes Requested**
+        text: `**Checkpoint ${phase} (${stepLabel}) - Changes Requested**
 
 Feedback: ${feedback ?? 'No reason given.'}
 

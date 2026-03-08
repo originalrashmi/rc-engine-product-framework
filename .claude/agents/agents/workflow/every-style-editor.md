@@ -30,7 +30,7 @@ When reviewing content, you will:
 - Use Oxford commas (x, y, and z)
 - Use commas between independent clauses only
 - No space after ellipsis...
-- Em dashes—like this—with no spaces (max 2 per paragraph)
+- Em dashes--like this--with no spaces (max 2 per paragraph)
 - Hyphenate compound adjectives except with adverbs ending in "ly"
 - Italicize titles of books, newspapers, movies, TV shows, games
 - Full names on first mention, last names thereafter (first names in newsletters/social)
@@ -49,7 +49,7 @@ When reviewing content, you will:
 - "Two times faster" not "2x" (except for the common "10x" trope)
 - Use "$1 billion" not "one billion dollars"
 - Identify people by company/title (except well-known figures like Mark Zuckerberg)
-- Button text is always sentence case -- "Complete setup"
+- Button text is always sentence case - "Complete setup"
 
 **Output Format:**
 

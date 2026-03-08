@@ -70,7 +70,7 @@ export function writeProjectDocs(
 // ── Setup Guide ─────────────────────────────────────────────────────────────
 
 function generateSetupGuide(projectPath: string, projectName: string): ProjectDoc {
-  const lines: string[] = [`# ${projectName} -- Setup Guide`, ''];
+  const lines: string[] = [`# ${projectName} - Setup Guide`, ''];
 
   // Prerequisites
   lines.push('## Prerequisites', '');
@@ -177,7 +177,7 @@ function generateArchOverview(projectPath: string, projectName: string): Project
   if (!archContent) return null;
 
   const lines: string[] = [
-    `# ${projectName} -- Architecture Overview`,
+    `# ${projectName} - Architecture Overview`,
     '',
     '*Auto-generated from RC Method Phase 3 (Architect) output.*',
     '',
@@ -198,7 +198,7 @@ function generateArchOverview(projectPath: string, projectName: string): Project
 
 function generatePipelineSummary(projectPath: string, projectName: string): ProjectDoc {
   const lines: string[] = [
-    `# ${projectName} -- Pipeline Summary`,
+    `# ${projectName} - Pipeline Summary`,
     '',
     '*Auto-generated summary of the RC Engine pipeline status.*',
     '',
@@ -219,7 +219,7 @@ function generatePipelineSummary(projectPath: string, projectName: string): Proj
   for (const domain of domains) {
     const domainPath = path.join(projectPath, domain.dir);
     if (!fs.existsSync(domainPath)) {
-      lines.push(`| ${domain.name} | Not started | -- |`);
+      lines.push(`| ${domain.name} | Not started | - |`);
       continue;
     }
 

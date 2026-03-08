@@ -27,7 +27,7 @@ interface StressTestVerdict {
 const DEFAULT_VERDICT: StressTestVerdict = {
   verdict: 'CONDITIONAL',
   confidence: 50,
-  conditions: ['Verdict could not be parsed -- review the full report manually'],
+  conditions: ['Verdict could not be parsed - review the full report manually'],
   topRisk: 'Analysis incomplete',
   topStrength: 'Unknown',
   dimensionRatings: {},
@@ -197,7 +197,7 @@ export async function prcStressTest(
   if (!hasFeature(tier, 'stressTest')) {
     return `The Idea Stress Test is a Pro feature.
 
-This tool runs a deep viability analysis of your product idea -- challenging market assumptions, fact-checking with live web data, and producing a GO/NO-GO/CONDITIONAL verdict before you invest in building.
+This tool runs a deep viability analysis of your product idea - challenging market assumptions, fact-checking with live web data, and producing a GO/NO-GO/CONDITIONAL verdict before you invest in building.
 
 To unlock it, upgrade to Pro ($79/month) or Enterprise.
 
@@ -378,7 +378,7 @@ ${state.brief.rawInput}
 
 ${analysisContent}
 
-## Fact-Check Results ${isWebGrounded ? '(verified with live web data)' : '(based on available data -- no live web search)'}
+## Fact-Check Results ${isWebGrounded ? '(verified with live web data)' : '(based on available data - no live web search)'}
 
 ${factCheckContent}
 
@@ -425,7 +425,7 @@ Be decisive. The entrepreneur needs a clear answer: should they build this or no
     const errMsg = err instanceof Error ? err.message : String(err);
     console.error(`[prc_stress_test] PASSTHROUGH TRIGGERED - Analysis failed: ${errMsg}`);
 
-    return `## Idea Stress Test -- Manual Mode
+    return `## Idea Stress Test - Manual Mode
 
 > **Why manual mode?** Automatic analysis failed: ${errMsg}
 
@@ -478,14 +478,14 @@ Save the results to: pre-rc-research/stress-test-${projectSlug}.md`;
 
   if (verdict.verdict === 'GO') {
     verdictEmoji = 'PASS';
-    verdictAdvice = `Your product idea passed the stress test. Risks exist but are manageable.\n\nReady to proceed to the build phase?\n- **Continue to build** -- proceed to architecture and task planning\n- **Review the full report** -- see the detailed analysis in pre-rc-research/${reportPath}`;
+    verdictAdvice = `Your product idea passed the stress test. Risks exist but are manageable.\n\nReady to proceed to the build phase?\n- **Continue to build** - proceed to architecture and task planning\n- **Review the full report** - see the detailed analysis in pre-rc-research/${reportPath}`;
   } else if (verdict.verdict === 'CONDITIONAL') {
     const conditionsList = verdict.conditions.map((c, i) => `${i + 1}. ${c}`).join('\n');
     verdictEmoji = 'CONDITIONAL';
-    verdictAdvice = `Your product idea has potential, but these conditions must be addressed:\n\n${conditionsList}\n\nYou can:\n- **Proceed anyway** -- build as designed and address conditions during development\n- **Adjust scope** -- revise the requirements document to address conditions, then re-run\n- **Explore alternatives** -- discuss the suggested alternative approaches`;
+    verdictAdvice = `Your product idea has potential, but these conditions must be addressed:\n\n${conditionsList}\n\nYou can:\n- **Proceed anyway** - build as designed and address conditions during development\n- **Adjust scope** - revise the requirements document to address conditions, then re-run\n- **Explore alternatives** - discuss the suggested alternative approaches`;
   } else {
     verdictEmoji = 'NO-GO';
-    verdictAdvice = `The analysis found fundamental issues with the product idea as designed. This does not mean the core idea is worthless -- it means the current approach needs rethinking.\n\nYou can:\n- **Pivot** -- revise the idea based on the analysis and start a new research cycle\n- **Proceed anyway** -- build despite the warning (not recommended)\n- **Stop here** -- use the stress test report as input for future planning`;
+    verdictAdvice = `The analysis found fundamental issues with the product idea as designed. This does not mean the core idea is worthless - it means the current approach needs rethinking.\n\nYou can:\n- **Pivot** - revise the idea based on the analysis and start a new research cycle\n- **Proceed anyway** - build despite the warning (not recommended)\n- **Stop here** - use the stress test report as input for future planning`;
   }
 
   return `**Idea Stress Test: ${verdictEmoji}** (Confidence: ${verdict.confidence}%)

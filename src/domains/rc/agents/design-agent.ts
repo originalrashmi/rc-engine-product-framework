@@ -38,7 +38,7 @@ export class DesignAgent extends BaseAgent {
   private async generateSpec(state: ProjectState, input: DesignInput): Promise<DesignSpec> {
     const inspirationSection = input.inspiration
       ? `\n\n## User Design Preferences\nThe user provided these design references/preferences:\n${input.inspiration}`
-      : '\n\n## User Design Preferences\nNo specific preferences provided -- use your best judgment based on ICP and product type.';
+      : '\n\n## User Design Preferences\nNo specific preferences provided - use your best judgment based on ICP and product type.';
 
     const icpSection = input.icpData ? `\n\n## Ideal Customer Profile\n${input.icpData}` : '';
 
@@ -286,7 +286,7 @@ OUTPUT FORMAT: For each screen, output in this exact format:
     }
 
     lines.push(`### Recommendation`);
-    lines.push(`**Option ${spec.recommendation.optionId}** -- ${spec.recommendation.reason}`);
+    lines.push(`**Option ${spec.recommendation.optionId}** - ${spec.recommendation.reason}`);
     lines.push('');
     lines.push(`### Saved Files (${savedFiles.length})`);
     for (const f of savedFiles) {

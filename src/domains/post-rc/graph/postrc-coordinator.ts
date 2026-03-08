@@ -1,5 +1,5 @@
 /**
- * Post-RC Coordinator -- wires GraphCoordinator to the Post-RC domain.
+ * Post-RC Coordinator - wires GraphCoordinator to the Post-RC domain.
  *
  * Thin wrapper that provides the correct node IDs, schema, and store factory.
  * The actual scan logic is injected via PostRcNodeHandlers when building

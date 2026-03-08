@@ -72,7 +72,7 @@ export async function loadState(projectPath: string): Promise<PostRCState> {
     if ((err as Error).message.includes('No checkpoint found')) {
       return migrateFromMarkdown(projectPath);
     }
-    // Validation failure -- surface it loudly, do NOT silently return default
+    // Validation failure - surface it loudly, do NOT silently return default
     throw new Error(`Post-RC state validation failed: ${(err as Error).message}`, { cause: err });
   }
 }

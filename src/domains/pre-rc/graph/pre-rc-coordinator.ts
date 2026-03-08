@@ -1,5 +1,5 @@
 /**
- * Pre-RC Coordinator -- wires GraphCoordinator to the Pre-RC domain.
+ * Pre-RC Coordinator - wires GraphCoordinator to the Pre-RC domain.
  *
  * Thin wrapper that provides the correct node IDs, schema, and store factory.
  * The actual domain logic (LLM calls, persona agents) is injected via

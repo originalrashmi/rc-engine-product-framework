@@ -43,7 +43,7 @@ export async function prcClassify(
     const result = await coordinator.run(projectPath, state);
 
     // The classify handler updated state with classification + personaSelection.
-    // Persist via the domain state manager (same CheckpointStore key -- overwrites
+    // Persist via the domain state manager (same CheckpointStore key - overwrites
     // the coordinator's checkpoint with the same data + markdown export).
     await persistence.save(result.state);
 
@@ -64,7 +64,7 @@ export async function prcClassify(
     console.error(`[prc_classify] PASSTHROUGH TRIGGERED - Autonomous classification failed: ${errMsg}`);
 
     const prompt = await classifier.buildPassthroughPrompt(state.brief);
-    return `**Classification -- Manual Mode**
+    return `**Classification - Manual Mode**
 
 The automatic analysis could not connect to the AI service: ${errMsg}
 
@@ -98,6 +98,6 @@ Key complexity factors:
 ${classification.complexityFactors.map((f: string) => `- ${f}`).join('\n')}
 
 **Checkpoint 1:** Does this research scope look right? Should I add or remove any areas of focus?
-- **Approve** -- Start the research
-- **Adjust** -- Tell me what to change`;
+- **Approve** - Start the research
+- **Adjust** - Tell me what to change`;
 }

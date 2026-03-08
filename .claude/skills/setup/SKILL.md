@@ -6,7 +6,7 @@ disable-model-invocation: true
 
 # Compound Engineering Setup
 
-Interactive setup for `compound-engineering.local.md` — configures which agents run during `/workflows:review` and `/workflows:work`.
+Interactive setup for `compound-engineering.local.md` - configures which agents run during `/workflows:review` and `/workflows:work`.
 
 ## Step 1: Check Existing Config
 
@@ -64,7 +64,7 @@ options:
 
 ## Step 3: Customize (3 questions)
 
-**a. Stack** — confirm or override:
+**a. Stack** - confirm or override:
 
 ```
 question: "Which stack should we optimize for?"
@@ -73,16 +73,16 @@ options:
   - label: "{detected_type} (Recommended)"
     description: "Auto-detected from project files"
   - label: "Rails"
-    description: "Ruby on Rails — adds DHH-style and Rails-specific reviewers"
+    description: "Ruby on Rails - adds DHH-style and Rails-specific reviewers"
   - label: "Python"
-    description: "Python — adds Pythonic pattern reviewer"
+    description: "Python - adds Pythonic pattern reviewer"
   - label: "TypeScript"
-    description: "TypeScript — adds type safety reviewer"
+    description: "TypeScript - adds type safety reviewer"
 ```
 
 Only show options that differ from the detected type.
 
-**b. Focus areas** — multiSelect:
+**b. Focus areas** - multiSelect:
 
 ```
 question: "Which review areas matter most?"
@@ -148,8 +148,8 @@ Add project-specific review instructions here.
 These notes are passed to all review agents during /workflows:review and /workflows:work.
 
 Examples:
-- "We use Turbo Frames heavily — check for frame-busting issues"
-- "Our API is public — extra scrutiny on input validation"
+- "We use Turbo Frames heavily - check for frame-busting issues"
+- "Our API is public - extra scrutiny on input validation"
 - "Performance-critical: we serve 10k req/s on this endpoint"
 ```
 

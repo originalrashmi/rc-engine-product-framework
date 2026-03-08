@@ -1,5 +1,5 @@
 /**
- * RC Method Coordinator -- wires GraphCoordinator to the RC domain.
+ * RC Method Coordinator - wires GraphCoordinator to the RC domain.
  *
  * Thin wrapper that provides the correct node IDs, schema, and store factory.
  * The actual domain logic (LLM calls, agents) is injected via RcNodeHandlers
@@ -27,7 +27,7 @@ export class RcCoordinator {
       NODE_IDS.RC_INTERRUPT,
       ProjectStateSchema,
     );
-    // RC graph is static -- build once
+    // RC graph is static - build once
     this.graph = buildRcGraph(handlers);
   }
 

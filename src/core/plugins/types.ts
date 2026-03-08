@@ -1,5 +1,5 @@
 /**
- * Plugin System Types -- Interface contracts for RC Engine extensions.
+ * Plugin System Types - Interface contracts for RC Engine extensions.
  *
  * Plugins can extend:
  * - Personas (custom research specialists)

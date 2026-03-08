@@ -83,7 +83,7 @@ export function ToolOutput({ toolName, output, isError, onClose }: ToolOutputPro
  * Basic formatting: highlight section headers, status indicators, numbers.
  */
 function formatOutput(text: string): string {
-  // Just return plain text -- React will handle the rendering.
+  // Just return plain text - React will handle the rendering.
   // Syntax highlighting would need dangerouslySetInnerHTML which adds risk.
   return text;
 }

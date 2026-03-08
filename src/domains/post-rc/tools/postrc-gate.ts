@@ -222,7 +222,7 @@ export async function postrcGate(args: GateInput): Promise<string> {
 
 /**
  * Resume the graph coordinator to advance past the ship gate.
- * Best-effort -- if no interrupt is pending (e.g., scan was run without coordinator),
+ * Best-effort - if no interrupt is pending (e.g., scan was run without coordinator),
  * silently skip the resume.
  */
 async function resumeCoordinator(projectPath: string, gateResume: GateResume): Promise<void> {
@@ -233,6 +233,6 @@ async function resumeCoordinator(projectPath: string, gateResume: GateResume): P
       await coordinator.resume(projectPath, gateResume);
     }
   } catch {
-    // Best-effort -- gate history is already persisted via state manager
+    // Best-effort - gate history is already persisted via state manager
   }
 }

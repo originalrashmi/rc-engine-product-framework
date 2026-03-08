@@ -1,5 +1,5 @@
 /**
- * Checkpoint Store -- SQLite-backed persistent state.
+ * Checkpoint Store - SQLite-backed persistent state.
  *
  * Replaces the 3 different state managers (regex markdown, JSON-in-HTML, plain JSON)
  * with a single, atomic, validated store.

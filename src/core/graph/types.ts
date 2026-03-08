@@ -1,5 +1,5 @@
 /**
- * Graph Engine -- Core Types
+ * Graph Engine - Core Types
  *
  * LangGraph-inspired but simpler. Designed for RC Engine's specific needs:
  * - Sequential and parallel node execution
@@ -95,7 +95,7 @@ export interface GraphEdge<S> {
   from: string;
   /** Target node ID. */
   to: string;
-  /** Optional condition -- edge is only followed when this returns true. */
+  /** Optional condition - edge is only followed when this returns true. */
   condition?: EdgeCondition<S>;
 }
 
@@ -104,7 +104,7 @@ export interface GraphEdge<S> {
 /** Valid decisions a human can make at a gate. */
 export type GateDecision = 'approve' | 'reject' | 'question';
 
-/** The result of a gate interrupt -- returned when execution pauses at a gate. */
+/** The result of a gate interrupt - returned when execution pauses at a gate. */
 export interface GateInterrupt<S> {
   /** The gate node that triggered the interrupt. */
   gateNodeId: string;

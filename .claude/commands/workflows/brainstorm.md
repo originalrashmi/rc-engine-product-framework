@@ -66,7 +66,7 @@ For each approach, provide:
 - Pros and cons
 - When it's best suited
 
-Lead with your recommendation and explain why. Apply YAGNI—prefer simpler solutions.
+Lead with your recommendation and explain why. Apply YAGNI--prefer simpler solutions.
 
 Use **AskUserQuestion tool** to ask which approach the user prefers.
 
