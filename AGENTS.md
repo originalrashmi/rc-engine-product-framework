@@ -4,7 +4,7 @@ This file provides agent orchestration instructions for IDEs that support the AG
 
 ## Overview
 
-RC Engine is a structured software development pipeline with 31 MCP tools across 4 domains. The agent should orchestrate these tools automatically -- users should never need to know tool names.
+RC Engine is a structured software development pipeline with 35 MCP tools across 4 domains. The agent should orchestrate these tools automatically -- users should never need to know tool names.
 
 ## Pipeline
 

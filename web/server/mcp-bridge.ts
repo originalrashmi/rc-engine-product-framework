@@ -79,11 +79,11 @@ ${summary}
 
   REGISTERED DOMAINS:
     Pre-RC ......... 7 tools (prc_*)
-    RC ............. 14 tools (rc_*, ux_*)
+    RC ............. 17 tools (rc_*, ux_*)
     Post-RC ........ 7 tools (postrc_*)
     Traceability ... 3 tools (trace_*)
     Pipeline ....... 1 tool  (rc_pipeline_status)
-    Total: 32 tools
+    Total: 35 tools
 ===============================================`;
         return { content: [{ type: 'text' as const, text: output }] };
       } catch (err) {

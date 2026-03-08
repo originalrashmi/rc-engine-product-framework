@@ -1,7 +1,7 @@
 {
   "name": "rc-engine",
   "version": "1.0.0",
-  "description": "RC Engine - A complete AI-native product development pipeline. Research, build, validate, and ship software products from idea to production with 31 orchestrated tools across 4 domains.",
+  "description": "RC Engine - A complete AI-native product development pipeline. Research, build, validate, and ship software products from idea to production with 35 orchestrated tools across 4 domains.",
   "type": "module",
   "main": "dist/index.js",
   "license": "MIT",

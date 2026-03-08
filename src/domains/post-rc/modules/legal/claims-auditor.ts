@@ -70,12 +70,12 @@ const CLAIM_PATTERNS: ClaimPattern[] = [
 
   // Quantity: tool count mismatch
   {
-    pattern: /\b31\s+(?:orchestrated\s+)?tools?\b/i,
+    pattern: /\b3[12]\s+(?:orchestrated\s+)?tools?\b/i,
     category: 'claims-quantity',
     title: 'Incorrect tool count',
     severity: Severity.Low,
-    description: 'Claims "31 tools" but actual tool registration count is 32.',
-    remediation: 'Update to correct count or use "30+ tools" for future-proofing.',
+    description: 'Claims "31" or "32" tools but actual tool registration count is 35.',
+    remediation: 'Update to correct count (35 tools) or use "35+ tools" for future-proofing.',
   },
 
   // Quantity: gate count without qualifier

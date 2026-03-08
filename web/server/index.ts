@@ -2,7 +2,7 @@
  * RC Engine Web UI -- Express server.
  *
  * Architecture:
- *   - Creates an in-process MCP server with all 31 tools registered
+ *   - Creates an in-process MCP server with all 35 tools registered
  *   - Connects an MCP client via InMemoryTransport
  *   - Exposes tools as REST endpoints: POST /api/tools/:name
  *   - Structured pipeline state via GET /api/project/state

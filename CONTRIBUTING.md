@@ -50,8 +50,8 @@ RC Engine uses domain-driven design:
 ```
 src/
   domains/
-    pre-rc/    # Research pipeline (6 tools)
-    rc/        # Build pipeline (14 tools)
+    pre-rc/    # Research pipeline (7 tools)
+    rc/        # Build pipeline (17 tools)
     post-rc/   # Validation pipeline (7 tools)
     traceability/  # Audit pipeline (3 tools)
   shared/      # LLM clients, config, types, token tracking

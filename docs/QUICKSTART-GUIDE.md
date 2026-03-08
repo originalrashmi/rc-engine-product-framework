@@ -222,9 +222,9 @@ RC Engine works in **manual mode** without API keys. The AI generates structured
 Your IDE (Claude Code / Cursor / Windsurf / VS Code)
     |
     v
-RC Engine MCP Server (31 tools)
+RC Engine MCP Server (35 tools)
     |
-    +--> Pre-RC Research (6 tools) --> 20 AI specialists
+    +--> Pre-RC Research (7 tools) --> 20 AI specialists
     |         |
     |         v
     +--> RC Method Build (14 tools) --> 8-phase gated pipeline

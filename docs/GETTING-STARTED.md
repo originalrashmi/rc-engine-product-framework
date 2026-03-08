@@ -189,12 +189,12 @@ Add to your MCP configuration:
 
 ### 4. Available Tools
 
-32 tools across 4 domains:
+35 tools across 4 domains:
 
 | Domain | Tools | Purpose |
 |--------|-------|---------|
-| Pre-RC | prc_start, prc_classify, prc_run_stage, prc_gate, prc_status, prc_synthesize | 20-persona research pipeline |
-| RC Method | rc_start, rc_import_prerc, rc_illuminate, rc_define, rc_architect, rc_sequence, rc_validate, rc_forge_task, rc_gate, rc_save, rc_status, ux_score, ux_audit, ux_generate | 8-phase structured build |
+| Pre-RC | prc_start, prc_classify, prc_run_stage, prc_gate, prc_status, prc_synthesize, prc_stress_test | 20-persona research pipeline |
+| RC Method | rc_start, rc_import_prerc, rc_illuminate, rc_define, rc_architect, rc_sequence, rc_validate, rc_forge_task, rc_connect, rc_compound, rc_gate, rc_save, rc_status, ux_score, ux_audit, ux_generate, ux_design | 8-phase structured build |
 | Post-RC | postrc_scan, postrc_override, postrc_report, postrc_configure, postrc_gate, postrc_status, postrc_generate_observability_spec | Security + quality validation |
 | Traceability | trace_enhance_prd, trace_map_findings, trace_status | Requirements coverage |
 | Pipeline | rc_pipeline_status | Cross-domain status |

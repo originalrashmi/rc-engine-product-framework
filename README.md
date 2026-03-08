@@ -156,7 +156,7 @@ All deliverables are saved as markdown and HTML files in your project directory.
 
 | Phase | Status | What |
 |-------|--------|------|
-| **CLI/MCP Pipeline** | Available now | Full 31-tool pipeline via Claude Code, Cursor, Windsurf, VS Code |
+| **CLI/MCP Pipeline** | Available now | Full 35-tool pipeline via Claude Code, Cursor, Windsurf, VS Code |
 | **Parallel Synthesis** | Available now | PRD generation runs 8 section groups concurrently for faster output |
 | **Web Dashboard** | Planned | Browser-based project management with real-time pipeline visualization |
 | **Pro Knowledge Marketplace** | Planned | Enhanced research personas, build skills, and security databases |
