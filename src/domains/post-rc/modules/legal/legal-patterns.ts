@@ -66,8 +66,7 @@ export const PRIVACY_POLICY_PATTERNS = /\b(?:privacy\s*policy|data\s*protection|
 export const TOS_PATTERNS = /\b(?:terms\s*of\s*service|terms\s*of\s*use|user\s*agreement|EULA)\b/i;
 
 /** Patterns indicating accessibility reference. */
-export const ACCESSIBILITY_PATTERNS =
-  /\b(?:accessibility|WCAG|ADA|aria|screen\s*reader|a11y|keyboard\s*navigation)\b/i;
+export const ACCESSIBILITY_PATTERNS = /\b(?:accessibility|WCAG|ADA|aria|screen\s*reader|a11y|keyboard\s*navigation)\b/i;
 
 /** Patterns indicating AI/ML components. */
 export const AI_COMPONENT_PATTERNS =
@@ -142,11 +141,7 @@ interface LlmLegalFinding {
  * Parse LLM JSON response into Finding[].
  * Expects a JSON array of objects with title, severity, description, remediation, category.
  */
-export function parseLlmLegalFindings(
-  raw: string,
-  module: ValidationModule,
-  idPrefix: string,
-): Finding[] {
+export function parseLlmLegalFindings(raw: string, module: ValidationModule, idPrefix: string): Finding[] {
   const findings: Finding[] = [];
   const nextId = createIdGenerator(idPrefix);
 

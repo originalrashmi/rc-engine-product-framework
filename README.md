@@ -7,7 +7,7 @@
 
 **Results through Clarity** -- an AI-native product development pipeline.
 
-Take a one-line product idea through structured research, architecture, build, validation, and traceability -- with 32 orchestrated tools across 4 domains.
+Take a one-line product idea through structured research, architecture, build, validation, and traceability -- with 35 orchestrated tools across 4 domains.
 
 Built for developers, technical founders, and product teams who want structured methodology instead of ad-hoc AI coding.
 
@@ -35,7 +35,7 @@ You never call tools directly. Open your IDE, describe what you want to build, a
 
 | Edition | What You Get | License |
 |---------|-------------|---------|
-| **RC Engine (this repo)** | Full MCP server, 32 tools, pipeline structure, state management, quality gates | MIT (free) |
+| **RC Engine (this repo)** | Full MCP server, 35 tools, pipeline structure, state management, quality gates | MIT (free) |
 | **[RC Engine Pro](https://github.com/originalrashmi/rc-engine-pro)** | 46 methodology knowledge files -- research personas, build skills, UX specialists, security databases | Proprietary |
 
 **Community mode** (without Pro): Tools assemble structured prompts for your IDE's AI to process. Full pipeline discipline at zero cost.
@@ -61,8 +61,8 @@ You never call tools directly. Open your IDE, describe what you want to build, a
 
 | Domain | Tools | What It Does |
 |--------|-------|-------------|
-| **Pre-RC Research** | 6 | Up to 20 AI specialists analyze your idea across market, users, security, UX, and business |
-| **RC Method Build** | 14 | 8-phase gated pipeline: discover, define, architect, sequence, validate, build, integrate, harden |
+| **Pre-RC Research** | 7 | Up to 20 AI specialists analyze your idea across market, users, security, UX, and business |
+| **RC Method Build** | 17 | 8-phase gated pipeline: discover, define, architect, sequence, validate, build, integrate, harden |
 | **Post-RC Validation** | 7 | Security scanning, monitoring readiness, legal compliance review (Pro), override tracking, ship/no-ship gate |
 | **Traceability** | 3 | Requirements-to-code audit trail with coverage reporting |
 | **Pipeline Status** | 1 | Cross-domain overview with token usage totals |

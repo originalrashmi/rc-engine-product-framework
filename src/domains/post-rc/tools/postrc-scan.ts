@@ -248,9 +248,7 @@ function formatScanOutput(scan: ScanResult, activeOverrides: number, remediation
   }
 
   // Legal findings disclaimer
-  const hasLegalFindings = scan.findings.some(
-    (f) => f.module === 'legal-claims' || f.module === 'legal-product',
-  );
+  const hasLegalFindings = scan.findings.some((f) => f.module === 'legal-claims' || f.module === 'legal-product');
   if (hasLegalFindings) {
     output += `
   LEGAL DISCLAIMER:

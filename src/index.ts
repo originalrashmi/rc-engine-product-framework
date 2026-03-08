@@ -57,9 +57,9 @@ server.registerTool = ((...toolArgs: unknown[]) => {
 
 // Register all tools across domains (lazy-load orchestrators on first call)
 registerPreRcTools(server); // 7 tools: prc_*
-registerRcPhaseTools(server); // 8 tools: rc_start, rc_illuminate, rc_define, rc_import_prerc, rc_architect, rc_sequence, rc_validate, rc_forge_task
+registerRcPhaseTools(server); // 10 tools: rc_start, rc_illuminate, rc_define, rc_import_prerc, rc_architect, rc_sequence, rc_validate, rc_forge_task, rc_connect, rc_compound
 registerRcGateTools(server); // 3 tools: rc_gate, rc_save, rc_status
-registerRcUxTools(server); // 3 tools: ux_score, ux_audit, ux_generate
+registerRcUxTools(server); // 4 tools: ux_score, ux_audit, ux_generate, ux_design
 registerPostRcTools(server); // 7 tools: postrc_*
 registerTraceabilityTools(server); // 3 tools: trace_*
 
@@ -146,11 +146,11 @@ ${summary}
 
   REGISTERED DOMAINS:
     Pre-RC ......... 7 tools (prc_*)
-    RC ............. 14 tools (rc_*, ux_*)
+    RC ............. 17 tools (rc_*, ux_*)
     Post-RC ........ 7 tools (postrc_*)
     Traceability ... 3 tools (trace_*)
     Pipeline ....... 1 tool  (rc_pipeline_status)
-    Total: 32 tools
+    Total: 35 tools
 
   PIPELINE FLOW:
     prc_start → prc_classify → prc_run_stage (x6)
@@ -185,7 +185,7 @@ async function main() {
 
   const knowledgeMode = manifest.mode === 'pro' ? 'pro' : 'community';
   const execMode = hasAnyApiKey ? 'autonomous' : 'passthrough';
-  console.error(`[rc-engine] Connected - 31 tools - knowledge: ${knowledgeMode} - execution: ${execMode}`);
+  console.error(`[rc-engine] Connected - 35 tools - knowledge: ${knowledgeMode} - execution: ${execMode}`);
 }
 
 main().catch((err) => {
