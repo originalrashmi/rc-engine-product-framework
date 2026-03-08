@@ -1,13 +1,12 @@
 /**
- * Pricing Tiers -- Hybrid pricing model for RC Engine.
+ * Pricing Tiers - Hybrid pricing model for RC Engine.
  *
  * Free tier hooks users with limited projects, then paid tiers
  * add capacity and features. Usage-based overage on top.
  *
  * Model:
  *   - Free: 1 project/month, research only, community support
- *   - Starter: $29/mo, 5 projects/month, full pipeline, email support
- *   - Pro: $79/mo, unlimited projects, priority routing, design options, playbook
+ *   - Pro: $79/mo, unlimited projects, full pipeline, priority routing, design options, playbook
  *   - Enterprise: Custom pricing, team seats, SSO, SLA, dedicated support
  *
  * Overage: $0.50 per additional project beyond tier limit.
@@ -16,7 +15,7 @@
 
 // ── Types ───────────────────────────────────────────────────────────────────
 
-export type TierId = 'free' | 'starter' | 'pro' | 'enterprise';
+export type TierId = 'free' | 'pro' | 'enterprise';
 
 export interface TierDefinition {
   id: TierId;
@@ -68,7 +67,7 @@ export const TIERS: Record<TierId, TierDefinition> = {
     monthlyPriceUsd: 0,
     annualPriceUsd: 0,
     projectsPerMonth: 1,
-    overagePerProjectUsd: 0, // No overage on free -- hard limit
+    overagePerProjectUsd: 0, // No overage on free - hard limit
     description: 'Try RC Engine with one project per month.',
     features: {
       fullPipeline: false, // Research only
@@ -77,30 +76,6 @@ export const TIERS: Record<TierId, TierDefinition> = {
       playbook: false,
       pdfExport: false,
       securityScan: false,
-      traceability: false,
-      priorityRouting: false,
-      customKnowledge: false,
-      teamSeats: 1,
-      apiAccess: false,
-      webhooks: false,
-      stressTest: false,
-    },
-  },
-  starter: {
-    id: 'starter',
-    name: 'Starter',
-    monthlyPriceUsd: 29,
-    annualPriceUsd: 24, // ~17% discount
-    projectsPerMonth: 5,
-    overagePerProjectUsd: 0.5,
-    description: 'Full pipeline for solopreneurs and freelancers.',
-    features: {
-      fullPipeline: true,
-      designOptions: 1,
-      diagrams: true,
-      playbook: false,
-      pdfExport: true,
-      securityScan: true,
       traceability: false,
       priorityRouting: false,
       customKnowledge: false,
@@ -189,5 +164,5 @@ export function formatTierPrice(tier: TierDefinition, annual: boolean = false): 
 
 /** Get all tier IDs in display order. */
 export function getTierOrder(): TierId[] {
-  return ['free', 'starter', 'pro', 'enterprise'];
+  return ['free', 'pro', 'enterprise'];
 }

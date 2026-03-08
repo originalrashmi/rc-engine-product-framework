@@ -74,7 +74,6 @@ export function Layout({ children, view, onNavigate, activeTool, user, onLogout 
                 <span className="max-w-[120px] truncate text-xs text-slate-300">{user.name || user.email}</span>
                 <span className={`rounded px-1.5 py-0.5 text-[10px] font-medium ${
                   user.tier === 'pro' ? 'bg-gold/20 text-gold-light' :
-                  user.tier === 'starter' ? 'bg-teal/20 text-teal-light' :
                   user.tier === 'enterprise' ? 'bg-purple-500/20 text-purple-300' :
                   'bg-slate-700 text-slate-400'
                 }`}>

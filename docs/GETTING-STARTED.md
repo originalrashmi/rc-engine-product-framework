@@ -1,17 +1,17 @@
 # Getting Started with RC Engine
 
 This guide covers two ways to use RC Engine:
-1. **Web UI** (recommended for most users) -- guided wizard, visual interface
-2. **MCP Server** (for developers) -- integrate with Claude Code, Cursor, etc.
+1. **Web UI** (recommended for most users) - guided wizard, visual interface
+2. **MCP Server** (for developers) - integrate with Claude Code, Cursor, etc.
 
 ---
 
 ## Prerequisites
 
-- **Node.js 18+** -- download from https://nodejs.org (LTS recommended). Verify with `node --version`.
-- **npm** -- included with Node.js. Verify with `npm --version`.
-- **2GB+ free disk space** -- for dependencies and project outputs.
-- **Internet connection** -- required for API calls, market research, and `npm install`.
+- **Node.js 18+** - download from https://nodejs.org (LTS recommended). Verify with `node --version`.
+- **npm** - included with Node.js. Verify with `npm --version`.
+- **2GB+ free disk space** - for dependencies and project outputs.
+- **Internet connection** - required for API calls, market research, and `npm install`.
 
 ---
 
@@ -67,7 +67,7 @@ This builds the frontend and starts the server. Open **http://localhost:3100** i
 
 ### 4. Create Your First Project
 
-1. You'll see the landing page -- click **Get Started Free**
+1. You'll see the landing page - click **Get Started Free**
 2. Describe your product idea in plain language
 3. Choose **Full Pipeline** (recommended) or **Research Only** or **Build Only**
 4. Click **Start Building**
@@ -76,14 +76,14 @@ This builds the frontend and starts the server. Open **http://localhost:3100** i
 ### 5. What You Get
 
 At the end of the pipeline, you'll have:
-- **Requirements Document (PRD)** -- 19-section comprehensive spec
-- **Visual Designs** -- lo-fi/hi-fi wireframes with design tokens
-- **Architecture Plan** -- tech stack, data model, API design
-- **Task Breakdown** -- prioritized tasks with dependencies
-- **Architecture Diagrams** -- dependency, Gantt, and layer views
-- **Security Report** -- vulnerability scan with plain-language explanations
-- **Value Report** -- cost/time savings vs. human team
-- **Playbook** -- consolidated architecture decision record
+- **Requirements Document (PRD)** - 19-section comprehensive spec
+- **Visual Designs** - lo-fi/hi-fi wireframes with design tokens
+- **Architecture Plan** - tech stack, data model, API design
+- **Task Breakdown** - prioritized tasks with dependencies
+- **Architecture Diagrams** - dependency, Gantt, and layer views
+- **Security Report** - vulnerability scan with plain-language explanations
+- **Value Report** - cost/time savings vs. human team
+- **Playbook** - consolidated architecture decision record
 
 All files are saved to your projects directory (defaults to `$HOME`, override with `RC_PROJECTS_DIR` in `.env`).
 
@@ -123,14 +123,14 @@ Environment variables to set on your host:
 - `RC_WEB_PORT` (default: 3100)
 - `ALLOWED_ORIGINS` (comma-separated list of allowed CORS origins, e.g. `https://your-domain.com`)
 - `RC_PROJECTS_DIR` (base directory for project files, defaults to `$HOME`)
-- `RC_AUTH_BYPASS=true` (for testing only -- bypasses login. Do NOT use in production)
+- `RC_AUTH_BYPASS=true` (for testing only - bypasses login. Do NOT use in production)
 
 **Authentication:** By default, the web UI uses magic link email auth. Configure email with either:
-- `RESEND_API_KEY` (recommended -- sign up at https://resend.com)
+- `RESEND_API_KEY` (recommended - sign up at https://resend.com)
 - `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASS`, `SMTP_FROM` (any SMTP provider)
 - If neither is set, magic links are logged to the server console (development only)
 
-The server is self-contained -- no external database, no Redis, no separate services.
+The server is self-contained - no external database, no Redis, no separate services.
 
 ### Option C: Docker (Coming Soon)
 
@@ -189,15 +189,15 @@ Add to your MCP configuration:
 
 ### 4. Available Tools
 
-35 tools across 4 domains:
+35 tools across 4 domains (access depends on your tier - 14 free, 35 Pro):
 
-| Domain | Tools | Purpose |
-|--------|-------|---------|
-| Pre-RC | prc_start, prc_classify, prc_run_stage, prc_gate, prc_status, prc_synthesize, prc_stress_test | 20-persona research pipeline |
-| RC Method | rc_start, rc_import_prerc, rc_illuminate, rc_define, rc_architect, rc_sequence, rc_validate, rc_forge_task, rc_connect, rc_compound, rc_gate, rc_save, rc_status, ux_score, ux_audit, ux_generate, ux_design | 8-phase structured build |
-| Post-RC | postrc_scan, postrc_override, postrc_report, postrc_configure, postrc_gate, postrc_status, postrc_generate_observability_spec | Security + quality validation |
-| Traceability | trace_enhance_prd, trace_map_findings, trace_status | Requirements coverage |
-| Pipeline | rc_pipeline_status | Cross-domain status |
+| Domain | Tools | Free Tier | Purpose |
+|--------|-------|-----------|---------|
+| Pre-RC | prc_start, prc_classify, prc_run_stage, prc_gate, prc_status, prc_synthesize, prc_stress_test | 6 of 7 (stress_test is Pro) | 20-persona research pipeline |
+| RC Method | rc_start, rc_import_prerc, rc_illuminate, rc_define, rc_architect, rc_sequence, rc_validate, rc_forge_task, rc_connect, rc_compound, rc_gate, rc_save, rc_status, ux_score, ux_audit, ux_generate, ux_design | 5 of 17 (build tools require Pro) | 8-phase structured build |
+| Post-RC | postrc_scan, postrc_override, postrc_report, postrc_configure, postrc_gate, postrc_status, postrc_generate_observability_spec | 2 of 7 (scanning requires Pro) | Security + quality validation |
+| Traceability | trace_enhance_prd, trace_map_findings, trace_status | 0 of 3 (Pro only) | Requirements coverage |
+| Pipeline | rc_pipeline_status | 1 of 1 | Cross-domain status |
 
 ---
 
@@ -248,7 +248,7 @@ your-project/
 
 4. **Review deliverables.** The PRD, architecture doc, and task list are standalone documents you can share with stakeholders.
 
-5. **Iterate on design.** Try 3 design options instead of 1 -- the AI recommendation based on your target users is often insightful.
+5. **Iterate on design.** Try 3 design options instead of 1 - the AI recommendation based on your target users is often insightful.
 
 ---
 

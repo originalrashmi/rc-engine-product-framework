@@ -1,6 +1,6 @@
-/* eslint-disable @typescript-eslint/consistent-type-imports -- Stripe is dynamically imported (optional dep) */
+/* eslint-disable @typescript-eslint/consistent-type-imports - Stripe is dynamically imported (optional dep) */
 /**
- * Billing -- Stripe integration for RC Engine tier subscriptions.
+ * Billing - Stripe integration for RC Engine tier subscriptions.
  *
  * Handles:
  *   1. Creating checkout sessions for tier upgrades
@@ -8,12 +8,10 @@
  *   3. Managing subscription state (active/canceled/past_due)
  *
  * Environment variables:
- *   STRIPE_SECRET_KEY     -- Stripe API key (sk_test_... or sk_live_...)
- *   STRIPE_WEBHOOK_SECRET -- Webhook signing secret (whsec_...)
- *   STRIPE_PRICE_STARTER_MONTHLY -- Price ID for Starter monthly
- *   STRIPE_PRICE_STARTER_ANNUAL  -- Price ID for Starter annual
- *   STRIPE_PRICE_PRO_MONTHLY     -- Price ID for Pro monthly
- *   STRIPE_PRICE_PRO_ANNUAL      -- Price ID for Pro annual
+ *   STRIPE_SECRET_KEY     - Stripe API key (sk_test_... or sk_live_...)
+ *   STRIPE_WEBHOOK_SECRET - Webhook signing secret (whsec_...)
+ *   STRIPE_PRICE_PRO_MONTHLY     - Price ID for Pro monthly
+ *   STRIPE_PRICE_PRO_ANNUAL      - Price ID for Pro annual
  *
  * Setup: Create these products/prices in the Stripe Dashboard first.
  */
@@ -29,7 +27,7 @@ interface PriceMapping {
 }
 
 interface CheckoutRequest {
-  tierId: 'starter' | 'pro';
+  tierId: 'pro';
   billing: 'monthly' | 'annual';
   successUrl?: string;
   cancelUrl?: string;
@@ -42,10 +40,6 @@ const WEBHOOK_SECRET = process.env.STRIPE_WEBHOOK_SECRET || '';
 
 // Price IDs from Stripe Dashboard (set via env vars)
 const PRICE_MAP: Record<string, PriceMapping> = {
-  starter: {
-    monthly: process.env.STRIPE_PRICE_STARTER_MONTHLY || '',
-    annual: process.env.STRIPE_PRICE_STARTER_ANNUAL || '',
-  },
   pro: {
     monthly: process.env.STRIPE_PRICE_PRO_MONTHLY || '',
     annual: process.env.STRIPE_PRICE_PRO_ANNUAL || '',
@@ -113,7 +107,7 @@ export function registerBillingRoutes(router: Router): void {
 
     const priceMapping = PRICE_MAP[tierId];
     if (!priceMapping) {
-      res.status(400).json({ error: `Invalid tier: ${tierId}. Choose "starter" or "pro".` });
+      res.status(400).json({ error: `Invalid tier: ${tierId}. Choose "pro".` });
       return;
     }
 
@@ -221,7 +215,7 @@ export function registerBillingRoutes(router: Router): void {
       }
 
       default:
-        // Unhandled event type -- no action needed
+        // Unhandled event type - no action needed
         break;
     }
 
@@ -233,14 +227,6 @@ export function registerBillingRoutes(router: Router): void {
     res.json({
       configured: isStripeConfigured(),
       plans: [
-        {
-          tierId: 'starter',
-          name: 'Starter',
-          monthlyPrice: 29,
-          annualPrice: 24,
-          hasMonthlyPrice: !!PRICE_MAP.starter.monthly,
-          hasAnnualPrice: !!PRICE_MAP.starter.annual,
-        },
         {
           tierId: 'pro',
           name: 'Pro',

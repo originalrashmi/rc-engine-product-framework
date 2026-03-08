@@ -1,7 +1,7 @@
-# RC Engine Product Framework -- Product Backlog
+# RC Engine Product Framework - Product Backlog
 
 Items identified during product framework consolidation (2026-03-01).
-These are NOT yet built -- they are backlog items for future implementation.
+These are NOT yet built - they are backlog items for future implementation.
 
 ## P0: First-Run Setup Experience (LAUNCH BLOCKER)
 
@@ -12,7 +12,7 @@ Found during self-validation: a non-technical user cannot get the engine running
 - [ ] Add startup validation that checks for required keys and prints plain-language guidance
 - [ ] Add `rc-engine setup` CLI command or interactive wizard that walks through key creation
 - [ ] Web UI: add a setup/onboarding page that detects missing keys and guides configuration
-- [ ] Error messages must be non-technical: "I need access to an AI service to run research. Let me help you set that up." -- not "No LLM provider available. gemini and Claude fallback both unconfigured."
+- [ ] Error messages must be non-technical: "I need access to an AI service to run research. Let me help you set that up." - not "No LLM provider available. gemini and Claude fallback both unconfigured."
 
 ### 0.2 Secrets Guard vs Setup Paradox
 - [ ] The secrets guard blocks the agent from helping users create or check their `.env` file
@@ -25,7 +25,7 @@ Found during self-validation: a non-technical user cannot get the engine running
 - [ ] Add a "run this prompt" button in the web UI for passthrough mode
 
 ### 0.4 Onboarding Flow Fix
-- [ ] Onboarding must check for API keys BEFORE attempting any tool call -- not after failure
+- [ ] Onboarding must check for API keys BEFORE attempting any tool call - not after failure
 - [ ] Onboarding must explain what each key does in plain language (not provider names)
 - [ ] Onboarding must offer a "no keys" path that works without friction
 
@@ -95,14 +95,14 @@ produces solid market data but lacks actionable depth for non-technical founders
 - [ ] Research output must include step-by-step revenue path (not just a TAM number)
 - [ ] Show: "If you price at $29, and acquire X users/month at Y conversion, you reach $Z revenue by month N"
 - [ ] Include multiple pricing scenarios (freemium, credit-based, flat subscription) with projected outcomes
-- [ ] Include specific actions the founder must take at each stage (not just "community seeding" -- what communities, what message, what frequency)
+- [ ] Include specific actions the founder must take at each stage (not just "community seeding" - what communities, what message, what frequency)
 - [ ] Revenue projections must show assumptions clearly and let the founder adjust inputs
 
 ### 5.2 Cost of Goods / Margin Analysis
 - [ ] Research must estimate hosting infrastructure costs for SaaS delivery
 - [ ] Include LLM API cost per user per month (based on average usage patterns)
 - [ ] Calculate gross margin at each pricing tier
-- [ ] Flag if a pricing tier is unprofitable (e.g., $29 Starter with hosted infra may lose money)
+- [ ] Flag if a pricing tier is unprofitable (e.g., low-tier plan with hosted infra may lose money)
 - [ ] Compare self-hosted vs managed hosting cost structures
 
 ### 5.3 Growth Playbook with Actions
@@ -146,14 +146,14 @@ Found by running RC Engine through its own pipeline (2026-03-04). These are issu
 in the generated web UI code that must be resolved before web deployment.
 
 ### 6.1 Security Fixes
-- [ ] Fix SQL injection vulnerabilities -- parameterize all queries (5 instances in forge outputs)
+- [ ] Fix SQL injection vulnerabilities - parameterize all queries (5 instances in forge outputs)
 - [ ] Add authorization middleware to project, gate, and state endpoints (SEC-003, SEC-004, SEC-005)
 - [ ] Replace Math.random() with crypto.randomUUID() for token generation (SEC-002)
 - [ ] Sanitize error messages to prevent internal detail leakage (SEC-006, SEC-007)
 - [ ] Add client-side security event logging for failed auth attempts (SEC-008)
 
 ### 6.2 Monitoring & Observability
-- [ ] Add error tracking integration (Sentry free tier or equivalent) (MON-002 -- critical)
+- [ ] Add error tracking integration (Sentry free tier or equivalent) (MON-002 - critical)
 - [ ] Define observability requirements in PRD template (MON-001)
 - [ ] Add observability tasks to default task generation (MON-003)
 - [ ] Define SLO targets for pipeline operations (MON-004)
@@ -168,10 +168,10 @@ in the generated web UI code that must be resolved before web deployment.
 - [ ] Wire SendGrid webhook route to app router
 
 ### 6.4 Pipeline Improvements (Self-Test Findings)
-- [x] Fix forge artifact tracking in state (Bug #1 -- fixed)
-- [x] Fix lineRange parsing in Post-RC scanner (Bug #2 -- fixed)
+- [x] Fix forge artifact tracking in state (Bug #1 - fixed)
+- [x] Fix lineRange parsing in Post-RC scanner (Bug #2 - fixed)
 - [ ] Investigate Connect/Compound tool discovery after MCP server restart (Bug #3)
-- [x] Fix streaming timeout on large synthesis calls (Bug #4 -- fixed)
+- [x] Fix streaming timeout on large synthesis calls (Bug #4 - fixed)
 - [ ] Add guided decision cards for operational choices in Validate phase
 - [ ] Improve Post-RC scan to handle large codebases (currently scans ~15%)
 
@@ -185,7 +185,7 @@ Target: 1,000 GitHub stars, 500 MCP installs, 50 Pro knowledge file sales.
 - [ ] Publish 4 technical blog posts (bi-weekly):
   1. "Why AI code editors fail on large projects"
   2. "Multi-LLM orchestration: Routing to Claude, GPT-4, Gemini, Perplexity"
-  3. "Building an MCP server: 31 tools and 536 tests"
+  3. "Building an MCP server: 35 tools and 578 tests"
   4. "Requirements traceability in AI-generated code"
 
 ### 7.2 Distribution
@@ -215,7 +215,7 @@ These are the 9 forge tasks from the pipeline self-test.
 
 ### 8.3 Growth Execution
 - [ ] Create 12 SEO landing pages targeting founder search intent
-- [ ] Stripe payment integration for Starter ($29/mo) and Pro ($79/mo) tiers
+- [ ] Stripe payment integration for Pro ($79/mo) tier
 - [ ] Free tier onboarding: email signup -> survey -> project wizard -> research phase
 
 ---

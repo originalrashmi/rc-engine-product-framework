@@ -5,9 +5,9 @@ import { UsageMeter } from '../../src/core/pricing/meter.js';
 // ── Tier Definitions ────────────────────────────────────────────────────────
 
 describe('Pricing Tiers', () => {
-  it('should define 4 tiers', () => {
-    expect(Object.keys(TIERS)).toHaveLength(4);
-    expect(getTierOrder()).toEqual(['free', 'starter', 'pro', 'enterprise']);
+  it('should define 3 tiers', () => {
+    expect(Object.keys(TIERS)).toHaveLength(3);
+    expect(getTierOrder()).toEqual(['free', 'pro', 'enterprise']);
   });
 
   it('free tier has correct limits', () => {
@@ -17,16 +17,6 @@ describe('Pricing Tiers', () => {
     expect(free.features.fullPipeline).toBe(false);
     expect(free.features.designOptions).toBe(0);
     expect(free.features.securityScan).toBe(false);
-  });
-
-  it('starter tier enables full pipeline', () => {
-    const starter = getTier('starter');
-    expect(starter.monthlyPriceUsd).toBe(29);
-    expect(starter.projectsPerMonth).toBe(5);
-    expect(starter.features.fullPipeline).toBe(true);
-    expect(starter.features.designOptions).toBe(1);
-    expect(starter.features.securityScan).toBe(true);
-    expect(starter.features.playbook).toBe(false);
   });
 
   it('pro tier has unlimited projects and all features', () => {
@@ -47,11 +37,9 @@ describe('Pricing Tiers', () => {
     expect(enterprise.features.apiAccess).toBe(true);
   });
 
-  it('annual prices are lower than monthly', () => {
-    for (const id of ['starter', 'pro'] as const) {
-      const tier = getTier(id);
-      expect(tier.annualPriceUsd).toBeLessThan(tier.monthlyPriceUsd);
-    }
+  it('annual price is lower than monthly for pro', () => {
+    const pro = getTier('pro');
+    expect(pro.annualPriceUsd).toBeLessThan(pro.monthlyPriceUsd);
   });
 
   it('getTier throws on unknown tier', () => {
@@ -60,15 +48,15 @@ describe('Pricing Tiers', () => {
 
   it('hasFeature checks boolean and numeric features', () => {
     expect(hasFeature('free', 'fullPipeline')).toBe(false);
-    expect(hasFeature('starter', 'fullPipeline')).toBe(true);
+    expect(hasFeature('pro', 'fullPipeline')).toBe(true);
     expect(hasFeature('free', 'designOptions')).toBe(false); // 0 = false
     expect(hasFeature('pro', 'designOptions')).toBe(true); // 3 = true
   });
 
   it('formatTierPrice returns correct strings', () => {
     expect(formatTierPrice(getTier('free'))).toBe('Free');
-    expect(formatTierPrice(getTier('starter'))).toBe('$29/mo');
-    expect(formatTierPrice(getTier('starter'), true)).toBe('$24/mo');
+    expect(formatTierPrice(getTier('pro'))).toBe('$79/mo');
+    expect(formatTierPrice(getTier('pro'), true)).toBe('$66/mo');
     expect(formatTierPrice(getTier('enterprise'))).toBe('Custom');
   });
 });
@@ -105,22 +93,6 @@ describe('UsageMeter', () => {
     expect(check.reason).toContain('Free tier limit');
   });
 
-  it('starter tier allows 5 projects with overage', () => {
-    meter.setUserTier('user-1', 'starter');
-
-    for (let i = 0; i < 5; i++) {
-      const check = meter.checkLimit('user-1');
-      expect(check.allowed).toBe(true);
-      meter.recordProject('user-1', `proj-${i}`, `Project ${i}`);
-    }
-
-    // 6th project: overage
-    const check = meter.checkLimit('user-1');
-    expect(check.allowed).toBe(true); // Still allowed, but with overage
-    expect(check.overageCostUsd).toBeGreaterThan(0);
-    expect(check.reason).toContain('Overage');
-  });
-
   it('pro tier has unlimited projects', () => {
     meter.setUserTier('user-1', 'pro');
 
@@ -152,8 +124,8 @@ describe('UsageMeter', () => {
     expect(summary.projects[0].completed).toBe(true);
   });
 
-  it('getSummary computes overage correctly', () => {
-    meter.setUserTier('user-1', 'starter'); // 5 projects/month
+  it('getSummary shows correct values for pro', () => {
+    meter.setUserTier('user-1', 'pro');
 
     for (let i = 0; i < 7; i++) {
       meter.recordProject('user-1', `proj-${i}`, `Project ${i}`);
@@ -161,9 +133,9 @@ describe('UsageMeter', () => {
 
     const summary = meter.getSummary('user-1');
     expect(summary.projectsUsed).toBe(7);
-    expect(summary.projectsAllowed).toBe(5);
-    expect(summary.overageProjects).toBe(2);
-    expect(summary.overageCostUsd).toBe(1.0); // 2 * $0.50
+    expect(summary.projectsAllowed).toBe(Infinity);
+    expect(summary.overageProjects).toBe(0);
+    expect(summary.overageCostUsd).toBe(0);
   });
 
   it('reset clears all data', () => {

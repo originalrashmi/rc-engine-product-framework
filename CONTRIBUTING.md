@@ -41,7 +41,7 @@ All checks must pass before submitting a PR.
 - Prefix unused params with `_`
 - Async/await for all I/O (no sync fs in new code)
 - Zod schemas for all external input validation
-- Explicit error types -- no catch-all with silent defaults
+- Explicit error types - no catch-all with silent defaults
 
 ### Architecture
 
@@ -50,20 +50,20 @@ RC Engine uses domain-driven design:
 ```
 src/
   domains/
-    pre-rc/    # Research pipeline (7 tools)
-    rc/        # Build pipeline (17 tools)
-    post-rc/   # Validation pipeline (7 tools)
-    traceability/  # Audit pipeline (3 tools)
+    pre-rc/    # Research pipeline (7 tools - 6 free, 1 Pro)
+    rc/        # Build pipeline (17 tools - 5 free, 12 Pro)
+    post-rc/   # Validation pipeline (7 tools - 2 free, 5 Pro)
+    traceability/  # Audit pipeline (3 tools - all Pro)
   shared/      # LLM clients, config, types, token tracking
-  core/        # Graph engine, state management, plugins
+  core/        # Graph engine, state management, plugins, pricing/tier enforcement
 ```
 
-Each domain owns its tools, agents, state management, and types. Domains communicate only through the alpha agent orchestration layer.
+Each domain owns its tools, agents, state management, and types. Domains communicate only through the alpha agent orchestration layer. Tier enforcement is handled at the web server layer via `TOOL_FEATURE_REQUIREMENTS` in `web/server/index.ts`.
 
 ### State Management
 
 - All state goes through the checkpoint store (SQLite, WAL mode)
-- State is Zod-validated on read -- corruption throws, never silently resets
+- State is Zod-validated on read - corruption throws, never silently resets
 - Atomic writes prevent half-written state
 - Every state change creates a checkpoint
 
@@ -77,14 +77,14 @@ Each domain owns its tools, agents, state management, and types. Domains communi
 
 - Tool errors return user-friendly messages, not stack traces
 - LLM failures fall back gracefully: preferred provider -> Claude -> passthrough
-- State errors are loud -- never swallow, always report
+- State errors are loud - never swallow, always report
 
 ## Pull Request Process
 
-1. **Branch from `v2`** -- this is the active development branch
-2. **Run `npm run check`** before submitting -- all checks must pass
+1. **Branch from `v2`** - this is the active development branch
+2. **Run `npm run check`** before submitting - all checks must pass
 3. **Write tests** for new functionality
-4. **Keep PRs focused** -- one feature or fix per PR
+4. **Keep PRs focused** - one feature or fix per PR
 5. **Write clear commit messages** that describe why, not just what
 
 ### PR Title Format
@@ -101,12 +101,12 @@ test: add integration tests for graph coordinator
 
 - **Bugs**: Use the [bug report template](https://github.com/originalrashmi/rc-engine/issues/new?template=bug_report.md)
 - **Features**: Use the [feature request template](https://github.com/originalrashmi/rc-engine/issues/new?template=feature_request.md)
-- **Security**: See [SECURITY.md](SECURITY.md) -- do not open public issues for vulnerabilities
+- **Security**: See [SECURITY.md](SECURITY.md) - do not open public issues for vulnerabilities
 
 ## Git Workflow
 
-- `main` -- stable releases
-- `v2` -- active development (branch from here)
+- `main` - stable releases
+- `v2` - active development (branch from here)
 - Feature branches from `v2`, PR back to `v2`
 - Merge `v2` -> `main` at milestone completions
 

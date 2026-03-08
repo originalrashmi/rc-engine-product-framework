@@ -1,5 +1,5 @@
 /**
- * RC Engine Web UI -- Express server.
+ * RC Engine Web UI - Express server.
  *
  * Architecture:
  *   - Creates an in-process MCP server with all 35 tools registered
@@ -74,6 +74,8 @@ const TOOL_FEATURE_REQUIREMENTS: Record<string, keyof ReturnType<typeof getTier>
   rc_sequence: 'fullPipeline',
   rc_validate: 'fullPipeline',
   rc_forge_task: 'fullPipeline',
+  rc_connect: 'fullPipeline',
+  rc_compound: 'fullPipeline',
   rc_gate: 'fullPipeline',
   // Design tools
   ux_design: 'designOptions',
@@ -100,7 +102,7 @@ function checkTierAccess(toolName: string, userTier: string): string | null {
     const tierDef = getTier(tierId);
     return `Your ${tierDef.name} plan does not include this feature. Upgrade to access ${requiredFeature.replace(/([A-Z])/g, ' $1').toLowerCase()}.`;
   } catch {
-    return null; // Unknown tier -- allow (fail-open for dev)
+    return null; // Unknown tier - allow (fail-open for dev)
   }
 }
 
@@ -157,7 +159,7 @@ async function main() {
     }),
   );
 
-  // CORS -- restrict to same-origin + configurable allowed origins
+  // CORS - restrict to same-origin + configurable allowed origins
   const allowedOrigins = process.env.ALLOWED_ORIGINS
     ? process.env.ALLOWED_ORIGINS.split(',').map((o) => o.trim())
     : [`http://localhost:${PORT}`];
@@ -472,7 +474,7 @@ async function main() {
     }
   });
 
-  // Structured pipeline state -- calls all status tools and returns parsed JSON
+  // Structured pipeline state - calls all status tools and returns parsed JSON
   app.get('/api/project/state', requireAuth, async (req, res) => {
     const projectPath = req.query.path as string;
     const pathError = validateProjectPath(projectPath);
@@ -553,7 +555,7 @@ async function main() {
     res.download(fullPath);
   });
 
-  // PDF export -- generates print-ready HTML from project artifacts
+  // PDF export - generates print-ready HTML from project artifacts
   app.get('/api/project/export', requireAuth, (req, res) => {
     const projectPath = req.query.path as string;
     const filesParam = req.query.files as string;
@@ -584,7 +586,7 @@ async function main() {
     }
   });
 
-  // Playbook / ARD generation -- aggregates all pipeline outputs
+  // Playbook / ARD generation - aggregates all pipeline outputs
   app.get('/api/project/playbook', requireAuth, (req, res) => {
     const projectPath = req.query.path as string;
     const format = req.query.format as string | undefined; // 'html' or default 'md'
@@ -617,7 +619,7 @@ async function main() {
     }
   });
 
-  // Diagram generation -- creates Mermaid diagrams from task data
+  // Diagram generation - creates Mermaid diagrams from task data
   app.get('/api/project/diagrams', requireAuth, async (req, res) => {
     const projectPath = req.query.path as string;
     const pathError = validateProjectPath(projectPath);

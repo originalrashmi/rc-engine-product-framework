@@ -5,7 +5,7 @@ This directory contains the methodology knowledge files that power RC Engine's p
 ## Community Mode (Default)
 
 Without knowledge files, RC Engine runs in **community mode**:
-- All 35 tools are available
+- 35 tools are registered across 4 domains (access depends on your tier - 14 on Free, all 35 on Pro)
 - Tools operate in **passthrough mode** - they assemble structured prompts and return them for your IDE's AI to process
 - You get the full pipeline structure, quality gates, and state management
 - No API keys or knowledge files required

@@ -1,11 +1,11 @@
-# RC Engine -- Conversation UX Templates
+# RC Engine - Conversation UX Templates
 
 Message templates for every pipeline event. The agent MUST use these patterns
 when communicating with users. Language is non-technical by default.
 
 ## Vocabulary Mapping
 
-Use plain language -- never internal jargon:
+Use plain language - never internal jargon:
 
 | Internal Term | Say Instead |
 |---------------|-------------|
@@ -16,12 +16,12 @@ Use plain language -- never internal jargon:
 | Artifact | Deliverable |
 | Forge | Build |
 | Illuminate | Discovery |
-| Token | (omit -- say "AI usage" or "cost") |
+| Token | (omit - say "AI usage" or "cost") |
 | Passthrough mode | Manual mode |
 | Autonomous mode | Automatic mode |
-| Orchestrator | (omit -- invisible to user) |
-| MCP | (omit -- invisible to user) |
-| State file | (omit -- invisible to user) |
+| Orchestrator | (omit - invisible to user) |
+| MCP | (omit - invisible to user) |
+| State file | (omit - invisible to user) |
 | CWE | (say the plain-language vulnerability name) |
 | Legal module | Legal risk review (Pro only) |
 | Claims auditor | Self-audit / claims review (Pro only) |
@@ -36,10 +36,10 @@ Use plain language -- never internal jargon:
 I'd love to help you build [product name].
 
 Here's my plan:
-1. **Research** -- I'll run [N] research specialists to analyze your idea from every angle (market, users, security, UX, and more)
-2. **Design** -- We'll create a detailed requirements document and technical architecture
-3. **Build** -- I'll generate implementation guidance for each component
-4. **Validate** -- Security scan and quality checks before shipping
+1. **Research** - I'll run [N] research specialists to analyze your idea from every angle (market, users, security, UX, and more)
+2. **Design** - We'll create a detailed requirements document and technical architecture
+3. **Build** - I'll generate implementation guidance for each component
+4. **Validate** - Security scan and quality checks before shipping
 
 There are [N] checkpoints along the way where I'll pause and ask for your approval before moving forward. You're always in control.
 
@@ -48,7 +48,7 @@ Ready to start? I'll begin with the research phase.
 
 ### When user wants to skip research
 ```
-No problem -- we can go straight to building.
+No problem - we can go straight to building.
 
 I'll start with some discovery questions to understand your project, then we'll create:
 1. A requirements document (what to build)
@@ -83,8 +83,8 @@ Estimated research time: ~[N] minutes
 Estimated AI cost: ~$[N]
 
 **Checkpoint 1:** Does this research scope look right? Should I add or remove any areas of focus?
-- **Approve** -- Start the research
-- **Adjust** -- Tell me what to change
+- **Approve** - Start the research
+- **Adjust** - Tell me what to change
 ```
 
 ### After each prc_run_stage
@@ -92,14 +92,14 @@ Estimated AI cost: ~$[N]
 **[Stage name] research complete** ([N] of [total] stages done)
 
 [N] specialists contributed:
-[bullet list: specialist name -- one-line key finding]
+[bullet list: specialist name - one-line key finding]
 
 [If any failed: "Warning: [N] specialists couldn't complete their analysis. Their areas were: [list]. This may leave gaps in the research."]
 
 [If gate is due:]
 **Checkpoint [N]:** [checkpoint question]
-- **Approve** -- Continue to the next stage
-- **Adjust** -- Tell me what needs to change
+- **Approve** - Continue to the next stage
+- **Adjust** - Tell me what needs to change
 [If no gate:] Moving to the next stage...
 ```
 
@@ -107,17 +107,17 @@ Estimated AI cost: ~$[N]
 ```
 **Research complete!** Here are your deliverables:
 
-1. **Requirements Document** (PRD) -- [N] sections covering [summary]
-2. **Consulting Deck** -- Visual presentation of findings
-3. **Task Breakdown** -- [N] tasks estimated at [total effort]
-4. **Research Index** -- Token usage breakdown by specialist
+1. **Requirements Document** (PRD) - [N] sections covering [summary]
+2. **Consulting Deck** - Visual presentation of findings
+3. **Task Breakdown** - [N] tasks estimated at [total effort]
+4. **Research Index** - Token usage breakdown by specialist
 
 Files saved to: pre-rc-research/
 
 **What's next?** You can:
-- **Continue to build** -- I'll convert this research into a build plan
-- **Review first** -- Take time to read through the deliverables
-- **Stop here** -- The PRD is a complete standalone document
+- **Continue to build** - I'll convert this research into a build plan
+- **Review first** - Take time to read through the deliverables
+- **Stop here** - The PRD is a complete standalone document
 ```
 
 ---
@@ -129,7 +129,7 @@ Files saved to: pre-rc-research/
 Research imported into the build pipeline. Your 19-section PRD has been converted to the build format.
 
 Steps 1-2 (Discovery and Requirements) are already done from research.
-We're starting at **Step 3: Architecture** -- defining how your product will be built.
+We're starting at **Step 3: Architecture** - defining how your product will be built.
 
 Do you have any technical preferences? (e.g., "use React and Firebase", "must work offline", "needs to handle 10,000 users")
 ```
@@ -145,8 +145,8 @@ Here's the technical plan:
 - **Infrastructure:** [hosting/deployment summary]
 
 **Checkpoint:** Does this architecture match your expectations?
-- **Approve** -- Generate the task list
-- **Adjust** -- Tell me what to change
+- **Approve** - Generate the task list
+- **Adjust** - Tell me what to change
 ```
 
 ### After rc_sequence
@@ -168,9 +168,9 @@ Estimated total effort: [total hours] ([critical path hours] on the critical pat
 - **Production hardening (Step 8):** [N] security surfaces to scan, [N] monitoring points to instrument, [N] deployment dependencies to configure
 
 **Checkpoint: Review your build plan**
-- **Approve and build** -- The plan is solid. Run quality checks, then start building.
-- **Review plan again** -- Something needs refinement. Tell me what to change and I'll regenerate.
-- **Change direction** -- Go back to architecture, revisit requirements, or adjust scope.
+- **Approve and build** - The plan is solid. Run quality checks, then start building.
+- **Review plan again** - Something needs refinement. Tell me what to change and I'll regenerate.
+- **Change direction** - Go back to architecture, revisit requirements, or adjust scope.
 ```
 
 ### After rc_validate
@@ -189,8 +189,8 @@ Here's what I found and recommend:
 [numbered list of issues with plain-language explanations]
 
 **Checkpoint:** Ready to start building?
-- **Approve** -- Begin building task by task
-- **Fix first** -- Address the issues above
+- **Approve** - Begin building task by task
+- **Fix first** - Address the issues above
 ```
 
 ### After each rc_forge_task
@@ -206,8 +206,8 @@ Progress: [completed]/[total] tasks ([percentage]%)
 All tasks complete!
 
 **Checkpoint:** Ready to verify integration?
-- **Approve** -- Move to integration check
-- **Build more** -- Add or re-run tasks first
+- **Approve** - Move to integration check
+- **Build more** - Add or re-run tasks first
 ```
 
 ### After rc_connect
@@ -223,8 +223,8 @@ Key findings:
 - Data flow: [matches architecture/mismatches found]
 
 **Checkpoint:** Is the integration solid?
-- **Approve** -- Move to production hardening
-- **Fix first** -- Address integration gaps
+- **Approve** - Move to production hardening
+- **Fix first** - Address integration gaps
 ```
 
 ### After rc_compound
@@ -242,13 +242,13 @@ Key findings:
 **Ship Checklist:** [N] items ready, [N] need attention
 
 **Checkpoint:** Ready for security validation?
-- **Approve** -- Run Post-RC security scan
-- **Harden first** -- Address the items above
+- **Approve** - Run Post-RC security scan
+- **Harden first** - Address the items above
 ```
 
 ### After Phase 8 gate approval (RC Method complete)
 ```
-**RC Method complete -- all 8 steps approved!**
+**RC Method complete - all 8 steps approved!**
 
 Your project has been through the full build pipeline:
 - Discovery and requirements (Steps 1-2)
@@ -263,8 +263,8 @@ I'll run a security and monitoring scan to verify your project is ready to ship.
 This checks for common vulnerabilities, missing error handling, and monitoring gaps.
 
 Ready to run the security scan?
-- **Yes** -- Start the scan
-- **Not yet** -- I want to review the deliverables first
+- **Yes** - Start the scan
+- **Not yet** - I want to review the deliverables first
 ```
 
 ---
@@ -289,9 +289,9 @@ BLOCKED: Found [N] critical issues that must be resolved:
 These must be fixed (or explicitly accepted) before shipping.
 
 **Ship Decision:**
-- **Ship** -- Approve for deployment
-- **Fix** -- Address the issues first
-- **Accept risk** -- I'll record your justification for each accepted issue
+- **Ship** - Approve for deployment
+- **Fix** - Address the issues first
+- **Accept risk** - I'll record your justification for each accepted issue
 ```
 
 ### Explaining security findings (use these translations)
@@ -299,25 +299,25 @@ These must be fixed (or explicitly accepted) before shipping.
 XSS vulnerability → "Your app could be tricked into running harmful code in users' browsers"
 SQL injection → "An attacker could manipulate your database through form inputs"
 Missing authentication → "Some pages can be accessed without logging in"
-Hardcoded credential → "There's a password written directly in the code -- it should be in a secure configuration"
+Hardcoded credential → "There's a password written directly in the code - it should be in a secure configuration"
 No rate limiting → "Someone could overwhelm your app by sending thousands of requests"
 Missing error tracking → "If your app crashes, you won't know about it"
 No HTTPS → "Data between your users and your app isn't encrypted"
 CSRF vulnerability → "An attacker could trick users into performing actions they didn't intend"
 ```
 
-### Explaining legal findings (Pro only -- requires rc-engine-pro knowledge files)
+### Explaining legal findings (Pro only - requires rc-engine-pro knowledge files)
 ```
 Missing privacy policy → "Your product collects user data but doesn't tell users how it's handled. Without a privacy policy, you may face regulatory fines (GDPR: up to 4% of annual revenue; CCPA: $2,500-$7,500 per violation)."
 Missing terms of service → "Users have no agreement governing how they use your product. Without ToS, you have limited legal recourse if users misuse the service."
 GPL dependency risk → "One of your code libraries requires you to open-source your entire product. Using GPL code in a closed-source product is a license violation that can result in injunctions and damages."
-AGPL SaaS risk → "A library you use requires you to publish your entire service's source code -- even for SaaS products served over a network."
+AGPL SaaS risk → "A library you use requires you to publish your entire service's source code - even for SaaS products served over a network."
 HIPAA non-compliance → "Your health-related product needs specific data protection that isn't set up yet. HIPAA penalties range from $100 to $50,000 per violation, up to $1.5 million per year per category."
 PCI-DSS non-compliance → "Your payment handling doesn't meet credit card industry security standards. Non-compliance can result in fines of $5,000-$100,000 per month from payment processors."
 COPPA non-compliance → "Your product targets children but lacks required parental consent mechanisms. FTC enforces COPPA with penalties up to $50,120 per violation."
 Missing AI disclaimer → "Your product uses AI but doesn't warn users that outputs may contain errors. Without proper disclaimers, users may hold you liable for AI-generated advice they rely on."
 PII without protection → "Your product handles sensitive personal data without specifying how it's protected. Data breach liability and regulatory fines apply."
-Missing accessibility → "Your product has a user interface but no plan for users with disabilities. ADA lawsuits have increased significantly -- average settlement is $10,000-$50,000."
+Missing accessibility → "Your product has a user interface but no plan for users with disabilities. ADA lawsuits have increased significantly - average settlement is $10,000-$50,000."
 GDPR non-compliance → "Your product collects data from EU users but lacks required privacy protections. GDPR fines can reach 20 million euros or 4% of global annual revenue, whichever is higher."
 Unqualified marketing claim → "A claim in your documentation could create liability because it overpromises. FTC can pursue deceptive advertising claims with penalties and injunctions."
 Missing cookie consent → "Your product uses cookies or tracking for EU users without a consent mechanism. ePrivacy Directive requires opt-in consent for non-essential cookies."
@@ -397,7 +397,7 @@ Something went wrong with [step name].
 What happened: [one-sentence plain explanation]
 What I recommend: [specific next step]
 
-This doesn't affect your previous work -- everything saved so far is safe.
+This doesn't affect your previous work - everything saved so far is safe.
 ```
 
 ### State corruption
@@ -405,11 +405,11 @@ This doesn't affect your previous work -- everything saved so far is safe.
 I'm having trouble reading the project state file.
 
 This can happen if the process was interrupted during a save.
-Your research and deliverables in [directory] are fine -- only the progress tracker is affected.
+Your research and deliverables in [directory] are fine - only the progress tracker is affected.
 
 I can:
-- **Try to recover** -- I'll attempt to read what's available
-- **Start this step over** -- Redo just the current step (previous work is preserved)
+- **Try to recover** - I'll attempt to read what's available
+- **Start this step over** - Redo just the current step (previous work is preserved)
 ```
 
 ---
@@ -425,7 +425,7 @@ Running total so far: ~$[total].
 ### Budget warning (50%)
 ```
 Heads up: we've used about half the estimated AI budget (~$[spent] of ~$[total]).
-Everything is on track -- just keeping you informed.
+Everything is on track - just keeping you informed.
 ```
 
 ### Budget warning (80%)
@@ -437,7 +437,7 @@ The remaining steps should stay within budget, but let me know if you'd like to 
 ### Budget exceeded
 ```
 We've exceeded the initial estimate (~$[spent] vs ~$[estimated]).
-This happened because [reason -- e.g., "the research required more specialist analysis than expected"].
+This happened because [reason - e.g., "the research required more specialist analysis than expected"].
 Shall I continue? The remaining steps will cost approximately ~$[remaining].
 ```
 

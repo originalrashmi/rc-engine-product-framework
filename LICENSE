@@ -26,3 +26,11 @@ NOTE: This license applies to the RC Engine source code only.
 The RC Engine Pro methodology knowledge files (personas, skills, templates,
 anti-pattern databases) are separately licensed under a proprietary license.
 See https://github.com/originalrashmi/rc-engine-pro for details.
+
+COMMERCIAL USE RESTRICTION: While the MIT License permits broad use of this
+source code, the names "RC Engine", "RC Method", and "Toerana" are trademarks
+of Toerana. Cloning, forking, or deriving from this repository to offer a
+competing commercial service, SaaS product, or paid offering is prohibited
+without written permission from Toerana. You may freely use RC Engine to build
+your own products and for internal use. For commercial licensing inquiries,
+contact licensing@toerana.com.

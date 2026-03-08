@@ -1,4 +1,4 @@
-# RC Engine -- Quickstart Guide
+# RC Engine - Quickstart Guide
 
 Get from product idea to production-ready deliverables in one session.
 
@@ -59,7 +59,7 @@ GOOGLE_GEMINI_API_KEY=your-key-here     # optional
 OPENAI_API_KEY=your-key-here            # optional
 ```
 
-This file is private -- it is already in `.gitignore` so it will never be committed or shared.
+This file is private - it is already in `.gitignore` so it will never be committed or shared.
 
 ### Step 3: Connect RC Engine to your IDE
 
@@ -67,7 +67,7 @@ RC Engine runs as a background server that your IDE talks to. You need to tell y
 
 **Option A: Claude Code (terminal-based)**
 
-Claude Code is a CLI tool -- you run it from your terminal. To connect RC Engine:
+Claude Code is a CLI tool - you run it from your terminal. To connect RC Engine:
 
 1. Open the project folder where you want to build your product (not the rc-engine folder):
    ```bash
@@ -106,7 +106,7 @@ For detailed IDE-specific setup, see [Getting Started](GETTING-STARTED.md).
 
 > **Where:** Inside your IDE (Claude Code terminal, or the AI chat panel in Cursor/Windsurf/VS Code).
 
-Type a message like: "What tools are available?" You should see 31 RC Engine tools listed.
+Type a message like: "What tools are available?" You should see RC Engine tools listed (14 on Free tier, up to 35 on Pro).
 
 If tools don't appear, check that:
 - The path in `.mcp.json` points to `dist/index.js` (not `src/`)
@@ -117,7 +117,7 @@ If tools don't appear, check that:
 
 ## Your First Run
 
-> **Where:** Everything from here happens inside your IDE's AI chat. Just type naturally -- you never need to call tools by name.
+> **Where:** Everything from here happens inside your IDE's AI chat. Just type naturally - you never need to call tools by name.
 
 ### 1. Describe your idea
 
@@ -131,11 +131,11 @@ Tell the AI what you want to build. Examples:
 
 The AI activates up to 20 research specialists that analyze your idea:
 
-- **Market Landscape Analyst** -- competitive landscape, market gaps
-- **Primary User Archetype** -- user personas, pain points, behaviors
-- **Systems Architect** -- technical feasibility, stack recommendations
-- **Security Compliance Analyst** -- threat modeling, regulatory requirements
-- **UX Systems Designer** -- interaction patterns, cognitive load analysis
+- **Market Landscape Analyst** - competitive landscape, market gaps
+- **Primary User Archetype** - user personas, pain points, behaviors
+- **Systems Architect** - technical feasibility, stack recommendations
+- **Security Compliance Analyst** - threat modeling, regulatory requirements
+- **UX Systems Designer** - interaction patterns, cognitive load analysis
 - ...and up to 15 more specialists
 
 You approve at **3 checkpoints** during research:
@@ -176,7 +176,7 @@ You make the final **ship/no-ship decision**.
 | Security scan report | `post-rc/reports/` |
 | Traceability matrix | `rc-traceability/` |
 
-All deliverables are markdown and HTML -- readable in any browser or text editor.
+All deliverables are markdown and HTML - readable in any browser or text editor.
 
 ---
 
@@ -188,19 +188,19 @@ RC Engine works in **manual mode** without API keys. The AI generates structured
 
 ## Tips for Best Results
 
-1. **Be specific about your users** -- "freelancers who bill hourly" is better than "users"
-2. **Mention scale** -- "100 users" vs "100,000 users" changes the architecture
-3. **State constraints** -- "must work offline" or "budget under $500/month" helps focus research
-4. **Read the checkpoints** -- the research findings are the most valuable part; don't skip them
+1. **Be specific about your users** - "freelancers who bill hourly" is better than "users"
+2. **Mention scale** - "100 users" vs "100,000 users" changes the architecture
+3. **State constraints** - "must work offline" or "budget under $500/month" helps focus research
+4. **Read the checkpoints** - the research findings are the most valuable part; don't skip them
 
 ---
 
 ## What's Next
 
-- **Give feedback** -- [Open an issue](https://github.com/originalrashmi/rc-engine-product-framework/issues) with your experience
-- **Star the repo** -- helps others find RC Engine
-- **Join the community** -- contribute improvements via [pull requests](https://github.com/originalrashmi/rc-engine-product-framework/blob/main/CONTRIBUTING.md)
-- **Get Pro knowledge files** -- enhanced research personas and build skills for autonomous execution
+- **Give feedback** - [Open an issue](https://github.com/originalrashmi/rc-engine-product-framework/issues) with your experience
+- **Star the repo** - helps others find RC Engine
+- **Join the community** - contribute improvements via [pull requests](https://github.com/originalrashmi/rc-engine-product-framework/blob/main/CONTRIBUTING.md)
+- **Get Pro knowledge files** - enhanced research personas and build skills for autonomous execution
 
 ---
 
@@ -211,7 +211,7 @@ RC Engine works in **manual mode** without API keys. The AI generates structured
 | `npm run build` fails | Make sure you have Node.js 18+ (`node --version`) |
 | Tools not showing in IDE | Verify the path in `.mcp.json` points to `dist/index.js` (not `src/`) |
 | "No LLM provider" error | Check your `.env` file has at least `ANTHROPIC_API_KEY` set |
-| Research phase is slow | This is normal -- each specialist makes multiple AI calls. Typical: 15-30 min |
+| Research phase is slow | This is normal - each specialist makes multiple AI calls. Typical: 15-30 min |
 | Cost seems high | Check [Usage & Cost Guide](USAGE-AND-COST-GUIDE.md) for optimization tips |
 
 ---
@@ -222,18 +222,18 @@ RC Engine works in **manual mode** without API keys. The AI generates structured
 Your IDE (Claude Code / Cursor / Windsurf / VS Code)
     |
     v
-RC Engine MCP Server (35 tools)
+RC Engine MCP Server (35 tools, Free + Pro tiers)
     |
-    +--> Pre-RC Research (7 tools) --> 20 AI specialists
+    +--> Pre-RC Research (7 tools, 6 free) --> 20 AI specialists
     |         |
     |         v
-    +--> RC Method Build (14 tools) --> 8-phase gated pipeline
+    +--> RC Method Build (17 tools, 5 free) --> 8-phase gated pipeline
     |         |
     |         v
-    +--> Post-RC Validation (7 tools) --> Security + monitoring scan
+    +--> Post-RC Validation (7 tools, 2 free) --> Security + monitoring scan
     |         |
     |         v
-    +--> Traceability (3 tools) --> Requirements-to-code audit
+    +--> Traceability (3 tools, Pro only) --> Requirements-to-code audit
     |
     v
 Deliverables (PRD, architecture, tasks, code, scan report)

@@ -1,4 +1,4 @@
-# RC Engine -- Architecture Reference Document (ARD)
+# RC Engine - Architecture Reference Document (ARD)
 
 > **Last updated:** 2026-03-02 | **Version:** v2 branch | **Tools:** 32 | **Tests:** 485
 
@@ -138,13 +138,13 @@ graph LR
 graph TD
     INDEX["index.ts"] --> PATCH["Monkey-patch server.tool()<br/>with guardedTool()"]
 
-    PATCH --> REG_PRC["registerPreRcTools(server)<br/>Uses: server.tool() -- GUARDED"]
-    PATCH --> REG_RC_P["registerRcPhaseTools(server)<br/>Uses: server.registerTool() -- UNGUARDED"]
-    PATCH --> REG_RC_G["registerRcGateTools(server)<br/>Uses: server.registerTool() -- UNGUARDED"]
-    PATCH --> REG_RC_U["registerRcUxTools(server)<br/>Uses: server.registerTool() -- UNGUARDED"]
-    PATCH --> REG_POST["registerPostRcTools(server)<br/>Uses: server.tool() -- GUARDED"]
-    PATCH --> REG_TRACE["registerTraceabilityTools(server)<br/>Uses: server.tool() -- GUARDED"]
-    PATCH --> REG_PIPE["rc_pipeline_status<br/>Inline, server.tool() -- GUARDED"]
+    PATCH --> REG_PRC["registerPreRcTools(server)<br/>Uses: server.tool() - GUARDED"]
+    PATCH --> REG_RC_P["registerRcPhaseTools(server)<br/>Uses: server.registerTool() - UNGUARDED"]
+    PATCH --> REG_RC_G["registerRcGateTools(server)<br/>Uses: server.registerTool() - UNGUARDED"]
+    PATCH --> REG_RC_U["registerRcUxTools(server)<br/>Uses: server.registerTool() - UNGUARDED"]
+    PATCH --> REG_POST["registerPostRcTools(server)<br/>Uses: server.tool() - GUARDED"]
+    PATCH --> REG_TRACE["registerTraceabilityTools(server)<br/>Uses: server.tool() - GUARDED"]
+    PATCH --> REG_PIPE["rc_pipeline_status<br/>Inline, server.tool() - GUARDED"]
 
     style REG_RC_P fill:#ff6b6b,color:#fff
     style REG_RC_G fill:#ff6b6b,color:#fff
@@ -251,11 +251,11 @@ graph TD
 
 **Key files:**
 
-- `tools.ts` -- registers 6 tools via `server.tool()`
-- `complexity-classifier.ts` -- Cynefin framework (Clear/Complicated/Complex/Chaotic)
-- `persona-selector.ts` -- full registry of 20 personas with activation conditions
-- `agents/persona-agent.ts` -- single class reused for all 20 personas
-- `state/state-persistence.ts` -- Markdown + JSON serialization
+- `tools.ts` - registers 6 tools via `server.tool()`
+- `complexity-classifier.ts` - Cynefin framework (Clear/Complicated/Complex/Chaotic)
+- `persona-selector.ts` - full registry of 20 personas with activation conditions
+- `agents/persona-agent.ts` - single class reused for all 20 personas
+- `state/state-persistence.ts` - Markdown + JSON serialization
 
 **20 Personas** (in `knowledge/pre-rc/personas/`):
 accessibility-advocate, ai-ml-specialist, business-model-strategist, cognitive-load-analyst, content-language-strategist, data-telemetry-strategist, demand-side-theorist, gtm-strategist, market-landscape-analyst, meta-product-architect, persona-coverage-auditor, prd-translation-specialist, primary-user-archetype, research-program-director, research-synthesis-specialist, secondary-edge-user, security-compliance-analyst, systems-architect, token-economics-optimizer, ux-systems-designer
@@ -301,20 +301,20 @@ graph TD
     end
 
     subgraph "State"
-        RCSTATE["RC-STATE.md<br/>JSON-in-HTML-comment<br/>Sync fs -- KNOWN FRAGILE"]
+        RCSTATE["RC-STATE.md<br/>JSON-in-HTML-comment<br/>Sync fs - KNOWN FRAGILE"]
     end
 ```
 
 **Key files:**
 
-- `orchestrator.ts` -- central orchestrator, handles all phases, file extraction, state
-- `tools/phase-tools.ts` -- 8 tools via `server.registerTool()` (UNGUARDED)
-- `tools/gate-tools.ts` -- 3 tools via `server.registerTool()` (UNGUARDED)
-- `tools/ux-tools.ts` -- 4 tools via `server.registerTool()` (UNGUARDED)
-- `agents/prerc-bridge-agent.ts` -- 19-to-11 section PRD converter
-- `agents/quality-agent.ts` -- 4 quality checks
-- `generators/diagram-generator.ts` -- Mermaid dependency/Gantt/layer diagrams
-- `generators/playbook-generator.ts` -- reads ALL 4 domain dirs to produce master playbook
+- `orchestrator.ts` - central orchestrator, handles all phases, file extraction, state
+- `tools/phase-tools.ts` - 8 tools via `server.registerTool()` (UNGUARDED)
+- `tools/gate-tools.ts` - 3 tools via `server.registerTool()` (UNGUARDED)
+- `tools/ux-tools.ts` - 4 tools via `server.registerTool()` (UNGUARDED)
+- `agents/prerc-bridge-agent.ts` - 19-to-11 section PRD converter
+- `agents/quality-agent.ts` - 4 quality checks
+- `generators/diagram-generator.ts` - Mermaid dependency/Gantt/layer diagrams
+- `generators/playbook-generator.ts` - reads ALL 4 domain dirs to produce master playbook
 
 **8 Phases:** Illuminate, Define, Architect, Sequence, Validate, Forge, Connect, Compound
 
@@ -347,7 +347,7 @@ graph TD
 
         GATE -->|PASS| SHIP[Ship]
         GATE -->|WARN| SHIP_WARN[Ship with warnings]
-        GATE -->|BLOCK| NOSHIP[Blocked -- fix required]
+        GATE -->|BLOCK| NOSHIP[Blocked - fix required]
     end
 
     subgraph "Code Source Priority"
@@ -366,9 +366,9 @@ graph TD
 
 **Key files:**
 
-- `modules/security/security-scanner.ts` -- 3-layer scanner (static + npm audit + LLM)
-- `modules/monitoring/monitoring-checker.ts` -- 7 monitoring readiness checks
-- `state/state-manager.ts` -- Markdown + JSON state, atomic writes
+- `modules/security/security-scanner.ts` - 3-layer scanner (static + npm audit + LLM)
+- `modules/monitoring/monitoring-checker.ts` - 7 monitoring readiness checks
+- `state/state-manager.ts` - Markdown + JSON state, atomic writes
 
 **Static Security Rules (11):**
 CWE-798 (hardcoded secrets), CWE-89 (SQL injection), CWE-95 (eval), CWE-79 (XSS/innerHTML), CWE-942 (CORS \*), CWE-78 (command injection), CWE-338 (Math.random), CWE-209 (error disclosure), CWE-347 (JWT without verify), CWE-22 (path traversal), plus `console.log` detection
@@ -398,14 +398,14 @@ graph TD
     end
 
     subgraph "Requirement Categories"
-        CAT1[FUNC -- Functional]
-        CAT2[SEC -- Security]
-        CAT3[PERF -- Performance]
-        CAT4[UX -- User Experience]
-        CAT5[DATA -- Data]
-        CAT6[INT -- Integration]
-        CAT7[OBS -- Observability]
-        CAT8[BIZ -- Business]
+        CAT1[FUNC - Functional]
+        CAT2[SEC - Security]
+        CAT3[PERF - Performance]
+        CAT4[UX - User Experience]
+        CAT5[DATA - Data]
+        CAT6[INT - Integration]
+        CAT7[OBS - Observability]
+        CAT8[BIZ - Business]
     end
 
     subgraph "Cross-Domain Reads"
@@ -424,7 +424,7 @@ graph TD
 
 ## Core Infrastructure
 
-### Graph Engine (DORMANT -- not wired to any domain)
+### Graph Engine (DORMANT - not wired to any domain)
 
 ```mermaid
 graph TD
@@ -473,8 +473,8 @@ graph TD
 | Fan-in | `fan-in` node + `MergeFn<S>` | Implemented |
 | Checkpointing | Separate `CheckpointStore` exists | NOT wired |
 | Streaming | `GraphEventListener<S>` | Implemented |
-| Subgraphs | -- | NOT implemented |
-| Send API | -- | NOT implemented |
+| Subgraphs | - | NOT implemented |
+| Send API | - | NOT implemented |
 
 ---
 
@@ -517,7 +517,7 @@ graph TD
     style OBS2 fill:#ffa500,color:#fff
 ```
 
-> **Orange = DORMANT.** Built and tested but not imported by any domain code. The INDIRECT modules (Budget, CircuitBreaker, LearningStore, ModelRouter) are wired into the `shared/llm/router.ts` -- but the router itself is also not used by domains (they call `llmFactory.getClient()` directly).
+> **Orange = DORMANT.** Built and tested but not imported by any domain code. The INDIRECT modules (Budget, CircuitBreaker, LearningStore, ModelRouter) are wired into the `shared/llm/router.ts` - but the router itself is also not used by domains (they call `llmFactory.getClient()` directly).
 
 ---
 
@@ -633,7 +633,6 @@ Tool access is gated by subscription tier:
 | Tier       | Price  | Access                                    |
 | ---------- | ------ | ----------------------------------------- |
 | Free       | $0     | Pre-RC research only                      |
-| Starter    | $29/mo | Full pipeline, basic features             |
 | Pro        | $79/mo | Full pipeline + security scan + UX design |
 | Enterprise | Custom | All features + team seats + SLA           |
 
@@ -667,18 +666,18 @@ graph LR
 
 ### Auth System
 
-- **Magic link login** -- email a one-time token (15-min expiry), verify via GET
-- **Sessions** -- 30-day HttpOnly secure cookies, SQLite-backed
-- **Organizations** -- create org, invite members, seat limits per tier
-- **Dev bypass** -- `RC_AUTH_BYPASS=true` returns a dev user with `pro` tier
+- **Magic link login** - email a one-time token (15-min expiry), verify via GET
+- **Sessions** - 30-day HttpOnly secure cookies, SQLite-backed
+- **Organizations** - create org, invite members, seat limits per tier
+- **Dev bypass** - `RC_AUTH_BYPASS=true` returns a dev user with `pro` tier
 - **Tables:** `users`, `sessions`, `organizations`, `magic_tokens`, `org_invites`
 
 ### Stripe Billing
 
-- Checkout session creation for Starter/Pro (monthly + annual)
+- Checkout session creation for Pro (monthly + annual)
 - Webhook handlers: `checkout.session.completed`, `customer.subscription.deleted`, `invoice.payment_failed`
 - Same-origin URL validation to prevent open redirects
-- Optional -- system works without Stripe configured
+- Optional - system works without Stripe configured
 
 ### Email Providers
 
@@ -828,7 +827,7 @@ graph TD
         FACTORY2 --> OPENAI_P["OpenAI (raw fetch)<br/>UX: design system analysis"]
     end
 
-    subgraph "NOT USED -- ModelRouter"
+    subgraph "NOT USED - ModelRouter"
         ROUTER4["ModelRouter"] -->|cheap tier| GEMINI_P
         ROUTER4 -->|standard tier| CLAUDE_P
         ROUTER4 -->|premium tier| CLAUDE_P
@@ -922,7 +921,7 @@ graph TD
     MON_KB -->|loaded by| MON_CHECK["MonitoringChecker"]
 ```
 
-**Knowledge Loader** (`src/shared/knowledge-loader.ts`) detects Pro vs Community mode based on which files are present. Missing files degrade gracefully -- the tool proceeds without that knowledge.
+**Knowledge Loader** (`src/shared/knowledge-loader.ts`) detects Pro vs Community mode based on which files are present. Missing files degrade gracefully - the tool proceeds without that knowledge.
 
 ---
 
@@ -1064,7 +1063,7 @@ Single GitHub Actions workflow (`.github/workflows/ci.yml`):
 | 11  | **Deployment tools not used**             | No deploy pipeline           | Readiness checks, profile detection, and config generation exist but aren't connected.                                                                                                                                                                                                                                                            |
 | 12  | **3 of 4 LLM clients use raw fetch**      | Missing SDK features         | OpenAI, Gemini, and Perplexity clients use raw `fetch` instead of official SDKs. Missing: automatic retries, streaming, type safety.                                                                                                                                                                                                              |
 | 13  | **No end-to-end integration tests**       | Pipeline untested as whole   | 421 unit tests across 20 files but zero tests running the full Pre-RC to Post-RC pipeline.                                                                                                                                                                                                                                                        |
-| 14  | **Forge writes to staging, not source**   | Dead-end output              | `rc_forge_task` writes to `rc-method/forge/{taskId}/` -- not the project source tree. No automated integration step.                                                                                                                                                                                                                              |
+| 14  | **Forge writes to staging, not source**   | Dead-end output              | `rc_forge_task` writes to `rc-method/forge/{taskId}/` - not the project source tree. No automated integration step.                                                                                                                                                                                                                              |
 | 15  | **Web UI deps in devDependencies**        | Broken prod install          | React, Vite, Tailwind are in `devDependencies` but the web UI is a production feature. `npm install --production` breaks the web UI.                                                                                                                                                                                                              |
 | 16  | ~~**Web UI not linted**~~                 | **RESOLVED**                 | Web server (`web/server/`) is now linted (ESLint) and formatted (Prettier) alongside `src/` and `tests/`. React frontend (`web/src/`) still excluded (needs JSX/React ESLint config).                                                                                                                                                             |
 | 17  | ~~**Web server not type-checked in CI**~~ | **RESOLVED**                 | TypeScript project references implemented: root `tsconfig.json` has `composite: true`, `web/tsconfig.json` has `references: [{ "path": ".." }]`. Cross-boundary imports fixed (`../../src/` changed to `../../dist/`). CI runs `tsc --noEmit -p web/tsconfig.json` as a separate step. `stripe` and `@types/nodemailer` added as devDependencies. |
@@ -1092,7 +1091,7 @@ Single GitHub Actions workflow (`.github/workflows/ci.yml`):
 | `tests/core/docs.test.ts`                    | Changelog + Doc Gen            | ~10   | All pass (dormant)                               |
 | `tests/core/deployment.test.ts`              | Deploy Readiness               | ~10   | All pass (dormant)                               |
 | `tests/core/learning-store.test.ts`          | Learning Store                 | ~15   | All pass (INDIRECT)                              |
-| `tests/core/model-router.test.ts`            | Model Router                   | ~10   | All pass (dormant -- router not used by domains) |
+| `tests/core/model-router.test.ts`            | Model Router                   | ~10   | All pass (dormant - router not used by domains) |
 | `tests/core/plugin-registry.test.ts`         | Plugin Registry                | ~10   | All pass (dormant)                               |
 | `tests/core/value-calculator.test.ts`        | Value + Roles                  | ~10   | All pass (dormant)                               |
 | `tests/agent-eval/tool-selection.test.ts`    | Tool Descriptions              | 33    | All pass (CONNECTED)                             |

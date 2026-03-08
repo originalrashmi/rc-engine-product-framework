@@ -32,23 +32,6 @@ const TIERS: TierCard[] = [
     cta: 'Start Free',
   },
   {
-    id: 'starter',
-    name: 'Starter',
-    price: '$29',
-    annualPrice: '$24',
-    description: 'Full pipeline for solopreneurs.',
-    features: [
-      '5 projects/month',
-      'Full pipeline (research to ship)',
-      '1 design option per project',
-      'Architecture diagrams',
-      'Security scanning',
-      'PDF export',
-      'Email support',
-    ],
-    cta: 'Start Building',
-  },
-  {
     id: 'pro',
     name: 'Pro',
     price: '$79',
@@ -101,7 +84,7 @@ const PIPELINE_STEPS = [
   {
     icon: Code2,
     title: 'Build',
-    desc: 'Architecture, task planning, and implementation guidance -- all generated.',
+    desc: 'Architecture, task planning, and implementation guidance - all generated.',
   },
   {
     icon: Shield,
@@ -161,7 +144,7 @@ export function Landing({ onGetStarted, onLogin }: LandingProps) {
         </h2>
         <p className="mx-auto mt-6 max-w-2xl text-lg text-slate-400">
           RC Engine is an AI-powered product development pipeline. 20 specialized AI analysts research your idea, design
-          your product, plan your architecture, and validate everything -- replacing a $32,000+ consulting engagement.
+          your product, plan your architecture, and validate everything - replacing a $32,000+ consulting engagement.
         </p>
         <div className="mt-8 flex items-center justify-center gap-4">
           <button
@@ -209,7 +192,7 @@ export function Landing({ onGetStarted, onLogin }: LandingProps) {
             {
               icon: FileText,
               title: 'Requirements Document',
-              desc: 'Comprehensive PRD covering 19 sections -- users, market, security, UX, and more.',
+              desc: 'Comprehensive PRD covering 19 sections - users, market, security, UX, and more.',
             },
             {
               icon: Palette,
@@ -276,7 +259,7 @@ export function Landing({ onGetStarted, onLogin }: LandingProps) {
       <section id="pricing" className="border-t border-navy-lighter px-8 py-20">
         <h3 className="mb-4 text-center text-3xl font-bold text-slate-100">Simple, Transparent Pricing</h3>
         <p className="mb-8 text-center text-slate-400">
-          You bring your own API keys -- no markup on AI costs. Pay only for RC Engine features.
+          You bring your own API keys - no markup on AI costs. Pay only for RC Engine features.
         </p>
 
         {/* Annual toggle */}
@@ -295,7 +278,7 @@ export function Landing({ onGetStarted, onLogin }: LandingProps) {
           </span>
         </div>
 
-        <div className="mx-auto grid max-w-5xl grid-cols-4 gap-4">
+        <div className="mx-auto grid max-w-5xl grid-cols-3 gap-4">
           {TIERS.map((tier) => (
             <div
               key={tier.id}
@@ -348,8 +331,7 @@ export function Landing({ onGetStarted, onLogin }: LandingProps) {
         </div>
 
         <p className="mt-8 text-center text-xs text-slate-500">
-          All plans: You provide your own AI API keys (Anthropic, OpenAI, etc). No markup on AI usage costs. Overage on
-          Starter: $0.50/project beyond plan limit.
+          All plans: You provide your own AI API keys (Anthropic, OpenAI, etc). No markup on AI usage costs.
         </p>
       </section>
 
@@ -370,7 +352,7 @@ export function Landing({ onGetStarted, onLogin }: LandingProps) {
       <footer className="border-t border-navy-lighter px-8 py-8">
         <div className="flex items-center justify-between text-xs text-slate-500">
           <div>
-            <span className="font-semibold text-gold">RC</span> Engine -- AI-Powered Product Development
+            <span className="font-semibold text-gold">RC</span> Engine - AI-Powered Product Development
           </div>
           <div className="flex gap-4">
             <span>Terms</span>

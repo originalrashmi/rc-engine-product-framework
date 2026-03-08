@@ -10,7 +10,7 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 #### Pipeline
 - Complete 4-domain pipeline: Pre-RC (Research), RC (Build), Post-RC (Validation), Traceability (Audit)
-- 35 MCP tools across all domains
+- 35 MCP tools across all domains (14 free, 35 Pro - tiered access via web UI)
 - Graph engine with topological sort, gate interrupts, and fan-out/fan-in execution
 - Domain coordinators wrapping graph execution for Pre-RC, RC, and Post-RC
 - Cross-domain bridge: Pre-RC research imports into RC build pipeline

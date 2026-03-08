@@ -1,5 +1,5 @@
 /**
- * Usage Meter -- Tracks per-user project consumption for billing.
+ * Usage Meter - Tracks per-user project consumption for billing.
  *
  * Records:
  *   - Projects created per billing period
@@ -81,7 +81,7 @@ export class UsageMeter {
     if (tierId === 'free' && remaining === 0) {
       return {
         allowed: false,
-        reason: 'Free tier limit reached (1 project/month). Upgrade to Starter for more.',
+        reason: 'Free tier limit reached (1 project/month). Upgrade to Pro for more.',
         projectsRemaining: 0,
         overageCostUsd: 0,
       };

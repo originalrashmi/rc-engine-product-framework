@@ -204,7 +204,6 @@ export function Settings({ user }: SettingsProps) {
 
   const TIER_LABELS: Record<string, { label: string; color: string }> = {
     free: { label: 'Free', color: 'bg-slate-700 text-slate-400' },
-    starter: { label: 'Starter', color: 'bg-teal/20 text-teal-light' },
     pro: { label: 'Pro', color: 'bg-gold/20 text-gold-light' },
     enterprise: { label: 'Enterprise', color: 'bg-purple-500/20 text-purple-300' },
   };
@@ -286,35 +285,7 @@ export function Settings({ user }: SettingsProps) {
               </p>
             )}
 
-            <div className="grid grid-cols-2 gap-4">
-              {/* Starter Plan */}
-              <div className={`rounded-lg border p-5 ${currentTier === 'starter' ? 'border-teal bg-teal/5' : 'border-navy-lighter'}`}>
-                <div className="mb-1 text-lg font-semibold text-slate-100">Starter</div>
-                <div className="mb-3">
-                  <span className="text-2xl font-bold text-slate-100">$29</span>
-                  <span className="text-slate-500">/mo</span>
-                </div>
-                <ul className="mb-4 space-y-1 text-xs text-slate-400">
-                  <li>5 projects/month</li>
-                  <li>Full pipeline</li>
-                  <li>Security scanning</li>
-                  <li>PDF export</li>
-                </ul>
-                {currentTier === 'starter' ? (
-                  <div className="rounded bg-teal/20 py-2 text-center text-xs font-medium text-teal-light">
-                    Current Plan
-                  </div>
-                ) : (
-                  <button
-                    onClick={() => handleCheckout('starter', 'monthly')}
-                    disabled={checkingOut || !billing?.stripeConfigured}
-                    className="w-full rounded border border-navy-lighter py-2 text-sm font-medium text-slate-300 transition-colors hover:border-teal hover:text-teal-light disabled:opacity-50"
-                  >
-                    {checkingOut ? <Loader2 size={14} className="mx-auto animate-spin" /> : 'Upgrade to Starter'}
-                  </button>
-                )}
-              </div>
-
+            <div className="grid grid-cols-1 gap-4">
               {/* Pro Plan */}
               <div className={`rounded-lg border p-5 ${currentTier === 'pro' ? 'border-gold bg-gold/5' : 'border-navy-lighter'}`}>
                 <div className="mb-1 text-lg font-semibold text-slate-100">Pro</div>
