@@ -357,6 +357,86 @@ const STATIC_PATTERNS: PatternRule[] = [
     remediation:
       'Add CAPTCHA verification (Turnstile, reCAPTCHA, or hCaptcha) to authentication endpoints to prevent automated abuse.',
   },
+  // Error message leaked to client (CWE-209)
+  {
+    pattern: /res\.(?:status\(\d+\)\.)?json\s*\(\s*\{\s*error:\s*\((?:err|error)\s+as\s+Error\)\.message/g,
+    title: 'Internal error message leaked to HTTP client',
+    severity: Severity.High,
+    cweId: 'CWE-209',
+    category: 'information-disclosure',
+    remediation:
+      'Return generic error messages to clients. Log full error details server-side with a structured logger. Use a centralized error handler middleware.',
+  },
+  // Missing request body validation (CWE-20)
+  {
+    pattern: /req\.body\s+as\s+\{[^}]*\}/g,
+    title: 'Request body cast without validation -- trusts client input',
+    severity: Severity.Medium,
+    cweId: 'CWE-20',
+    category: 'input-validation',
+    remediation:
+      'Validate request bodies with a schema validation library (Zod, Joi, or yup) before use. Never trust type assertions on client input.',
+  },
+  // Missing HSTS header (CWE-319)
+  {
+    pattern: /helmet\s*\(\s*\{(?:(?!hsts)[\s\S])*\}\s*\)/g,
+    title: 'Helmet configured without HSTS -- HTTPS not enforced on repeat visits',
+    severity: Severity.Medium,
+    cweId: 'CWE-319',
+    category: 'transport-security',
+    remediation:
+      'Add hsts: { maxAge: 31536000, includeSubDomains: true, preload: true } to helmet configuration.',
+  },
+  // Missing startup env var validation (CWE-1188)
+  {
+    pattern: /process\.env\.(?:STRIPE_SECRET|DATABASE_URL|RESEND_API|SMTP_PASS)\w*\s*\|\|\s*['"]/g,
+    title: 'Secret falls back to empty string -- no startup validation',
+    severity: Severity.Medium,
+    cweId: 'CWE-1188',
+    category: 'configuration',
+    remediation:
+      'Validate required secrets at startup (before app.listen). Throw an error if critical env vars are missing in production.',
+  },
+  // Unbounded WebSocket message (CWE-400)
+  {
+    pattern: /new\s+WebSocketServer\s*\((?:(?!maxPayload)[\s\S])*\)/g,
+    title: 'WebSocket server has no message size limit -- resource exhaustion risk',
+    severity: Severity.Medium,
+    cweId: 'CWE-400',
+    category: 'resource-management',
+    remediation:
+      'Set maxPayload on WebSocketServer or validate message size in the message handler. Reject oversized messages.',
+  },
+  // Missing CSRF protection (CWE-352)
+  {
+    pattern: /app\.(?:post|put|delete)\s*\([^)]+(?:(?!csrf|csrfProtection|webhook)[\s\S]){0,200}(?:req\.body|req\.params)/g,
+    title: 'Mutation endpoint may lack CSRF protection',
+    severity: Severity.Low,
+    cweId: 'CWE-352',
+    category: 'csrf',
+    remediation:
+      'Apply CSRF token validation middleware to all state-changing endpoints. Use SameSite cookies as a baseline and add explicit CSRF tokens for enterprise proxy compatibility.',
+  },
+  // console.log/error used directly instead of structured logger
+  {
+    pattern: /console\.(?:log|error|warn)\s*\(\s*[`'"][^`'"]*(?:user|email|session|auth|billing|payment)/gi,
+    title: 'Unstructured logging with potentially sensitive context',
+    severity: Severity.Low,
+    cweId: 'CWE-778',
+    category: 'logging',
+    remediation:
+      'Replace console.log/error/warn with a structured logger (Winston, Pino, or custom) that supports log levels, correlation IDs, and automatic PII masking.',
+  },
+  // PII in audit/log output without masking
+  {
+    pattern: /auditLog\s*\(\s*\{[^}]*actorEmail:\s*(?:user\.email|req\.user\.email|email)/g,
+    title: 'PII (email) stored in audit log without pseudonymization',
+    severity: Severity.Medium,
+    cweId: 'CWE-359',
+    category: 'privacy',
+    remediation:
+      'Hash or pseudonymize email addresses before storing in audit logs. Use a one-way hash (SHA-256 truncated) so logs are useful for correlation but not PII exposure.',
+  },
 ];
 
 function runStaticPatternScan(code: string, policy: SecurityPolicy): Finding[] {
