@@ -29,6 +29,16 @@ export const DesignStyleSchema = z.object({
     borderRadius: z.enum(['none', 'subtle', 'rounded', 'pill']).describe('Corner style'),
   }),
   personality: z.string().describe('1-sentence description of the visual personality'),
+  colorDistribution: z.object({
+    primary: z.number().describe('Background/base percentage (target: 60)'),
+    secondary: z.number().describe('Supporting surfaces percentage (target: 30)'),
+    accent: z.number().describe('CTAs/highlights percentage (target: 10)'),
+  }).optional().describe('60-30-10 color distribution — ensures visual hierarchy'),
+  aestheticDirection: z.enum([
+    'brutally-minimal', 'maximalist', 'retro-futuristic', 'editorial',
+    'art-deco', 'organic', 'industrial', 'luxury', 'playful', 'brutalist',
+    'warm-neutral', 'high-contrast',
+  ]).optional().describe('Bold aesthetic direction — prevents generic output'),
 });
 
 export const DesignOptionSchema = z.object({
@@ -47,6 +57,7 @@ export const DesignOptionSchema = z.object({
     strengths: z.array(z.string()).describe('What this option does well'),
     weaknesses: z.array(z.string()).describe('Where this option compromises'),
   }),
+  differentiator: z.string().optional().describe('The one visual element someone will remember 24 hours later'),
 });
 
 export const DesignSpecSchema = z.object({

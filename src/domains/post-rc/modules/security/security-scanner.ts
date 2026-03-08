@@ -437,6 +437,49 @@ const STATIC_PATTERNS: PatternRule[] = [
     remediation:
       'Hash or pseudonymize email addresses before storing in audit logs. Use a one-way hash (SHA-256 truncated) so logs are useful for correlation but not PII exposure.',
   },
+
+  // ── UI Anti-Pattern Rules ───────────────────────────────────────────────────
+
+  // transition: all is a performance anti-pattern (forces browser to watch every property)
+  {
+    pattern: /transition\s*:\s*all\b/g,
+    title: 'CSS transition: all — performance anti-pattern',
+    severity: Severity.Low,
+    cweId: 'CWE-400',
+    category: 'ui-performance',
+    remediation:
+      'List specific properties instead of "all" (e.g., transition: transform 200ms, opacity 200ms). "transition: all" forces the browser to watch every CSS property for changes.',
+  },
+  // <div onClick> without role="button" — accessibility violation
+  {
+    pattern: /<div\s[^>]*onClick[^>]*(?!role=["']button["'])>/g,
+    title: '<div onClick> without role="button" — not keyboard accessible',
+    severity: Severity.Medium,
+    cweId: 'CWE-20',
+    category: 'accessibility',
+    remediation:
+      'Use <button> for actions instead of <div onClick>. If a div must handle clicks, add role="button", tabIndex={0}, and onKeyDown for Enter/Space.',
+  },
+  // outline: none / outline-none without focus-visible replacement
+  {
+    pattern: /outline:\s*(?:none|0)\s*;(?![\s\S]{0,100}:focus-visible)/g,
+    title: 'outline: none without :focus-visible replacement — focus ring removed',
+    severity: Severity.Medium,
+    cweId: 'CWE-20',
+    category: 'accessibility',
+    remediation:
+      'Never remove outline without providing a visible :focus-visible style. Users who navigate by keyboard lose all orientation without focus indicators.',
+  },
+  // user-scalable=no or maximum-scale=1 — blocks zoom for accessibility
+  {
+    pattern: /(?:user-scalable\s*=\s*no|maximum-scale\s*=\s*1(?:\.0)?)\b/g,
+    title: 'Viewport blocks user zoom — accessibility violation',
+    severity: Severity.Medium,
+    cweId: 'CWE-20',
+    category: 'accessibility',
+    remediation:
+      'Remove user-scalable=no and maximum-scale=1 from viewport meta tags. Users with low vision rely on pinch-to-zoom. WCAG 1.4.4 requires support for 200% zoom.',
+  },
 ];
 
 function runStaticPatternScan(code: string, policy: SecurityPolicy): Finding[] {

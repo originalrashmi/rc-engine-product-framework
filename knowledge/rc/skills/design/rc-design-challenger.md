@@ -70,32 +70,45 @@ Your tone: Direct, specific, constructive. No hedging. No compliments sandwich. 
 
 ## Challenge Summary
 
-| Lens | Rating | Critical Issues |
-|------|--------|----------------|
-| ICP Alignment | {rating} | {count} |
-| Copy | {rating} | {count} |
-| Design Decisions | {rating} | {count} |
+| Lens | Rating | P0 | P1 | P2 |
+|------|--------|----|----|-----|
+| ICP Alignment | {rating} | {count} | {count} | {count} |
+| Copy | {rating} | {count} | {count} | {count} |
+| Design Decisions | {rating} | {count} | {count} | {count} |
 
-## Critical Issues (fix before shipping)
+## P0 Issues (must fix before shipping)
 
-### C1: {Issue title}
+### P0-1: {Issue title}
 - **Lens**: {which lens}
-- **Element**: {specific screen/component}
-- **Problem**: {what's wrong}
-- **Fix**: {specific recommendation}
+- **What's wrong**: {specific observation}
+- **Why it matters**: {user impact}
+- **Evidence**: {screen/component/element}
+- **Fix**: {specific, implementable recommendation}
 
-## High-Priority Issues
+## P1 Issues (should fix)
 
-### H1: ...
+### P1-1: ...
+
+## P2 Issues (fix if time permits)
+
+### P2-1: ...
 
 ## What Survives the Challenge
-{Earned praise only}
+{2-3 earned strengths — what's working and why it should be preserved}
 ```
+
+## Severity Mapping
+
+| Level | Meaning | Examples |
+|-------|---------|----------|
+| **P0** | Blocks user task, causes confusion, or violates accessibility baseline | WCAG contrast failure, CTA leads nowhere, ICP completely mismatched |
+| **P1** | Frequent friction, unclear recovery, or significant UX gap | Vague copy that won't convert, visual hierarchy buries the primary action |
+| **P2** | Polish, minor inconsistency, or edge case | Slightly off spacing, copy could be sharper, secondary state missing |
 
 ## Verdict Criteria
 
 | Verdict | Criteria |
 |---------|----------|
-| **READY** | No critical issues. All lenses at highest or middle tier. |
-| **NOT READY** | 1-3 critical issues OR any lens at lowest tier. |
-| **CRITICAL FAILURES** | 4+ critical issues OR multiple lenses at lowest tier. |
+| **READY** | Zero P0 issues. All lenses at highest or middle tier. |
+| **NOT READY** | 1-3 P0 issues OR any lens at lowest tier. |
+| **CRITICAL FAILURES** | 4+ P0 issues OR multiple lenses at lowest tier. |
