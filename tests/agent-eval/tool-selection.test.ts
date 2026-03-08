@@ -24,6 +24,8 @@ const TOOL_DESCRIPTIONS: Record<string, string> = {
     'Check Pre-RC research progress. Read-only, safe to call anytime. Returns: current stage, completed stages, gate statuses, persona results, token usage. Use this to orient yourself when resuming a session or when the user asks "where are we?" Call this BEFORE deciding which prc_ tool to call next if you are unsure of the current state.',
   prc_synthesize:
     'FINAL STEP of Pre-RC. Call ONLY after Gate 3 is approved (all 6 stages complete). Synthesizes all persona research into deliverables: 19-section PRD (markdown), HTML consulting deck, task list, DOCX document, and research index. LONG-RUNNING: involves multiple LLM calls for synthesis. Set include_task_deck=true to also generate a visual task breakdown deck. After success: present deliverables to user. To continue into RC Method, call rc_import_prerc. This is a natural stopping point -- user may choose to stop here with just the PRD.',
+  prc_stress_test:
+    'Run AFTER prc_synthesize, BEFORE building. Challenges the product idea with VC-level scrutiny across market viability, technical feasibility, business model, and competitive landscape. Returns GO/NO-GO recommendation with detailed reasoning. Pro tier only. After success: proceed to rc_import_prerc to begin the build phase.',
 
   rc_import_prerc:
     'BRIDGE from Pre-RC to RC Method. Call after prc_synthesize completes and user wants to continue building. Converts the 19-section Pre-RC PRD to 11-section RC format, auto-approves Phases 1-2, and advances to Phase 3 (Architect). Prerequisites: pre-rc-research/ directory must exist with Gate 3 approved. After success: call rc_architect to begin technical design. Skips rc_start/rc_illuminate/rc_define since Pre-RC already covered discovery and requirements.',
@@ -41,6 +43,10 @@ const TOOL_DESCRIPTIONS: Record<string, string> = {
     'Phase 5 (Validate). QUALITY GATE before building. Runs 4 automated checks: anti-pattern scan, token budget audit, scope drift detection, and UX quality assessment. This catches problems BEFORE code is written -- saving significant rework. No user input needed. Present findings to user with severity ratings. Prerequisites: Phase 4 gate approved. After gate approval: moves to Phase 6 (Forge) -- begin building with rc_forge_task.',
   rc_forge_task:
     'Phase 6 (Forge). Call once per task from the approved task list. Loads the PRD, architecture, and task context, then generates implementation guidance for the specified task_id (e.g., "TASK-001"). Call this for EACH task in sequence, respecting dependency order. Prerequisites: Phase 5 gate approved, valid task_id from the task list. After ALL tasks complete: proceed to Phase 7 (Connect) via rc_gate, then run postrc_scan for security validation. Present each task result to user before moving to the next.',
+  rc_connect:
+    'Phase 7 (Connect). Call after all Forge tasks complete. Verifies integration points across all built components: API contracts, data flow, authentication, error propagation, and end-to-end user flows. Prerequisites: Phase 6 gate approved. After gate approval: moves to Phase 8 (Compound).',
+  rc_compound:
+    'Phase 8 (Compound). Production hardening assessment. Evaluates: non-functional requirements, error handling and recovery, observability readiness, security hardening, and deployment readiness. Produces a ship checklist. Prerequisites: Phase 7 gate approved. After gate approval: move to Post-RC validation via postrc_scan.',
   rc_gate:
     'Submit user\'s gate decision for the current RC Method phase. NEVER call without first presenting the phase output to the user and getting their explicit approval. Valid decisions: "approve" advances to next phase, "reject" stays at current phase (include reason in feedback), "question" pauses for clarification. Gates exist after Phases 1-5, 7, and 8. Phase 6 (Forge) has no gate -- it runs per-task. After approve: the next phase tool becomes available. After reject: re-run the current phase tool with adjusted inputs.',
   rc_save:
@@ -54,6 +60,8 @@ const TOOL_DESCRIPTIONS: Record<string, string> = {
     'Audit UI code or a screen description against 42 core UX rules plus specialist modules. Call during or after Forge (Phase 6) to check implementation quality. task_type controls which specialist modules load: form, dashboard, onboarding, admin, payment, component_library, content, navigation, or "audit" to load all. Returns findings with severity, rule citations, and fix suggestions. Use this to catch UX issues before postrc_scan.',
   ux_generate:
     'Generate a UX child PRD (PRD-[project]-ux.md). Call during Phase 2 (Define) if ux_score returned selective or deep_dive mode. Produces: screen inventory, state contracts, component inventory, copy inventory, and accessibility checklist. Saved alongside the main PRD in rc-method/prds/. Pass descriptions of the screens and user flows. After success: the UX PRD is used by rc_validate (Phase 5) for UX quality checks and by rc_forge_task for implementation guidance.',
+  ux_design:
+    'Generate visual design options with HTML wireframes. Call after Define phase to produce 1-3 design options based on ICP and design intake. Each option includes color palette, typography, layout, and personality. Returns design spec with recommendation. Prerequisites: PRD must exist.',
 
   postrc_scan:
     'Run AFTER building (Phase 6 Forge complete). Scans code for security vulnerabilities and checks monitoring instrumentation. Pass code_context with the actual project code -- without it, the scan has nothing to analyze. Returns findings by severity (critical/high/medium/low) with CWE references. LONG-RUNNING: involves LLM analysis. After success: present findings to user in plain language. Then call postrc_gate for ship/no-ship decision. If critical findings exist, also generates REMEDIATION-TASKS file.',
@@ -106,8 +114,8 @@ function findBestMatch(intent: string, descriptions: Record<string, string>): st
 // ─── Test Suite ────────────────────────────────────────────────────────────
 
 describe('Tool Description Completeness', () => {
-  it('all 31 tools have descriptions', () => {
-    expect(Object.keys(TOOL_DESCRIPTIONS)).toHaveLength(31);
+  it('all 35 tools have descriptions', () => {
+    expect(Object.keys(TOOL_DESCRIPTIONS)).toHaveLength(35);
   });
 
   it('every description starts with WHEN to call (action word or context)', () => {
