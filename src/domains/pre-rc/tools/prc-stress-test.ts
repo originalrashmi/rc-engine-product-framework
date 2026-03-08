@@ -279,15 +279,15 @@ Analyze this product idea using the evaluation framework provided. Be brutally h
     analysisContent = call1Response.content;
     totalTokens += call1Response.tokensUsed;
 
-    tokenTracker.record('pre-rc', 'prc_stress_test:analysis', call1Response.tokensUsed, call1Response.provider);
+    tokenTracker.record('pre-rc', 'prc_stress_test:analysis', call1Response.tokensUsed, call1Response.provider, { inputTokens: call1Response.inputTokens, outputTokens: call1Response.outputTokens });
     recordCost({
       pipelineId: 'pre-rc-session',
       domain: 'pre-rc',
       tool: 'prc_stress_test:analysis',
       provider: call1Response.provider,
       model: claudeClient.getModel(),
-      inputTokens: 0,
-      outputTokens: call1Response.tokensUsed,
+      inputTokens: call1Response.inputTokens ?? 0,
+      outputTokens: call1Response.outputTokens ?? call1Response.tokensUsed,
     });
     recordModelPerformance({
       provider: call1Response.provider,
@@ -342,15 +342,15 @@ Produce your analysis following the output format in your instructions.`;
     factCheckContent = call2Response.content;
     totalTokens += call2Response.tokensUsed;
 
-    tokenTracker.record('pre-rc', 'prc_stress_test:factcheck', call2Response.tokensUsed, call2Response.provider);
+    tokenTracker.record('pre-rc', 'prc_stress_test:factcheck', call2Response.tokensUsed, call2Response.provider, { inputTokens: call2Response.inputTokens, outputTokens: call2Response.outputTokens });
     recordCost({
       pipelineId: 'pre-rc-session',
       domain: 'pre-rc',
       tool: 'prc_stress_test:factcheck',
       provider: call2Response.provider,
       model: perplexityClient.getModel(),
-      inputTokens: 0,
-      outputTokens: call2Response.tokensUsed,
+      inputTokens: call2Response.inputTokens ?? 0,
+      outputTokens: call2Response.outputTokens ?? call2Response.tokensUsed,
     });
     recordModelPerformance({
       provider: call2Response.provider,
@@ -401,15 +401,15 @@ Be decisive. The entrepreneur needs a clear answer: should they build this or no
     finalReport = call3Response.content;
     totalTokens += call3Response.tokensUsed;
 
-    tokenTracker.record('pre-rc', 'prc_stress_test:verdict', call3Response.tokensUsed, call3Response.provider);
+    tokenTracker.record('pre-rc', 'prc_stress_test:verdict', call3Response.tokensUsed, call3Response.provider, { inputTokens: call3Response.inputTokens, outputTokens: call3Response.outputTokens });
     recordCost({
       pipelineId: 'pre-rc-session',
       domain: 'pre-rc',
       tool: 'prc_stress_test:verdict',
       provider: call3Response.provider,
       model: claudeClient.getModel(),
-      inputTokens: 0,
-      outputTokens: call3Response.tokensUsed,
+      inputTokens: call3Response.inputTokens ?? 0,
+      outputTokens: call3Response.outputTokens ?? call3Response.tokensUsed,
     });
     recordModelPerformance({
       provider: call3Response.provider,

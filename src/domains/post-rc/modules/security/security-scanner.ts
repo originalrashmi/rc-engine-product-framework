@@ -277,6 +277,86 @@ const STATIC_PATTERNS: PatternRule[] = [
     remediation:
       'Only access non-NEXT_PUBLIC_ env vars in server components, API routes, or getServerSideProps.',
   },
+  // Unescaped template interpolation in HTML strings
+  {
+    pattern: /`<[^`]*\$\{(?!esc\(|escapeHtml\(|sanitize)[^}]*\}[^`]*>`/g,
+    title: 'Unescaped interpolation in HTML template literal',
+    severity: Severity.High,
+    cweId: 'CWE-79',
+    category: 'xss',
+    remediation:
+      'Wrap all interpolated values in HTML template literals with an escape function (e.g., esc(), escapeHtml()). Never interpolate raw values into HTML.',
+  },
+  // CSP with unsafe-inline for scripts
+  {
+    pattern: /scriptSrc:.*['"]'unsafe-inline'['"]/g,
+    title: "CSP allows 'unsafe-inline' scripts -- XSS protection defeated",
+    severity: Severity.High,
+    cweId: 'CWE-79',
+    category: 'csp',
+    remediation:
+      "Remove 'unsafe-inline' from scriptSrc. Use nonces or hashes for inline scripts that must execute.",
+  },
+  // path.resolve with user input but no startsWith check
+  {
+    pattern: /path\.resolve\s*\([^)]*(?:req\.|params\.|query\.|body\.)[^)]*\)(?![\s\S]{0,200}startsWith)/g,
+    title: 'User input in path.resolve without containment check',
+    severity: Severity.High,
+    cweId: 'CWE-22',
+    category: 'path-traversal',
+    remediation:
+      'After resolving a path with user input, validate the result with startsWith() against an allowed base directory.',
+  },
+  // Inline style with unescaped interpolation
+  {
+    pattern: /style=["'][^"']*\$\{(?!Math\.|sanitize|String\(|Number\()[^}]*\}/g,
+    title: 'Unescaped interpolation in HTML style attribute -- CSS injection risk',
+    severity: Severity.Medium,
+    cweId: 'CWE-79',
+    category: 'xss',
+    remediation:
+      'Sanitize values interpolated into style attributes. Use a sanitizeStyleValue() function or clamp numeric values to safe ranges.',
+  },
+  // Session/auth token accepted from custom header (bypasses httpOnly)
+  {
+    pattern: /req\.headers\[['"]x-(?:session|auth|token)['"]\]/gi,
+    title: 'Auth token accepted from custom header -- bypasses httpOnly cookie protection',
+    severity: Severity.Medium,
+    cweId: 'CWE-614',
+    category: 'auth',
+    remediation:
+      'Accept session tokens only via httpOnly cookies. Custom headers expose tokens to XSS attacks.',
+  },
+  // POST/PUT/DELETE route without role or auth check
+  {
+    pattern: /app\.(?:post|put|delete)\s*\(\s*['"][^'"]+['"]\s*,\s*(?:async\s+)?\(?(?:req|_req)/g,
+    title: 'Mutation endpoint may lack authentication middleware',
+    severity: Severity.Medium,
+    cweId: 'CWE-862',
+    category: 'authorization',
+    remediation:
+      'All POST/PUT/DELETE endpoints should include requireAuth or equivalent middleware before the handler. Verify that authentication and authorization checks are applied.',
+  },
+  // console.log with token/secret/key/password in the argument
+  {
+    pattern: /console\.log\s*\([^)]*(?:token|secret|password|api[_-]?key)[^)]*\)/gi,
+    title: 'Sensitive value (token/secret/key) logged to console',
+    severity: Severity.Medium,
+    cweId: 'CWE-532',
+    category: 'logging',
+    remediation:
+      'Never log tokens, secrets, or API keys. Use structured audit logging that redacts sensitive values.',
+  },
+  // Missing CAPTCHA on auth/login/register endpoints
+  {
+    pattern: /app\.post\s*\(\s*['"]\/(?:auth|login|register|signup)['"]/g,
+    title: 'Auth endpoint may lack CAPTCHA protection',
+    severity: Severity.Low,
+    cweId: 'CWE-799',
+    category: 'auth',
+    remediation:
+      'Add CAPTCHA verification (Turnstile, reCAPTCHA, or hCaptcha) to authentication endpoints to prevent automated abuse.',
+  },
 ];
 
 function runStaticPatternScan(code: string, policy: SecurityPolicy): Finding[] {
@@ -420,15 +500,15 @@ async function runLlmScan(prompt: string, policy: SecurityPolicy): Promise<Findi
       maxTokens: 4096,
     });
 
-    tokenTracker.record('post-rc', 'postrc_scan', response.tokensUsed, response.provider);
+    tokenTracker.record('post-rc', 'postrc_scan', response.tokensUsed, response.provider, { inputTokens: response.inputTokens, outputTokens: response.outputTokens });
     recordCost({
       pipelineId: 'postrc-session',
       domain: 'post-rc',
       tool: 'postrc_scan',
       provider: response.provider,
       model: client.getModel(),
-      inputTokens: 0,
-      outputTokens: response.tokensUsed,
+      inputTokens: response.inputTokens ?? 0,
+      outputTokens: response.outputTokens ?? response.tokensUsed,
     });
     recordModelPerformance({
       provider: response.provider,

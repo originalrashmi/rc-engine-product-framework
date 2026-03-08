@@ -374,15 +374,15 @@ async function runLlmEdgeCaseScan(
       maxTokens: 4096,
     });
 
-    tokenTracker.record('post-rc', 'postrc_scan_edge_case', response.tokensUsed, response.provider);
+    tokenTracker.record('post-rc', 'postrc_scan_edge_case', response.tokensUsed, response.provider, { inputTokens: response.inputTokens, outputTokens: response.outputTokens });
     recordCost({
       pipelineId: 'postrc-session',
       domain: 'post-rc',
       tool: 'postrc_scan_edge_case',
       provider: response.provider,
       model: client.getModel(),
-      inputTokens: 0,
-      outputTokens: response.tokensUsed,
+      inputTokens: response.inputTokens ?? 0,
+      outputTokens: response.outputTokens ?? response.tokensUsed,
     });
 
     return parseEdgeCaseFindings(response.content);

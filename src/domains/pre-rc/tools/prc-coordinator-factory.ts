@@ -135,13 +135,13 @@ export function createPreRcHandlers(deps: PreRcDependencies): PreRcNodeHandlers 
             domain: 'pre-rc',
             tool: `prc_run_stage:${config.id}`,
             provider: result.llmUsed,
-            model: '',
+            model: 'unknown',
             inputTokens: 0,
             outputTokens: result.tokensUsed,
           });
           recordModelPerformance({
             provider: result.llmUsed,
-            model: '',
+            model: 'unknown',
             taskType: `prc-persona-${config.id}`,
             tokensUsed: result.tokensUsed,
             success: result.success,

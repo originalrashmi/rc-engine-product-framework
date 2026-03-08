@@ -4,6 +4,7 @@ import { loadTraceability } from '../state/state-manager.js';
 import { tokenTracker } from '../../../shared/token-tracker.js';
 import { formatRecentActivity } from '../../../shared/audit.js';
 import { formatCostSummary } from '../../../shared/cost-tracker.js';
+import { formatTokenReport } from '../../../shared/token-report.js';
 import { getLearningSummary } from '../../../shared/learning.js';
 
 type StatusInput = z.infer<typeof TraceStatusInputSchema>;
@@ -82,6 +83,7 @@ export async function traceStatus(args: StatusInput): Promise<string> {
   }
 
   output += tokenTracker.getDomainSummary('traceability');
+  output += formatTokenReport();
   output += formatCostSummary();
   output += getLearningSummary();
   output += formatRecentActivity(project_path);

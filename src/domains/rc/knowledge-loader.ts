@@ -3,15 +3,24 @@ import path from 'node:path';
 import { resolveFromRoot } from '../../shared/config.js';
 import { UX_ROUTING_TABLE } from './types.js';
 
+/** Maximum knowledge file size in characters (~12K tokens). Files above this are truncated with a warning. */
+const MAX_KNOWLEDGE_FILE_SIZE = 40_000;
+
 /**
  * KnowledgeLoader — loads knowledge files from community and Pro overlay directories.
  *
  * Single responsibility: resolve and read knowledge files.
  * Pro files override community files when present (overlay pattern).
+ * Enforces size limits to prevent prompt bloat.
  */
 export class KnowledgeLoader {
   private basePath: string;
   private proBasePath: string | null;
+  /** Cumulative chars loaded this session — exposed for token visibility. */
+  private _totalCharsLoaded = 0;
+  private _fileCount = 0;
+  /** Warnings emitted during loading (truncations, large files). */
+  private _warnings: string[] = [];
 
   constructor() {
     this.basePath = resolveFromRoot('knowledge', 'rc');
@@ -33,17 +42,20 @@ export class KnowledgeLoader {
 
   /** Load a single knowledge file by relative path. Pro files override community files. */
   loadFile(relativePath: string): string {
+    let content: string;
     if (this.proBasePath) {
       const proFullPath = path.join(this.proBasePath, relativePath);
       if (fs.existsSync(proFullPath)) {
-        return fs.readFileSync(proFullPath, 'utf-8');
+        content = fs.readFileSync(proFullPath, 'utf-8');
+        return this.trackAndLimit(relativePath, content);
       }
     }
     const fullPath = path.join(this.basePath, relativePath);
     if (!fs.existsSync(fullPath)) {
       throw new Error(`Knowledge file not found: ${fullPath}`);
     }
-    return fs.readFileSync(fullPath, 'utf-8');
+    content = fs.readFileSync(fullPath, 'utf-8');
+    return this.trackAndLimit(relativePath, content);
   }
 
   /** Try to load a knowledge file, returning null if not found */
@@ -58,6 +70,29 @@ export class KnowledgeLoader {
   /** Check if Pro knowledge is available */
   isProMode(): boolean {
     return this.proBasePath !== null;
+  }
+
+  /** Get loading stats for token visibility reporting. */
+  getLoadingStats(): { totalChars: number; fileCount: number; estimatedTokens: number; warnings: string[] } {
+    return {
+      totalChars: this._totalCharsLoaded,
+      fileCount: this._fileCount,
+      estimatedTokens: Math.ceil(this._totalCharsLoaded / 3.5),
+      warnings: [...this._warnings],
+    };
+  }
+
+  /** Track file size and truncate if above limit. */
+  private trackAndLimit(relativePath: string, content: string): string {
+    this._fileCount++;
+    if (content.length > MAX_KNOWLEDGE_FILE_SIZE) {
+      const warning = `Knowledge file "${relativePath}" truncated: ${content.length} → ${MAX_KNOWLEDGE_FILE_SIZE} chars (${Math.round((MAX_KNOWLEDGE_FILE_SIZE / content.length) * 100)}% kept)`;
+      this._warnings.push(warning);
+      console.error(`[rc-engine] ${warning}`);
+      content = content.slice(0, MAX_KNOWLEDGE_FILE_SIZE) + '\n\n[... truncated — file exceeded size limit ...]';
+    }
+    this._totalCharsLoaded += content.length;
+    return content;
   }
 
   /**

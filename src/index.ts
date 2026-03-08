@@ -17,6 +17,7 @@ import { registerDesignTools } from './domains/rc/tools/design-tools.js';
 import { registerPostRcTools } from './domains/post-rc/tools.js';
 import { registerTraceabilityTools } from './domains/traceability/tools.js';
 import { formatCostSummary } from './shared/cost-tracker.js';
+import { formatTokenReport } from './shared/token-report.js';
 import { getCircuitStatuses } from './shared/circuit-breaker.js';
 import { getLearningSummary } from './shared/learning.js';
 import { getPluginSummary, loadPlugins } from './shared/plugins.js';
@@ -97,6 +98,7 @@ server.tool(
       recordToolCall('operator', projectPath);
 
       // Subsystem summaries (only shown when data exists)
+      const tokenSection = formatTokenReport();
       const costSection = formatCostSummary();
       const circuits = getCircuitStatuses();
       const openCircuits = Object.entries(circuits).filter(([, s]) => s.state !== 'closed');
@@ -172,7 +174,7 @@ ${summary}
     → rc_architect → rc_sequence → rc_validate
     → rc_forge_task → postrc_scan
     → trace_enhance_prd → trace_map_findings
-${costSection}${circuitSection}${learnSection}${pluginSection}${benchSection}${deploySection}${docsSection}${projectDocsSection}${traceSection}${valueSection}${activitySection}
+${tokenSection}${costSection}${circuitSection}${learnSection}${pluginSection}${benchSection}${deploySection}${docsSection}${projectDocsSection}${traceSection}${valueSection}${activitySection}
   Call domain-specific status tools for details:
     prc_status    - Pre-RC research progress
     rc_status     - RC phase progress

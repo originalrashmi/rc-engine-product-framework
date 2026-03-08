@@ -516,15 +516,15 @@ Return ONLY a valid JSON array. No markdown, no explanation.`;
       maxTokens: 4096,
     });
 
-    tokenTracker.record('post-rc', 'postrc_scan_app_security', response.tokensUsed, response.provider);
+    tokenTracker.record('post-rc', 'postrc_scan_app_security', response.tokensUsed, response.provider, { inputTokens: response.inputTokens, outputTokens: response.outputTokens });
     recordCost({
       pipelineId: 'postrc-session',
       domain: 'post-rc',
       tool: 'postrc_scan_app_security',
       provider: response.provider,
       model: client.getModel(),
-      inputTokens: 0,
-      outputTokens: response.tokensUsed,
+      inputTokens: response.inputTokens ?? 0,
+      outputTokens: response.outputTokens ?? response.tokensUsed,
     });
     recordModelPerformance({
       provider: response.provider,

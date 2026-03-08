@@ -7,6 +7,24 @@ import { recordModelPerformance } from '../../../shared/learning.js';
 import { routeRequest } from '../../../shared/model-router.js';
 import type { AgentResult } from '../types.js';
 
+/**
+ * Task-specific maxTokens mapping. Sized to typical output needs per agent.
+ * Prevents waste: a scoring agent doesn't need 4096 output tokens.
+ */
+const AGENT_MAX_TOKENS: Record<string, number> = {
+  UxAgent_score: 1024,       // Numeric score + mode + specialist list
+  UxAgent_audit: 3500,       // Audit report with findings
+  UxAgent_generate: 4096,    // Full UX PRD child
+  QualityAgent: 3500,        // Quality gate report
+  TaskAgent: 4096,           // Full task list
+  ConnectAgent: 3500,        // Integration report
+  ArchitectAgent: 4096,      // Architecture document
+  DefineAgent: 4096,         // PRD generation
+  IlluminateAgent: 3500,     // Discovery report
+};
+
+const DEFAULT_MAX_TOKENS = 4096;
+
 export abstract class BaseAgent {
   protected contextLoader: ContextLoader;
   protected llmFactory: LLMFactory;
@@ -39,22 +57,40 @@ export abstract class BaseAgent {
       : userMessage;
 
     if (hasApiKey) {
+      const agentName = this.constructor.name;
+      const maxTokens = AGENT_MAX_TOKENS[agentName] ?? DEFAULT_MAX_TOKENS;
+
+      // Pre-flight token estimation: warn if input is unusually large
+      const estimatedInputChars = systemPrompt.length + userContent.length;
+      const estimatedInputTokens = Math.ceil(estimatedInputChars / 3.5);
+      if (estimatedInputTokens > 50_000) {
+        console.error(
+          `[rc-engine] [${agentName}] Large input detected: ~${estimatedInputTokens.toLocaleString()} tokens ` +
+          `(system: ${Math.ceil(systemPrompt.length / 3.5).toLocaleString()}, user: ${Math.ceil(userContent.length / 3.5).toLocaleString()})`,
+        );
+      }
+
       // Autonomous mode: route to best LLM via ModelRouter with token tracking
       const { client } = routeRequest({
-        taskType: `rc-agent-${this.constructor.name}`,
+        taskType: `rc-agent-${agentName}`,
         domain: 'rc',
         pipelineId: 'rc-session',
       });
       const response = await client.chatWithRetry({
         systemPrompt,
         messages: [{ role: 'user', content: userContent }],
-        maxTokens: 4096,
+        maxTokens,
       });
-      tokenTracker.record('rc', this.constructor.name, response.tokensUsed, response.provider);
+      tokenTracker.record('rc', agentName, response.tokensUsed, response.provider, {
+        inputTokens: response.inputTokens,
+        outputTokens: response.outputTokens,
+        cacheCreationTokens: response.cacheCreationTokens,
+        cacheReadTokens: response.cacheReadTokens,
+      });
       recordCost({
         pipelineId: 'rc-session',
         domain: 'rc',
-        tool: this.constructor.name,
+        tool: agentName,
         provider: response.provider,
         model: client.getModel(),
         inputTokens: response.inputTokens ?? 0,
@@ -63,7 +99,7 @@ export abstract class BaseAgent {
       recordModelPerformance({
         provider: response.provider,
         model: client.getModel(),
-        taskType: `rc-agent-${this.constructor.name}`,
+        taskType: `rc-agent-${agentName}`,
         tokensUsed: response.tokensUsed,
         success: true,
       });

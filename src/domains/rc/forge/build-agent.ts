@@ -113,7 +113,12 @@ export abstract class BuildAgent {
       maxTokens: 8192,
     });
 
-    tokenTracker.record('rc', this.agentName, response.tokensUsed, response.provider);
+    tokenTracker.record('rc', this.agentName, response.tokensUsed, response.provider, {
+      inputTokens: response.inputTokens,
+      outputTokens: response.outputTokens,
+      cacheCreationTokens: response.cacheCreationTokens,
+      cacheReadTokens: response.cacheReadTokens,
+    });
     recordCost({
       pipelineId: 'rc-session',
       domain: 'rc',

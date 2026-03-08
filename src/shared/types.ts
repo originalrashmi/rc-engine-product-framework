@@ -45,5 +45,9 @@ export interface LLMResponse {
   inputTokens?: number;
   /** Output tokens generated. Available when the provider reports them separately. */
   outputTokens?: number;
+  /** Tokens written to Anthropic prompt cache (first call with new system prompt). */
+  cacheCreationTokens?: number;
+  /** Tokens read from Anthropic prompt cache (subsequent calls with same system prompt). */
+  cacheReadTokens?: number;
   provider: LLMProvider;
 }
