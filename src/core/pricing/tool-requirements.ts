@@ -32,7 +32,10 @@ export const TOOL_FEATURE_REQUIREMENTS: Record<string, keyof TierFeatures> = {
   postrc_override: 'securityScan',
   postrc_gate: 'securityScan',
   postrc_configure: 'securityScan',
-  // Stress test (Pro/Enterprise only) -- tool not yet implemented
+  // Export tools
+  playbook_generate: 'playbook',
+  pdf_export: 'pdfExport',
+  // Stress test (Pro/Enterprise only)
   prc_stress_test: 'stressTest',
   // Traceability
   trace_enhance_prd: 'traceability',

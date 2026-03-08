@@ -14,6 +14,7 @@ import { registerRcGateTools } from './domains/rc/tools/gate-tools.js';
 import { registerRcUxTools } from './domains/rc/tools/ux-tools.js';
 import { registerCopyTools } from './domains/rc/tools/copy-tools.js';
 import { registerDesignTools } from './domains/rc/tools/design-tools.js';
+import { registerExportTools } from './domains/rc/tools/export-tools.js';
 import { registerPostRcTools } from './domains/post-rc/tools.js';
 import { registerTraceabilityTools } from './domains/traceability/tools.js';
 import { formatCostSummary } from './shared/cost-tracker.js';
@@ -72,6 +73,7 @@ registerRcGateTools(server); // 4 tools: rc_gate, rc_save, rc_status, rc_reset
 registerRcUxTools(server); // 5 tools: ux_score, ux_audit, ux_generate, ux_design, design_challenge
 registerCopyTools(server); // 4 tools: copy_research_brief, copy_generate, copy_iterate, copy_critique
 registerDesignTools(server); // 3 tools: design_research_brief, design_intake, brand_import
+registerExportTools(server); // 2 tools: playbook_generate, pdf_export
 registerPostRcTools(server); // 7 tools: postrc_*
 registerTraceabilityTools(server); // 3 tools: trace_*
 
@@ -162,10 +164,11 @@ ${summary}
     Gateway ........ 1 tool  (rc_init — start here)
     Pre-RC ......... 7 tools (prc_*)
     RC ............. 15 tools (rc_*, ux_*)
+    Export ......... 2 tools (playbook_generate, pdf_export)
     Post-RC ........ 7 tools (postrc_*)
     Traceability ... 3 tools (trace_*)
     Pipeline ....... 1 tool  (rc_pipeline_status)
-    Total: 33 tools
+    Total: 35 tools
 
   PIPELINE FLOW:
     prc_start → prc_classify → prc_run_stage (x6)

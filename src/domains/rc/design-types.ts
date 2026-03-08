@@ -11,6 +11,12 @@ export const DesignStyleSchema = z.object({
     surface: z.string().describe('Card/surface color hex'),
     text: z.string().describe('Primary text color hex'),
     muted: z.string().describe('Muted/secondary text color hex'),
+    semantic: z.object({
+      success: z.string().describe('Success/positive state color hex'),
+      warning: z.string().describe('Warning/caution state color hex'),
+      error: z.string().describe('Error/danger state color hex'),
+      info: z.string().describe('Info/neutral state color hex'),
+    }).optional().describe('Semantic state colors — auto-generated if not provided by intake'),
   }),
   typography: z.object({
     headingFont: z.string().describe('Heading font family'),

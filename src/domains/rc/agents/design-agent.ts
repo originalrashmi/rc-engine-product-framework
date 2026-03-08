@@ -17,21 +17,60 @@ export class DesignAgent extends BaseAgent {
     // Step 1: Generate design spec JSON
     const spec = await this.generateSpec(state, input);
 
+    // Step 1.5: Validate spec against brand/intake constraints
+    const constraintWarnings = this.validateConstraints(spec, input);
+
     // Step 2: Generate wireframes for each option (with brand/copy/font context)
+    // Use atomic approach: collect all, validate, then save
     const wireframes: DesignWireframe[] = [];
+    const failedOptions: string[] = [];
     for (const option of spec.options) {
-      const screens = await this.generateWireframes(state, option, spec, input);
-      wireframes.push(...screens);
+      try {
+        const screens = await this.generateWireframes(state, option, spec, input);
+        // Verify wireframes have actual content (not just placeholders)
+        const hasContent = screens.some(s =>
+          s.hifiHtml.length > 100 && !s.hifiHtml.includes('wireframe not generated'),
+        );
+        if (!hasContent) {
+          failedOptions.push(option.id);
+        }
+        wireframes.push(...screens);
+      } catch (err) {
+        failedOptions.push(option.id);
+        console.error(`[DesignAgent] Wireframe generation failed for option ${option.id}: ${(err as Error).message}`);
+      }
+    }
+
+    // If ALL options failed, return error instead of saving empty artifacts
+    if (failedOptions.length === spec.options.length) {
+      return {
+        text: `Error: Wireframe generation failed for all design options (${failedOptions.join(', ')}). The design spec was generated but no wireframes could be produced. Try again or adjust the design parameters.`,
+        isError: true,
+        errorCode: 'LLM_ERROR',
+      };
     }
 
     // Step 3: Self-critique against design rules + intake constraints
     const critiqueNote = await this.selfCritique(state, spec, input);
 
-    // Step 4: Save artifacts
-    const savedFiles = this.saveDesignArtifacts(state, spec, wireframes);
+    // Step 4: Save artifacts (only for successful options)
+    const successfulWireframes = wireframes.filter(wf => !failedOptions.includes(wf.optionId));
+    const savedFiles = this.saveDesignArtifacts(state, spec, successfulWireframes);
 
     // Build user-facing summary
-    let summary = this.formatSummary(spec, wireframes, savedFiles);
+    let summary = this.formatSummary(spec, successfulWireframes, savedFiles);
+
+    if (constraintWarnings.length > 0) {
+      summary += `\n\n---\n\n## Constraint Validation Warnings\n\n`;
+      for (const w of constraintWarnings) {
+        summary += `- ${w}\n`;
+      }
+    }
+
+    if (failedOptions.length > 0) {
+      summary += `\n\n> **Note:** Wireframe generation failed for option(s): ${failedOptions.join(', ')}. Only successful options were saved.\n`;
+    }
+
     if (critiqueNote) {
       summary += `\n\n---\n\n## Design Self-Critique\n\n${critiqueNote}`;
     }
@@ -40,6 +79,79 @@ export class DesignAgent extends BaseAgent {
       text: summary,
       artifacts: savedFiles,
     };
+  }
+
+  /** Validate design spec against brand profile and intake constraints */
+  private validateConstraints(spec: DesignSpec, input: DesignInput): string[] {
+    const warnings: string[] = [];
+
+    // Validate against brand profile colors
+    if (input.brandProfilePath) {
+      try {
+        const brand = JSON.parse(fs.readFileSync(input.brandProfilePath, 'utf-8'));
+        const brandPrimary = brand.colors?.primary?.hex?.toUpperCase();
+        if (brandPrimary) {
+          for (const option of spec.options) {
+            const specPrimary = option.style.colorPalette.primary?.toUpperCase();
+            if (specPrimary && specPrimary !== brandPrimary) {
+              warnings.push(
+                `Option ${option.id}: Primary color ${specPrimary} differs from brand primary ${brandPrimary}. Verify this is intentional.`,
+              );
+            }
+          }
+        }
+
+        // Validate fonts
+        const brandHeadingFont = brand.typography?.headingFont?.family;
+        if (brandHeadingFont) {
+          for (const option of spec.options) {
+            if (option.style.typography.headingFont !== brandHeadingFont) {
+              warnings.push(
+                `Option ${option.id}: Heading font "${option.style.typography.headingFont}" differs from brand font "${brandHeadingFont}".`,
+              );
+            }
+          }
+        }
+      } catch { /* continue without brand validation */ }
+    }
+
+    // Validate against intake constraints
+    if (input.designIntakePath) {
+      try {
+        const jsonPath = input.designIntakePath.replace(/\.md$/, '.json');
+        if (fs.existsSync(jsonPath)) {
+          const intake = JSON.parse(fs.readFileSync(jsonPath, 'utf-8'));
+          const constraints = intake.extractedConstraints as ExtractedDesignConstraints | undefined;
+
+          // Check avoided colors
+          if (constraints?.colorDirection?.avoid?.length) {
+            for (const option of spec.options) {
+              const palette = option.style.colorPalette;
+              const paletteColors = [palette.primary, palette.secondary, palette.background]
+                .filter(Boolean)
+                .map(c => c!.toUpperCase());
+              for (const avoided of constraints.colorDirection.avoid) {
+                const avoidedUpper = avoided.toUpperCase();
+                if (paletteColors.includes(avoidedUpper)) {
+                  warnings.push(
+                    `Option ${option.id}: Uses avoided color ${avoided} (from intake preferences).`,
+                  );
+                }
+              }
+            }
+          }
+
+          // Check WCAG target
+          if (constraints?.accessibilityDirection?.wcagTarget) {
+            warnings.push(
+              `WCAG target: ${constraints.accessibilityDirection.wcagTarget} — verify all options meet this level.`,
+            );
+          }
+        }
+      } catch { /* continue without intake validation */ }
+    }
+
+    return warnings;
   }
 
   /** Self-critique the generated design spec against design rules and intake constraints */
@@ -241,7 +353,7 @@ OUTPUT FORMAT: Return ONLY valid JSON matching this structure (no markdown, no c
       "id": "A",
       "name": "...",
       "style": {
-        "colorPalette": { "primary": "#...", "secondary": "#...", "background": "#...", "surface": "#...", "text": "#...", "muted": "#..." },
+        "colorPalette": { "primary": "#...", "secondary": "#...", "background": "#...", "surface": "#...", "text": "#...", "muted": "#...", "semantic": { "success": "#...", "warning": "#...", "error": "#...", "info": "#..." } },
         "typography": { "headingFont": "...", "bodyFont": "...", "scale": "standard" },
         "layout": { "maxWidth": "1200px", "spacing": "comfortable", "borderRadius": "rounded" },
         "personality": "..."
@@ -450,13 +562,20 @@ OUTPUT FORMAT: For each screen, output in this exact format:
     const savedFiles: string[] = [];
 
     // Save design spec JSON with schema version
-    const specPath = path.join(designDir, `design-spec-${sanitizedName}.json`);
+    const specPath = path.join(designDir, `DESIGN-SPEC.json`);
     const versionedSpec = stampVersion('design-spec', spec as unknown as Record<string, unknown>);
     fs.writeFileSync(specPath, JSON.stringify(versionedSpec, null, 2), 'utf-8');
-    const specRef = `rc-method/design/design-spec-${sanitizedName}.json`;
+    const specRef = `rc-method/design/DESIGN-SPEC.json`;
     savedFiles.push(specRef);
 
-    // Save wireframes as HTML files
+    // Save wireframes as HTML files and build manifest
+    const manifest: Array<{
+      optionId: string;
+      screenName: string;
+      lofi: string;
+      hifi: string;
+    }> = [];
+
     for (const wf of wireframes) {
       const screenSlug = wf.screenName
         .toLowerCase()
@@ -466,16 +585,32 @@ OUTPUT FORMAT: For each screen, output in this exact format:
       const optionDir = path.join(designDir, `option-${wf.optionId.toLowerCase()}`);
       fs.mkdirSync(optionDir, { recursive: true });
 
+      const lofiRef = `rc-method/design/option-${wf.optionId.toLowerCase()}/${screenSlug}-lofi.html`;
+      const hifiRef = `rc-method/design/option-${wf.optionId.toLowerCase()}/${screenSlug}-hifi.html`;
+
       const lofiPath = path.join(optionDir, `${screenSlug}-lofi.html`);
       fs.writeFileSync(lofiPath, wf.lofiHtml, 'utf-8');
-      savedFiles.push(`rc-method/design/option-${wf.optionId.toLowerCase()}/${screenSlug}-lofi.html`);
+      savedFiles.push(lofiRef);
 
       const hifiPath = path.join(optionDir, `${screenSlug}-hifi.html`);
       fs.writeFileSync(hifiPath, wf.hifiHtml, 'utf-8');
-      savedFiles.push(`rc-method/design/option-${wf.optionId.toLowerCase()}/${screenSlug}-hifi.html`);
+      savedFiles.push(hifiRef);
+
+      manifest.push({
+        optionId: wf.optionId,
+        screenName: wf.screenName,
+        lofi: lofiRef,
+        hifi: hifiRef,
+      });
     }
 
-    // Track in state
+    // Save wireframe manifest (maps spec screens → actual files)
+    const manifestPath = path.join(designDir, 'WIREFRAME-MANIFEST.json');
+    fs.writeFileSync(manifestPath, JSON.stringify({ generatedAt: new Date().toISOString(), wireframes: manifest }, null, 2), 'utf-8');
+    const manifestRef = 'rc-method/design/WIREFRAME-MANIFEST.json';
+    savedFiles.push(manifestRef);
+
+    // Track in state (deduplicated)
     for (const ref of savedFiles) {
       if (!state.artifacts.includes(ref)) {
         state.artifacts.push(ref);
@@ -550,12 +685,13 @@ OUTPUT FORMAT: For each screen, output in this exact format:
   async iterate(state: ProjectState, input: DesignIterateInput): Promise<AgentResult> {
     // Load existing design spec
     const designDir = path.join(state.projectPath, 'rc-method', 'design');
-    const specFiles = fs.readdirSync(designDir).filter((f) => f.startsWith('design-spec-') && f.endsWith('.json'));
-    if (specFiles.length === 0) {
+    const specFile = 'DESIGN-SPEC.json';
+    const specFilePath = path.join(designDir, specFile);
+    if (!fs.existsSync(specFilePath)) {
       return { text: 'Error: No design spec found. Run ux_design first.', isError: true, errorCode: 'FILE_NOT_FOUND' };
     }
 
-    const specContent = fs.readFileSync(path.join(designDir, specFiles[0]), 'utf-8');
+    const specContent = fs.readFileSync(specFilePath, 'utf-8');
     const spec: DesignSpec = JSON.parse(specContent);
 
     // Find the target option

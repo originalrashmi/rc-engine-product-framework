@@ -51,22 +51,62 @@ export class DesignIntakeAgent extends BaseAgent {
     );
     const isAutonomous = input.mode === 'autonomous';
 
+    // Run parallel phases with graceful failure handling
+    const parallelTasks: Array<Promise<{ type: string; result: unknown }>> = [];
+
     // Phase 1: Analyze competitors (if provided)
-    let competitiveLandscape: CompetitiveLandscape | undefined;
     if (hasCompetitors) {
-      competitiveLandscape = await this.analyzeCompetitors(input.competitorUrls!);
+      parallelTasks.push(
+        this.analyzeCompetitors(input.competitorUrls!)
+          .then(result => ({ type: 'competitors' as const, result }))
+          .catch(err => {
+            console.error(`[DesignIntake] Competitor analysis failed: ${(err as Error).message}`);
+            return { type: 'competitors' as const, result: undefined };
+          }),
+      );
     }
 
     // Phase 2: Analyze all preferences and inputs into findings
-    let referenceFindings: DesignDirectionFinding[] = [];
     if (hasAnyPreferences) {
-      referenceFindings = await this.analyzeReferences(input, icpData);
+      parallelTasks.push(
+        this.analyzeReferences(input, icpData)
+          .then(result => ({ type: 'references' as const, result }))
+          .catch(err => {
+            console.error(`[DesignIntake] Reference analysis failed: ${(err as Error).message}`);
+            return { type: 'references' as const, result: [] };
+          }),
+      );
     }
 
     // Phase 3: Validate font preferences
-    let fontFindings: DesignDirectionFinding[] = [];
     if (input.fontPreferences?.liked) {
-      fontFindings = await this.validateFontPreferences(input.fontPreferences.liked);
+      parallelTasks.push(
+        this.validateFontPreferences(input.fontPreferences.liked)
+          .then(result => ({ type: 'fonts' as const, result }))
+          .catch(err => {
+            console.error(`[DesignIntake] Font validation failed: ${(err as Error).message}`);
+            return { type: 'fonts' as const, result: [] };
+          }),
+      );
+    }
+
+    // Wait for all parallel tasks — partial failures don't block others
+    const settled = await Promise.all(parallelTasks);
+
+    let competitiveLandscape: CompetitiveLandscape | undefined;
+    let referenceFindings: DesignDirectionFinding[] = [];
+    let fontFindings: DesignDirectionFinding[] = [];
+    const warnings: string[] = [];
+
+    for (const { type, result } of settled) {
+      if (type === 'competitors') {
+        competitiveLandscape = result as CompetitiveLandscape | undefined;
+        if (!competitiveLandscape) warnings.push('Competitor analysis failed — proceeding without competitive data.');
+      } else if (type === 'references') {
+        referenceFindings = (result as DesignDirectionFinding[]) ?? [];
+      } else if (type === 'fonts') {
+        fontFindings = (result as DesignDirectionFinding[]) ?? [];
+      }
     }
 
     // Phase 4: Synthesize all inputs and produce assessment
@@ -80,7 +120,13 @@ export class DesignIntakeAgent extends BaseAgent {
     );
 
     // Format output text
-    const text = this.formatAssessment(assessment, isAutonomous);
+    let text = this.formatAssessment(assessment, isAutonomous);
+    if (warnings.length > 0) {
+      text += '\n\n---\n\n**Partial Analysis Warnings:**\n';
+      for (const w of warnings) {
+        text += `- ${w}\n`;
+      }
+    }
 
     return { text, assessment };
   }
@@ -605,10 +651,26 @@ RESPOND with:
     const scoreMatch = text.match(/(?:alignment|score).*?(\d{1,3})/i);
     const alignmentScore = scoreMatch ? Math.min(parseInt(scoreMatch[1], 10), 100) : 50;
 
-    // Parse verdict
+    // Parse verdict — check if LLM explicitly provided one, otherwise use thresholds
     let verdict: DesignDirectionAssessment['verdict'] = 'proceed_with_adjustments';
-    if (alignmentScore >= 70) verdict = 'proceed';
-    else if (alignmentScore < 40) verdict = 'reconsider';
+    const explicitVerdict = text.match(/\b(proceed|proceed_with_adjustments|reconsider)\b/i)?.[1]?.toLowerCase();
+    if (explicitVerdict === 'proceed' || explicitVerdict === 'proceed_with_adjustments' || explicitVerdict === 'reconsider') {
+      verdict = explicitVerdict as DesignDirectionAssessment['verdict'];
+    } else {
+      // Configurable thresholds (can be overridden via env)
+      const proceedThreshold = parseInt(process.env.RC_VERDICT_PROCEED_THRESHOLD ?? '70', 10);
+      const reconsiderThreshold = parseInt(process.env.RC_VERDICT_RECONSIDER_THRESHOLD ?? '40', 10);
+      if (alignmentScore >= proceedThreshold) verdict = 'proceed';
+      else if (alignmentScore < reconsiderThreshold) verdict = 'reconsider';
+    }
+
+    // Override: if critical misalignments exist in accessibility or platform, force adjustments
+    const hasCriticalMisalignment = findings.some(
+      f => f.alignment === 'misaligned' && (f.category === 'accessibility' || f.category === 'platform'),
+    );
+    if (hasCriticalMisalignment && verdict === 'proceed') {
+      verdict = 'proceed_with_adjustments';
+    }
 
     // Parse constraints — comprehensive extraction
     const extractedConstraints: ExtractedDesignConstraints = {

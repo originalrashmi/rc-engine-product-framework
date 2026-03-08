@@ -257,12 +257,41 @@ export function registerRcUxTools(server: McpServer): void {
         const copyCandidate = pathMod.join(project_path, 'rc-method', 'copy', 'COPY-SYSTEM.md');
         if (fs.existsSync(copyCandidate)) copySystemPath = copyCandidate;
 
+        // Auto-detect wireframe HTML from the recommended design option
+        let wireframeHtml: string | undefined;
+        if (designSpecPath && fs.existsSync(designSpecPath)) {
+          try {
+            const spec = JSON.parse(fs.readFileSync(designSpecPath, 'utf-8'));
+            const optionId: string = spec?.recommendation?.optionId ?? 'a';
+            const optionDir = pathMod.join(
+              project_path, 'rc-method', 'design', `option-${optionId.toLowerCase()}`,
+            );
+            if (fs.existsSync(optionDir)) {
+              const htmlFiles = fs.readdirSync(optionDir).filter(
+                (f: string) => f.endsWith('-hifi.html'),
+              );
+              const parts: string[] = [];
+              let totalLen = 0;
+              const MAX_WIREFRAME_CHARS = 5000;
+              for (const hf of htmlFiles) {
+                if (totalLen >= MAX_WIREFRAME_CHARS) break;
+                const content = fs.readFileSync(pathMod.join(optionDir, hf), 'utf-8');
+                const truncated = content.slice(0, MAX_WIREFRAME_CHARS - totalLen);
+                parts.push(`<!-- ${hf} -->\n${truncated}`);
+                totalLen += truncated.length;
+              }
+              if (parts.length > 0) wireframeHtml = parts.join('\n\n');
+            }
+          } catch { /* continue without wireframe HTML */ }
+        }
+
         const input: ChallengeInput = {
           projectPath: project_path,
           prdContext,
           icpData,
           designSpecPath,
           copySystemPath,
+          wireframeHtml,
           screenDescriptions: screen_descriptions,
         };
 

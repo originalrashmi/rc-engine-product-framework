@@ -58,19 +58,39 @@ export class ChallengerAgent extends BaseAgent {
       caps.hasProKnowledge,
     );
 
-    // Save report
+    // Save report (markdown)
     const reportPath = path.join(state.projectPath, 'rc-method', 'design', 'CHALLENGE-REPORT.md');
     fs.mkdirSync(path.dirname(reportPath), { recursive: true });
     fs.writeFileSync(reportPath, report, 'utf-8');
 
+    // Save structured findings as JSON for downstream automation (challenge → iterate)
+    const structuredReport = {
+      projectName: state.projectName,
+      verdict,
+      generatedAt: new Date().toISOString(),
+      lenses: lensResults,
+      findings: {
+        critical: criticalIssues,
+        high: highPriorityIssues,
+        recommendations,
+      },
+      iterationFeedback: ChallengerAgent.buildIterationFeedback(criticalIssues, highPriorityIssues),
+    };
+    const jsonPath = path.join(state.projectPath, 'rc-method', 'design', 'CHALLENGE-REPORT.json');
+    fs.writeFileSync(jsonPath, JSON.stringify(structuredReport, null, 2), 'utf-8');
+
     const artifactRef = 'rc-method/design/CHALLENGE-REPORT.md';
+    const jsonArtifactRef = 'rc-method/design/CHALLENGE-REPORT.json';
     if (!state.artifacts.includes(artifactRef)) {
       state.artifacts.push(artifactRef);
+    }
+    if (!state.artifacts.includes(jsonArtifactRef)) {
+      state.artifacts.push(jsonArtifactRef);
     }
 
     return {
       text: report,
-      artifacts: [artifactRef],
+      artifacts: [artifactRef, jsonArtifactRef],
     };
   }
 
@@ -224,6 +244,7 @@ Focus: Contrast, keyboard, screen reader, motion, cognitive a11y, responsive.`,
     if (budget > 0) {
       const designDir = path.join(input.projectPath, 'rc-method', 'design');
       if (fs.existsSync(designDir)) {
+        // Scan top-level design files (.md, .json)
         const designFiles = fs.readdirSync(designDir).filter(
           (f) => (f.endsWith('.md') || f.endsWith('.json')) && f !== 'CHALLENGE-REPORT.md',
         );
@@ -232,6 +253,27 @@ Focus: Contrast, keyboard, screen reader, motion, cognitive a11y, responsive.`,
           const content = fs.readFileSync(path.join(designDir, f), 'utf-8').slice(0, MAX_FILE_CHARS);
           sections.push(`## ${f}\n${content}`);
           budget -= content.length;
+        }
+
+        // Scan option-* subdirectories for HTML wireframes
+        if (budget > 0) {
+          const subdirs = fs.readdirSync(designDir).filter((d) => {
+            const fullPath = path.join(designDir, d);
+            return d.startsWith('option-') && fs.statSync(fullPath).isDirectory();
+          });
+          for (const subdir of subdirs) {
+            if (budget <= 0) break;
+            const subdirPath = path.join(designDir, subdir);
+            const htmlFiles = fs.readdirSync(subdirPath).filter(
+              (f) => f.endsWith('.html'),
+            );
+            for (const f of htmlFiles.slice(0, 3)) {
+              if (budget <= 0) break;
+              const content = fs.readFileSync(path.join(subdirPath, f), 'utf-8').slice(0, MAX_FILE_CHARS);
+              sections.push(`## ${subdir}/${f}\n\`\`\`html\n${content}\n\`\`\``);
+              budget -= content.length;
+            }
+          }
         }
       }
     }
@@ -252,22 +294,24 @@ Focus: Contrast, keyboard, screen reader, motion, cognitive a11y, responsive.`,
     return sections.join('\n\n---\n\n');
   }
 
-  /** Parse findings from agent response text */
+  /** Parse findings from agent response text with multi-strategy extraction */
   private parseFindings(text: string, lens: ChallengerLens): ChallengeFinding[] {
     const findings: ChallengeFinding[] = [];
-    const blocks = text.split(/FINDING:\s*/i).slice(1);
 
+    // Strategy 1: Structured FINDING: blocks (preferred)
+    const blocks = text.split(/FINDING:\s*/i).slice(1);
     for (const block of blocks) {
-      const id = block.match(/^([CHR]\d+)/i)?.[1] ?? `${lens[0].toUpperCase()}?`;
+      const id = block.match(/^([CHR]\d+)/i)?.[1] ?? `${lens[0].toUpperCase()}${findings.length + 1}`;
       const severity = block.match(/SEVERITY:\s*(critical|high|recommendation)/i)?.[1] as
         | 'critical'
         | 'high'
         | 'recommendation'
         | undefined;
       const element = block.match(/ELEMENT:\s*(.+)/i)?.[1]?.trim() ?? 'Unknown';
-      const problem = block.match(/PROBLEM:\s*(.+)/i)?.[1]?.trim() ?? block.slice(0, 200);
+      const problem = block.match(/PROBLEM:\s*([\s\S]+?)(?=\n(?:EVIDENCE|FIX|SEVERITY|FINDING|$))/i)?.[1]?.trim()
+        ?? block.slice(0, 200);
       const evidence = block.match(/EVIDENCE:\s*(.+)/i)?.[1]?.trim();
-      const fix = block.match(/FIX:\s*(.+)/i)?.[1]?.trim() ?? 'Review and address';
+      const fix = block.match(/FIX:\s*([\s\S]+?)(?=\n(?:FINDING|$))/i)?.[1]?.trim() ?? 'Review and address';
 
       findings.push({
         id,
@@ -276,23 +320,71 @@ Focus: Contrast, keyboard, screen reader, motion, cognitive a11y, responsive.`,
         problem,
         evidence,
         fix,
-        severity: severity ?? 'high',
+        severity: severity ?? this.inferSeverity(problem),
       });
     }
 
-    // If structured parsing found nothing, create a single finding from the whole text
+    // Strategy 2: Fallback — extract from numbered lists or bullet points
+    if (findings.length === 0) {
+      const bulletPattern = /(?:^|\n)\s*(?:\d+\.|[-*•])\s*\*?\*?(.+?)(?:\*?\*?)\s*[:—–-]\s*(.+)/gm;
+      let bulletMatch;
+      let idx = 1;
+      while ((bulletMatch = bulletPattern.exec(text)) !== null && idx <= 10) {
+        const title = bulletMatch[1].trim();
+        const detail = bulletMatch[2].trim();
+        findings.push({
+          id: `${lens[0].toUpperCase()}${idx}`,
+          lens: this.lensDisplayName(lens),
+          element: title,
+          problem: detail,
+          fix: 'Review and address',
+          severity: this.inferSeverity(detail),
+        });
+        idx++;
+      }
+    }
+
+    // Strategy 3: Last resort — extract meaningful sentences as individual findings
     if (findings.length === 0 && text.length > 100) {
-      findings.push({
-        id: 'U1',
-        lens: this.lensDisplayName(lens),
-        element: 'Overall',
-        problem: 'See detailed analysis below',
-        fix: 'Address findings in the analysis',
-        severity: 'high',
-      });
+      const sentences = text.match(/[^.!?\n]{30,}[.!?]/g) ?? [];
+      const issueIndicators = /(?:missing|broken|fail|violat|incorrect|inconsistent|poor|lack|no |without)/i;
+      let idx = 1;
+      for (const sentence of sentences.slice(0, 5)) {
+        if (issueIndicators.test(sentence)) {
+          findings.push({
+            id: `U${idx}`,
+            lens: this.lensDisplayName(lens),
+            element: 'Overall',
+            problem: sentence.trim(),
+            fix: 'Review and address',
+            severity: this.inferSeverity(sentence),
+          });
+          idx++;
+        }
+      }
+
+      // Absolute fallback: single aggregate finding
+      if (findings.length === 0) {
+        findings.push({
+          id: 'U1',
+          lens: this.lensDisplayName(lens),
+          element: 'Overall',
+          problem: 'Analysis produced unstructured output. Review raw text for details.',
+          fix: 'Address findings in the analysis',
+          severity: 'high',
+        });
+      }
     }
 
     return findings;
+  }
+
+  /** Infer severity from problem text keywords */
+  private inferSeverity(text: string): 'critical' | 'high' | 'recommendation' {
+    const lower = text.toLowerCase();
+    if (/\b(broken|crash|fail|xss|inject|vulnerab|security|data.?loss|inaccessib)\b/.test(lower)) return 'critical';
+    if (/\b(missing|inconsistent|violat|poor|confus|unclear|wrong)\b/.test(lower)) return 'high';
+    return 'recommendation';
   }
 
   /** Parse lens rating from agent response */
@@ -404,6 +496,51 @@ Focus: Contrast, keyboard, screen reader, motion, cognitive a11y, responsive.`,
       accessibility: 'Accessibility & Inclusion',
     };
     return names[lens];
+  }
+
+  /**
+   * Build iteration feedback from challenge findings.
+   * Maps critical and high-priority findings into a structured feedback string
+   * that can be passed directly to design_iterate.
+   */
+  static buildIterationFeedback(
+    criticalIssues: ChallengeFinding[],
+    highIssues: ChallengeFinding[],
+  ): string {
+    const lines: string[] = [];
+
+    if (criticalIssues.length > 0) {
+      lines.push('CRITICAL FIXES REQUIRED:');
+      for (const f of criticalIssues) {
+        lines.push(`- [${f.id}] ${f.element}: ${f.problem} → Fix: ${f.fix}`);
+      }
+    }
+
+    if (highIssues.length > 0) {
+      lines.push('');
+      lines.push('HIGH-PRIORITY IMPROVEMENTS:');
+      for (const f of highIssues) {
+        lines.push(`- [${f.id}] ${f.element}: ${f.problem} → Fix: ${f.fix}`);
+      }
+    }
+
+    return lines.join('\n');
+  }
+
+  /**
+   * Load challenge findings from saved JSON and produce iteration input.
+   * Call this to auto-generate design_iterate feedback from the last challenge.
+   */
+  static loadIterationFeedback(projectPath: string): string | null {
+    const jsonPath = path.join(projectPath, 'rc-method', 'design', 'CHALLENGE-REPORT.json');
+    if (!fs.existsSync(jsonPath)) return null;
+
+    try {
+      const report = JSON.parse(fs.readFileSync(jsonPath, 'utf-8'));
+      return report.iterationFeedback ?? null;
+    } catch {
+      return null;
+    }
   }
 
   /** Required by BaseAgent */

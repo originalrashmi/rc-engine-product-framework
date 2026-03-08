@@ -404,41 +404,262 @@ export class BrandAssetLoader {
   // ── URL Scraping ────────────────────────────────────────────────────────
 
   private async scrapeUrl(url: string): Promise<Partial<BrandProfile> | null> {
-    // URL scraping is done via WebFetch or Firecrawl MCP in the host environment.
-    // This agent method prepares the scrape request and processes results.
-    // For now, return null — the host IDE (Claude Code) will handle actual fetching
-    // via MCP tools when the brand_import tool is called.
-    //
-    // In autonomous mode (with API key), this would:
-    // 1. fetch(url) to get HTML
-    // 2. Parse CSS for colors, fonts, spacing
-    // 3. Extract meta tags for brand name, description
-    // 4. Return partial BrandProfile
-    console.log(`[BrandAssetLoader] URL scraping for ${url} — delegated to host environment`);
+    try {
+      console.log(`[BrandAssetLoader] Scraping ${url} for brand signals...`);
+
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), 5000);
+
+      const response = await fetch(url, {
+        signal: controller.signal,
+        headers: {
+          'User-Agent': 'RC-Engine-BrandLoader/1.0',
+          Accept: 'text/html',
+        },
+      });
+      clearTimeout(timeout);
+
+      if (!response.ok) {
+        console.log(`[BrandAssetLoader] HTTP ${response.status} from ${url}`);
+        return null;
+      }
+
+      const html = await response.text();
+      const profile: Partial<BrandProfile> = {};
+
+      // ── Extract brand name from meta tags / title ──
+      const brandName = this.extractBrandName(html);
+      if (brandName) {
+        profile.name = brandName;
+      }
+
+      // ── Extract colors from inline styles and <style> blocks ──
+      const colors = this.extractColorsFromHtml(html);
+      if (colors) {
+        profile.colors = colors;
+      }
+
+      // ── Extract fonts from CSS and Google Fonts links ──
+      const typography = this.extractTypographyFromHtml(html);
+      if (typography) {
+        profile.typography = typography;
+      }
+
+      if (Object.keys(profile).length === 0) {
+        console.log(`[BrandAssetLoader] No brand signals found in ${url}`);
+        return null;
+      }
+
+      console.log(
+        `[BrandAssetLoader] Extracted from ${url}: ${Object.keys(profile).join(', ')}`,
+      );
+      return profile;
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err);
+      console.log(`[BrandAssetLoader] URL scrape failed for ${url}: ${message}`);
+      return null;
+    }
+  }
+
+  /**
+   * Extract brand name from og:title, meta title, or <title> tag.
+   */
+  private extractBrandName(html: string): string | null {
+    // Try og:title first
+    const ogTitle = html.match(
+      /<meta[^>]+property=["']og:title["'][^>]+content=["']([^"']+)["']/i,
+    ) ?? html.match(
+      /<meta[^>]+content=["']([^"']+)["'][^>]+property=["']og:title["']/i,
+    );
+    if (ogTitle?.[1]) return ogTitle[1].trim();
+
+    // Fall back to <title>
+    const titleMatch = html.match(/<title[^>]*>([^<]+)<\/title>/i);
+    if (titleMatch?.[1]) {
+      // Clean common suffixes like "| Company" or "- Home"
+      const raw = titleMatch[1].trim();
+      const cleaned = raw.split(/\s*[|\-–—]\s*/)[0].trim();
+      return cleaned || raw;
+    }
+
     return null;
+  }
+
+  /**
+   * Extract hex colors from HTML style blocks and inline styles.
+   * Picks the most common non-white/black/gray color as primary.
+   */
+  private extractColorsFromHtml(
+    html: string,
+  ): Partial<BrandProfile>['colors'] | null {
+    // Collect all hex colors from the page
+    const hexPattern = /#([0-9a-fA-F]{3,8})\b/g;
+    const colorCounts = new Map<string, number>();
+
+    for (const match of html.matchAll(hexPattern)) {
+      let hex = match[1];
+      // Normalize 3-char hex to 6-char
+      if (hex.length === 3) {
+        hex = hex[0] + hex[0] + hex[1] + hex[1] + hex[2] + hex[2];
+      }
+      // Skip 8-char (alpha) and anything not 6-char after normalization
+      if (hex.length !== 6) continue;
+
+      const normalized = `#${hex.toUpperCase()}`;
+      if (this.isNeutralColor(normalized)) continue;
+
+      colorCounts.set(normalized, (colorCounts.get(normalized) ?? 0) + 1);
+    }
+
+    if (colorCounts.size === 0) return null;
+
+    // Sort by frequency, most common first
+    const sorted = [...colorCounts.entries()].sort((a, b) => b[1] - a[1]);
+    const primary = sorted[0][0];
+    const secondary = sorted.length > 1 ? sorted[1][0] : undefined;
+    const accents = sorted.slice(2, 5).map(([hex]) => ({ hex }));
+
+    return {
+      primary: { hex: primary },
+      secondary: secondary ? { hex: secondary } : undefined,
+      accent: accents.length > 0 ? accents : undefined,
+      neutral: { lightest: '#FFFFFF', darkest: '#111111' },
+    };
+  }
+
+  /**
+   * Check if a hex color is effectively white, black, or gray.
+   */
+  private isNeutralColor(hex: string): boolean {
+    const r = parseInt(hex.slice(1, 3), 16);
+    const g = parseInt(hex.slice(3, 5), 16);
+    const b = parseInt(hex.slice(5, 7), 16);
+
+    // Check if near-white or near-black
+    if (r > 230 && g > 230 && b > 230) return true; // near white
+    if (r < 30 && g < 30 && b < 30) return true; // near black
+
+    // Check if gray (all channels within 15 of each other)
+    const max = Math.max(r, g, b);
+    const min = Math.min(r, g, b);
+    if (max - min < 15) return true;
+
+    return false;
+  }
+
+  /**
+   * Extract font families from CSS font-family declarations and Google Fonts links.
+   */
+  private extractTypographyFromHtml(
+    html: string,
+  ): Partial<BrandProfile>['typography'] | null {
+    const fonts: string[] = [];
+
+    // Extract from Google Fonts <link> tags
+    const googleFontsPattern =
+      /fonts\.googleapis\.com\/css2?\?[^"'>\s]*family=([^"'>\s&]+)/gi;
+    for (const match of html.matchAll(googleFontsPattern)) {
+      // Google Fonts encodes families like "Inter:wght@400;700" or "Open+Sans"
+      const familyParam = decodeURIComponent(match[1]);
+      // May have multiple families separated by &family=
+      const families = familyParam.split(/[&]?family=/);
+      for (const fam of families) {
+        if (!fam) continue;
+        const cleaned = fam.split(':')[0].replace(/\+/g, ' ').trim();
+        if (cleaned && !fonts.includes(cleaned)) {
+          fonts.push(cleaned);
+        }
+      }
+    }
+
+    // Extract from CSS font-family declarations
+    const fontFamilyPattern = /font-family:\s*['"]?([^;'"}\n]+)/gi;
+    for (const match of html.matchAll(fontFamilyPattern)) {
+      const firstFont = match[1].split(',')[0].trim().replace(/['"]/g, '');
+      // Skip generic families and system defaults
+      const generics = [
+        'serif', 'sans-serif', 'monospace', 'cursive', 'fantasy',
+        'system-ui', 'ui-sans-serif', 'ui-serif', 'ui-monospace',
+        'inherit', 'initial', 'unset', 'var',
+      ];
+      if (firstFont && !generics.includes(firstFont.toLowerCase()) && !fonts.includes(firstFont)) {
+        fonts.push(firstFont);
+      }
+    }
+
+    if (fonts.length === 0) return null;
+
+    return {
+      headingFont: { family: fonts[0], source: this.inferFontSource(fonts[0], html) },
+      bodyFont: {
+        family: fonts.length > 1 ? fonts[1] : fonts[0],
+        source: this.inferFontSource(fonts.length > 1 ? fonts[1] : fonts[0], html),
+      },
+    };
+  }
+
+  /**
+   * Infer whether a font is from Google Fonts or another source.
+   */
+  private inferFontSource(
+    fontFamily: string,
+    html: string,
+  ): 'google' | 'custom' | 'system' {
+    if (html.includes('fonts.googleapis.com') && html.includes(fontFamily.replace(/\s/g, '+'))) {
+      return 'google';
+    }
+    const systemFonts = [
+      'Arial', 'Helvetica', 'Times New Roman', 'Georgia', 'Verdana',
+      'Courier New', 'Segoe UI', 'Roboto', 'SF Pro',
+    ];
+    if (systemFonts.some((sf) => sf.toLowerCase() === fontFamily.toLowerCase())) {
+      return 'system';
+    }
+    return 'custom';
   }
 
   // ── Utilities ───────────────────────────────────────────────────────────
 
   /**
-   * Merge source into target without overwriting existing values.
+   * Recursively merge source into target without overwriting existing values.
+   * - Scalars: target wins (source only fills gaps)
+   * - Objects: recurse to fill gaps at every level
+   * - Arrays: target wins (no array merging to avoid duplicates)
    */
   private mergePartial(
     target: Partial<BrandProfile>,
     source: Partial<BrandProfile>,
   ): void {
+    this.deepMergeGaps(
+      target as Record<string, unknown>,
+      source as Record<string, unknown>,
+    );
+  }
+
+  private deepMergeGaps(
+    target: Record<string, unknown>,
+    source: Record<string, unknown>,
+  ): void {
     for (const [key, value] of Object.entries(source)) {
       if (value === undefined || value === null) continue;
 
-      const existing = (target as Record<string, unknown>)[key];
+      const existing = target[key];
       if (existing === undefined || existing === null) {
-        (target as Record<string, unknown>)[key] = value;
-      } else if (typeof existing === 'object' && typeof value === 'object' && !Array.isArray(existing)) {
-        // Deep merge objects
-        Object.assign(existing, value);
+        // Gap: fill from source
+        target[key] = value;
+      } else if (
+        typeof existing === 'object' &&
+        typeof value === 'object' &&
+        !Array.isArray(existing) &&
+        !Array.isArray(value)
+      ) {
+        // Both are objects: recurse
+        this.deepMergeGaps(
+          existing as Record<string, unknown>,
+          value as Record<string, unknown>,
+        );
       }
-      // If target already has a value and source has one too, target wins
-      // (manual input is applied last to override)
+      // Scalars and arrays: target wins
     }
   }
 

@@ -675,24 +675,27 @@ ${testScriptKnowledge}`;
       forgeSection += `\nForge Files: ${totalFiles} generated`;
     }
 
-    const text = `===================================================
-RC METHOD STATUS
-===================================================
-Project: ${state.projectName}
-Current Phase: ${state.currentPhase} - ${PHASE_NAMES[state.currentPhase]}
-Gate Status: ${state.gates[state.currentPhase]?.status ?? 'pending'}
+    const text = `
+════════════════════════════════════════════════════════════════════════════════
+  RC METHOD STATUS
+════════════════════════════════════════════════════════════════════════════════
 
-Phase Progress:
+  Project:        ${state.projectName}
+  Current Phase:  ${state.currentPhase} - ${PHASE_NAMES[state.currentPhase]}
+  Gate Status:    ${state.gates[state.currentPhase]?.status ?? 'pending'}
+
+  PHASE PROGRESS:
 ${phaseLines.join('\n')}
 
-PRDs: ${state.artifacts.filter((a) => a.includes('/prds/')).length}
-Tasks: ${state.artifacts.filter((a) => a.includes('/tasks/')).length} list(s)
-Gates Passed: ${approvedCount} of ${GATED_PHASES.length}
-UX Score: ${state.uxScore ?? 'not scored'}
-UX Mode: ${state.uxMode ?? 'not set'}
-Tech Stack: ${state.techStack ? `${state.techStack.language}/${state.techStack.framework}` : 'not set'}${forgeSection}
+  PRDs:           ${state.artifacts.filter((a) => a.includes('/prds/')).length}
+  Tasks:          ${state.artifacts.filter((a) => a.includes('/tasks/')).length} list(s)
+  Gates Passed:   ${approvedCount} of ${GATED_PHASES.length}
+  UX Score:       ${state.uxScore ?? 'not scored'}
+  UX Mode:        ${state.uxMode ?? 'not set'}
+  Tech Stack:     ${state.techStack ? `${state.techStack.language}/${state.techStack.framework}` : 'not set'}${forgeSection}
 ${tokenTracker.getDomainSummary('rc')}${formatCostSummary()}${getLearningSummary()}${formatRecentActivity(projectPath)}
-===================================================`;
+
+════════════════════════════════════════════════════════════════════════════════`;
 
     return { text };
   }
@@ -711,14 +714,47 @@ ${tokenTracker.getDomainSummary('rc')}${formatCostSummary()}${getLearningSummary
   async uxGenerate(projectPath: string, screensDescription: string): Promise<AgentResult> {
     const state = this.stateManager.load(projectPath);
     const result = await this.uxAgent.generate(state, screensDescription);
+    this.deduplicateArtifacts(state);
     this.stateManager.save(projectPath, state);
     return result;
+  }
+
+  /** Check if a PRD exists in the project (rc-method/prds/ or pre-rc-research/) */
+  private hasPrd(projectPath: string): boolean {
+    const prdDir = path.join(projectPath, 'rc-method', 'prds');
+    if (fs.existsSync(prdDir) && fs.readdirSync(prdDir).some(f => f.endsWith('.md'))) return true;
+    const preRcDir = path.join(projectPath, 'pre-rc-research');
+    if (fs.existsSync(preRcDir) && fs.readdirSync(preRcDir).some(f => f.endsWith('.md') && f.includes('prd'))) return true;
+    return false;
+  }
+
+  /** De-duplicate state.artifacts in-place */
+  private deduplicateArtifacts(state: ProjectState): void {
+    state.artifacts = [...new Set(state.artifacts)];
+  }
+
+  /** Add artifact ref to state without duplicates */
+  private addArtifact(state: ProjectState, ref: string): void {
+    if (!state.artifacts.includes(ref)) {
+      state.artifacts.push(ref);
+    }
   }
 
   /** Generate design options with wireframes */
   async designGenerate(input: DesignInput): Promise<AgentResult> {
     const state = this.stateManager.load(input.projectPath);
+
+    // Phase dependency: PRD must exist
+    if (!this.hasPrd(input.projectPath)) {
+      return {
+        text: 'Error: No PRD found. Run rc_define first to create a PRD before generating designs.',
+        isError: true,
+        errorCode: 'VALIDATION_FAILED',
+      };
+    }
+
     const result = await this.designAgent.generate(state, input);
+    this.deduplicateArtifacts(state);
     this.stateManager.save(input.projectPath, state);
     return result;
   }
@@ -727,6 +763,7 @@ ${tokenTracker.getDomainSummary('rc')}${formatCostSummary()}${getLearningSummary
   async designIterate(input: DesignIterateInput): Promise<AgentResult> {
     const state = this.stateManager.load(input.projectPath);
     const result = await this.designAgent.iterate(state, input);
+    this.deduplicateArtifacts(state);
     this.stateManager.save(input.projectPath, state);
     return result;
   }
@@ -749,9 +786,8 @@ ${tokenTracker.getDomainSummary('rc')}${formatCostSummary()}${getLearningSummary
       importedAt: new Date().toISOString(),
     };
     const artifactRef = 'rc-method/design/BRAND-PROFILE.json';
-    if (!state.artifacts.includes(artifactRef)) {
-      state.artifacts.push(artifactRef);
-    }
+    this.addArtifact(state, artifactRef);
+    this.deduplicateArtifacts(state);
     this.stateManager.save(input.projectPath, state);
 
     const summary = [
@@ -817,12 +853,9 @@ ${tokenTracker.getDomainSummary('rc')}${formatCostSummary()}${getLearningSummary
     };
     const artifactRef = 'rc-method/design/DESIGN-INTAKE.md';
     const jsonArtifactRef = 'rc-method/design/DESIGN-INTAKE.json';
-    if (!state.artifacts.includes(artifactRef)) {
-      state.artifacts.push(artifactRef);
-    }
-    if (!state.artifacts.includes(jsonArtifactRef)) {
-      state.artifacts.push(jsonArtifactRef);
-    }
+    this.addArtifact(state, artifactRef);
+    this.addArtifact(state, jsonArtifactRef);
+    this.deduplicateArtifacts(state);
     this.stateManager.save(input.projectPath, state);
 
     return { text: result.text, artifacts: [artifactRef, jsonArtifactRef] };
@@ -830,20 +863,40 @@ ${tokenTracker.getDomainSummary('rc')}${formatCostSummary()}${getLearningSummary
 
   /** Generate design research brief */
   async designResearch(input: DesignResearchInput): Promise<AgentResult> {
+    // Phase dependency: PRD must exist
+    if (!this.hasPrd(input.projectPath)) {
+      return {
+        text: 'Error: No PRD found. Run rc_define first to create a PRD before generating design research.',
+        isError: true,
+        errorCode: 'VALIDATION_FAILED',
+      };
+    }
+
     const state = this.stateManager.load(input.projectPath);
     const result = await this.designResearchAgent.research(state, input);
+    this.deduplicateArtifacts(state);
     this.stateManager.save(input.projectPath, state);
     return result;
   }
 
   /** Generate copy research brief */
   async copyResearch(input: CopyResearchInput): Promise<AgentResult> {
+    // Phase dependency: PRD must exist
+    if (!this.hasPrd(input.projectPath)) {
+      return {
+        text: 'Error: No PRD found. Run rc_define first before generating copy research.',
+        isError: true,
+        errorCode: 'VALIDATION_FAILED',
+      };
+    }
+
     const state = this.stateManager.load(input.projectPath);
     const result = await this.copyResearchAgent.research(state, input);
     state.copyResearchBrief = {
       path: path.join(input.projectPath, 'rc-method', 'copy', 'COPY-RESEARCH-BRIEF.md'),
       generatedAt: new Date().toISOString(),
     };
+    this.deduplicateArtifacts(state);
     this.stateManager.save(input.projectPath, state);
     return result;
   }
@@ -852,14 +905,26 @@ ${tokenTracker.getDomainSummary('rc')}${formatCostSummary()}${getLearningSummary
   async copyGenerate(input: CopyGenerateInput): Promise<AgentResult> {
     const state = this.stateManager.load(input.projectPath);
     const result = await this.copyAgent.generate(state, input);
+    this.deduplicateArtifacts(state);
     this.stateManager.save(input.projectPath, state);
     return result;
   }
 
   /** Self-critique copy system */
   async copyCritique(projectPath: string): Promise<AgentResult> {
+    // Phase dependency: copy system must exist
+    const copyPath = path.join(projectPath, 'rc-method', 'copy', 'COPY-SYSTEM.md');
+    if (!fs.existsSync(copyPath)) {
+      return {
+        text: 'Error: No copy system found. Run copy_generate first before critiquing.',
+        isError: true,
+        errorCode: 'VALIDATION_FAILED',
+      };
+    }
+
     const state = this.stateManager.load(projectPath);
     const result = await this.copyAgent.critique(state);
+    this.deduplicateArtifacts(state);
     this.stateManager.save(projectPath, state);
     return result;
   }
@@ -868,14 +933,26 @@ ${tokenTracker.getDomainSummary('rc')}${formatCostSummary()}${getLearningSummary
   async copyIterate(input: CopyIterateInput): Promise<AgentResult> {
     const state = this.stateManager.load(input.projectPath);
     const result = await this.copyAgent.iterate(state, input);
+    this.deduplicateArtifacts(state);
     this.stateManager.save(input.projectPath, state);
     return result;
   }
 
   /** Run the Design Challenger — brutal multi-lens review */
   async designChallenge(input: ChallengeInput): Promise<AgentResult> {
+    // Phase dependency: design spec must exist
+    const specPath = path.join(input.projectPath, 'rc-method', 'design', 'DESIGN-SPEC.json');
+    if (!fs.existsSync(specPath)) {
+      return {
+        text: 'Error: No design spec found. Run ux_design first to generate design options before running the challenger.',
+        isError: true,
+        errorCode: 'VALIDATION_FAILED',
+      };
+    }
+
     const state = this.stateManager.load(input.projectPath);
     const result = await this.challengerAgent.challenge(state, input);
+    this.deduplicateArtifacts(state);
     this.stateManager.save(input.projectPath, state);
     return result;
   }

@@ -393,6 +393,42 @@ export type CopySystem = z.infer<typeof CopySystemSchema>;
 
 // ── Copy Critique Result ────────────────────────────────────────────────────
 
+/**
+ * Copy critique score weights — used to compute the weightedTotal.
+ * Sum to 1.0. Aligned with rc-copy-critique.md heuristics.
+ */
+export const COPY_CRITIQUE_WEIGHTS: Record<keyof CopyCritiqueScore, number> = {
+  clarity: 0.30,            // Highest: unclear copy = 0 conversions
+  persuasionFramework: 0.20, // Framework adherence (AIDA, PAS, BAB)
+  voiceTone: 0.15,          // Brand voice consistency
+  specificity: 0.15,        // Concrete vs vague claims
+  microcopy: 0.10,          // Error states, labels, tooltips
+  behavioralDesign: 0.05,   // Nudges, defaults, loss aversion
+  seo: 0.05,                // On-page keyword alignment
+};
+
+/**
+ * Compute the weighted total from individual scores.
+ * Returns a number between 1 and 5.
+ */
+export function computeWeightedTotal(scores: CopyCritiqueScore): number {
+  let total = 0;
+  for (const [key, weight] of Object.entries(COPY_CRITIQUE_WEIGHTS)) {
+    total += scores[key as keyof CopyCritiqueScore] * weight;
+  }
+  return Math.round(total * 100) / 100;
+}
+
+/**
+ * Derive verdict from weighted total.
+ * >= 4.0 = ship, >= 2.5 = revise, < 2.5 = rewrite
+ */
+export function deriveVerdict(weightedTotal: number): 'ship' | 'revise' | 'rewrite' {
+  if (weightedTotal >= 4.0) return 'ship';
+  if (weightedTotal >= 2.5) return 'revise';
+  return 'rewrite';
+}
+
 export const CopyCritiqueScoreSchema = z.object({
   clarity: z.number().min(1).max(5),
   persuasionFramework: z.number().min(1).max(5),
@@ -408,7 +444,7 @@ export type CopyCritiqueScore = z.infer<typeof CopyCritiqueScoreSchema>;
 export interface CopyCritiqueResult {
   screen: string;
   scores: CopyCritiqueScore;
-  weightedTotal: number; // 0-5
+  weightedTotal: number; // 1-5, computed via COPY_CRITIQUE_WEIGHTS
   verdict: 'ship' | 'revise' | 'rewrite';
   strengths: string[];
   issues: Array<{

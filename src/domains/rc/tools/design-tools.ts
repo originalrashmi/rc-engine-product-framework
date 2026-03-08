@@ -340,12 +340,62 @@ export function registerDesignTools(server: McpServer): void {
     },
   );
 
+  // design_select - Select a design option for downstream use
+  server.registerTool(
+    'design_select',
+    {
+      description:
+        'Select a design option after reviewing ux_design output. Saves the selected option ID to project state so that design_iterate, design_challenge, and code generation know which option to use. If not called, the recommended option is used by default.',
+      inputSchema: {
+        project_path: z.string().describe('Absolute path to the project directory'),
+        option_id: z.string().describe('Design option ID to select ("A", "B", or "C")'),
+      },
+      annotations: {
+        title: 'Select Design Option',
+        readOnlyHint: false,
+        destructiveHint: false,
+        idempotentHint: true,
+        openWorldHint: false,
+      },
+    },
+    async ({ project_path, option_id }) => {
+      try {
+        const specPath = path.join(project_path, 'rc-method', 'design', 'DESIGN-SPEC.json');
+        if (!fs.existsSync(specPath)) {
+          return {
+            content: [{ type: 'text' as const, text: 'Error: No design spec found. Run ux_design first.' }],
+            isError: true,
+          };
+        }
+
+        // Validate the option exists in the spec
+        const spec = JSON.parse(fs.readFileSync(specPath, 'utf-8'));
+        const option = spec.options?.find((o: { id: string }) => o.id === option_id);
+        if (!option) {
+          const available = spec.options?.map((o: { id: string }) => o.id).join(', ') ?? 'none';
+          return {
+            content: [{ type: 'text' as const, text: `Error: Option "${option_id}" not found. Available options: ${available}` }],
+            isError: true,
+          };
+        }
+
+        const result = getOrchestrator().designSelect(project_path, option_id, specPath);
+        return { content: [{ type: 'text' as const, text: `Design option ${option_id} ("${option.name}") selected.\n\nNext steps:\n- "design_iterate" to refine wireframes\n- "design_challenge" to run design review\n- "rc_forge_task" to start building` }] };
+      } catch (err) {
+        return {
+          content: [{ type: 'text' as const, text: `Error: ${(err as Error).message}` }],
+          isError: true,
+        };
+      }
+    },
+  );
+
   // design_pipeline - Full design intelligence pipeline in one call
   server.registerTool(
     'design_pipeline',
     {
       description:
-        'Run the full Design Intelligence pipeline in sequence: brand_import → design_intake → design_research_brief → ux_design → design_challenge. Requires PRD to exist (run rc_define first). Captures user design preferences via design_intake, then generates research-backed design options with wireframes. Returns a combined report with all artifacts. Each step can also be called individually for more control.',
+        'Run the full Design Intelligence pipeline in sequence: brand_import → design_intake → design_research_brief → copy_research + copy_generate → ux_design → auto-select → design_challenge. Requires PRD to exist (run rc_define first). Captures user design preferences via design_intake, generates real copy, then produces research-backed design options with wireframes using that copy. Returns a combined report with all artifacts. Each step can also be called individually for more control.',
       inputSchema: {
         project_path: z.string().describe('Absolute path to the project directory'),
         option_count: z
@@ -443,6 +493,66 @@ export function registerDesignTools(server: McpServer): void {
         steps.push(`Design Research Brief generated (${researchResult.text.length} chars)`);
         if (researchResult.artifacts) allArtifacts.push(...researchResult.artifacts);
 
+        // Step 3.5: Copy Research + Copy Generation (so wireframes use real copy)
+        steps.push('\n---\n\n## Step 3.5: Copy System');
+        const copySystemCandidate = path.join(project_path, 'rc-method', 'copy', 'COPY-SYSTEM.md');
+        if (!fs.existsSync(copySystemCandidate)) {
+          try {
+            // Step 3.5a: Copy Research Brief
+            const copyResearchInput = {
+              projectPath: project_path,
+              prdContext,
+              icpData,
+              competitorData,
+              designResearchBrief: researchResult.text,
+            };
+            const copyResearchResult = await orchestrator.copyResearch(copyResearchInput);
+            steps.push(`Copy Research Brief generated`);
+            if (copyResearchResult.artifacts) allArtifacts.push(...copyResearchResult.artifacts);
+
+            // Step 3.5b: Copy Generation (needs screen inventory from intake or PRD)
+            const briefPath = path.join(project_path, 'rc-method', 'copy', 'COPY-RESEARCH-BRIEF.md');
+            if (fs.existsSync(briefPath)) {
+              const briefContent = fs.readFileSync(briefPath, 'utf-8');
+
+              // Extract screen inventory from design intake if available
+              let screenInventory: string[] = key_screens ?? [];
+              if (screenInventory.length === 0) {
+                const intakeJsonPath = path.join(project_path, 'rc-method', 'design', 'DESIGN-INTAKE.json');
+                if (fs.existsSync(intakeJsonPath)) {
+                  try {
+                    const intake = JSON.parse(fs.readFileSync(intakeJsonPath, 'utf-8'));
+                    screenInventory = intake.extractedConstraints?.screenInventory?.keyScreens ?? [];
+                  } catch { /* continue */ }
+                }
+              }
+              // Fallback: extract from PRD
+              if (screenInventory.length === 0) {
+                screenInventory = ['Landing Page', 'Dashboard', 'Settings'];
+              }
+
+              const designBriefPath = path.join(project_path, 'rc-method', 'design', 'DESIGN-RESEARCH-BRIEF.md');
+              const designBrief = fs.existsSync(designBriefPath)
+                ? fs.readFileSync(designBriefPath, 'utf-8')
+                : undefined;
+
+              const copyGenInput = {
+                projectPath: project_path,
+                copyResearchBrief: briefContent as unknown as import('../copy-types.js').CopyGenerateInput['copyResearchBrief'],
+                designResearchBrief: designBrief,
+                screenInventory,
+              };
+              const copyGenResult = await orchestrator.copyGenerate(copyGenInput);
+              steps.push(`Copy System generated for ${screenInventory.length} screens`);
+              if (copyGenResult.artifacts) allArtifacts.push(...copyGenResult.artifacts);
+            }
+          } catch (err) {
+            steps.push(`Copy generation skipped — ${(err as Error).message}`);
+          }
+        } else {
+          steps.push(`Copy System already exists — skipping`);
+        }
+
         // Step 4: Design Generation
         steps.push('\n---\n\n## Step 4: Design Generation');
         const designInput = {
@@ -461,6 +571,19 @@ export function registerDesignTools(server: McpServer): void {
         const designResult = await orchestrator.designGenerate(designInput);
         steps.push(designResult.text);
         if (designResult.artifacts) allArtifacts.push(...designResult.artifacts);
+
+        // Step 4.5: Auto-select recommended design option
+        const specPath = path.join(project_path, 'rc-method', 'design', 'DESIGN-SPEC.json');
+        if (fs.existsSync(specPath)) {
+          try {
+            const spec = JSON.parse(fs.readFileSync(specPath, 'utf-8'));
+            const recId = spec?.recommendation?.optionId;
+            if (recId) {
+              orchestrator.designSelect(project_path, recId, specPath);
+              steps.push(`\nAuto-selected recommended option: ${recId}`);
+            }
+          } catch { /* continue without selection */ }
+        }
 
         // Step 5: Design Challenge (optional, default true)
         if (run_challenge !== false) {
