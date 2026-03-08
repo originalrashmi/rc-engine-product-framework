@@ -106,7 +106,7 @@ For detailed IDE-specific setup, see [Getting Started](GETTING-STARTED.md).
 
 > **Where:** Inside your IDE (Claude Code terminal, or the AI chat panel in Cursor/Windsurf/VS Code).
 
-Type a message like: "What tools are available?" You should see 33 RC Engine tools listed.
+Type a message like: "What tools are available?" You should see 31 RC Engine tools listed.
 
 If tools don't appear, check that:
 - The path in `.mcp.json` points to `dist/index.js` (not `src/`)
@@ -222,7 +222,7 @@ RC Engine works in **manual mode** without API keys. The AI generates structured
 Your IDE (Claude Code / Cursor / Windsurf / VS Code)
     |
     v
-RC Engine MCP Server (33 tools)
+RC Engine MCP Server (31 tools)
     |
     +--> Pre-RC Research (6 tools) --> 20 AI specialists
     |         |

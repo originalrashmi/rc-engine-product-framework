@@ -76,15 +76,15 @@ async function generateAutonomousSpec(
       maxTokens: 4096,
     });
 
-    tokenTracker.record('post-rc', 'postrc_generate_observability_spec', response.tokensUsed, response.provider, { inputTokens: response.inputTokens, outputTokens: response.outputTokens });
+    tokenTracker.record('post-rc', 'postrc_generate_observability_spec', response.tokensUsed, response.provider);
     recordCost({
       pipelineId: 'postrc-session',
       domain: 'post-rc',
       tool: 'postrc_generate_observability_spec',
       provider: response.provider,
       model: client.getModel(),
-      inputTokens: response.inputTokens ?? 0,
-      outputTokens: response.outputTokens ?? response.tokensUsed,
+      inputTokens: 0,
+      outputTokens: response.tokensUsed,
     });
     recordModelPerformance({
       provider: response.provider,

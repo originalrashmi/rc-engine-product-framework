@@ -38,7 +38,6 @@ const noopPostRcHandlers = {
   scanMonitoring: async (s: PostRCState): Promise<NodeResult<PostRCState>> => ({ state: s }),
   scanLegalClaims: async (s: PostRCState): Promise<NodeResult<PostRCState>> => ({ state: s }),
   scanLegalProduct: async (s: PostRCState): Promise<NodeResult<PostRCState>> => ({ state: s }),
-  scanEdgeCase: async (s: PostRCState): Promise<NodeResult<PostRCState>> => ({ state: s }),
   mergeScans: (_states: PostRCState[], original: PostRCState): PostRCState => original,
 };
 
@@ -151,12 +150,11 @@ describe('Post-RC Graph Definition', () => {
     expect(fanIn!.id).toBe('scan-fanin');
   });
 
-  it('has 5 parallel scan nodes', () => {
+  it('has 4 parallel scan nodes', () => {
     const graph = buildPostRcGraph(noopPostRcHandlers);
     const scans = graph.nodes.filter((n) => n.type === 'action');
-    expect(scans).toHaveLength(5);
+    expect(scans).toHaveLength(4);
     expect(scans.map((s) => s.id).sort()).toEqual([
-      'scan-edge-case',
       'scan-legal-claims',
       'scan-legal-product',
       'scan-monitoring',
@@ -182,9 +180,8 @@ describe('Post-RC Graph Definition', () => {
   it('fan-out edges connect to all scan modules', () => {
     const graph = buildPostRcGraph(noopPostRcHandlers);
     const fanOutEdges = graph.edges.filter((e) => e.from === 'scan-fanout');
-    expect(fanOutEdges).toHaveLength(5);
+    expect(fanOutEdges).toHaveLength(4);
     expect(fanOutEdges.map((e) => e.to).sort()).toEqual([
-      'scan-edge-case',
       'scan-legal-claims',
       'scan-legal-product',
       'scan-monitoring',
@@ -195,9 +192,8 @@ describe('Post-RC Graph Definition', () => {
   it('all scan modules connect to fan-in', () => {
     const graph = buildPostRcGraph(noopPostRcHandlers);
     const fanInEdges = graph.edges.filter((e) => e.to === 'scan-fanin');
-    expect(fanInEdges).toHaveLength(5);
+    expect(fanInEdges).toHaveLength(4);
     expect(fanInEdges.map((e) => e.from).sort()).toEqual([
-      'scan-edge-case',
       'scan-legal-claims',
       'scan-legal-product',
       'scan-monitoring',
@@ -205,8 +201,8 @@ describe('Post-RC Graph Definition', () => {
     ]);
   });
 
-  it('has correct total node count (1 fan-out + 5 scans + 1 fan-in + 1 gate)', () => {
+  it('has correct total node count (1 fan-out + 4 scans + 1 fan-in + 1 gate)', () => {
     const graph = buildPostRcGraph(noopPostRcHandlers);
-    expect(graph.nodes).toHaveLength(8);
+    expect(graph.nodes).toHaveLength(7);
   });
 });

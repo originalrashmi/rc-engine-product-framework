@@ -86,7 +86,6 @@ The project is "${state.projectName}".`;
     // Save the converted PRD
     const prdFilename = `PRD-${this.sanitizeName(state.projectName)}-master.md`;
     const prdPath = path.join(state.projectPath, 'rc-method', 'prds', prdFilename);
-    fs.mkdirSync(path.dirname(prdPath), { recursive: true });
     fs.writeFileSync(prdPath, text, 'utf-8');
 
     const artifactRef = `rc-method/prds/${prdFilename}`;

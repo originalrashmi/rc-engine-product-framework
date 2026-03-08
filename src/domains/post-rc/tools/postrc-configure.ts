@@ -22,12 +22,6 @@ export async function postrcConfigure(args: ConfigureInput): Promise<string> {
     jurisdiction,
     check_licenses,
     check_accessibility,
-    app_security_enabled,
-    app_security_block_on_critical,
-    app_security_skills,
-    edge_case_enabled,
-    edge_case_block_on_critical,
-    edge_case_categories,
   } = args;
 
   await ensureDirectories(project_path);
@@ -78,45 +72,6 @@ export async function postrcConfigure(args: ConfigureInput): Promise<string> {
     if (check_accessibility !== undefined) state.config.legalPolicy.checkAccessibility = check_accessibility;
   }
 
-  // App security policy updates (initialize if missing for backward compat)
-  if (
-    app_security_enabled !== undefined ||
-    app_security_block_on_critical !== undefined ||
-    app_security_skills !== undefined
-  ) {
-    if (!state.config.appSecurityPolicy) {
-      state.config.appSecurityPolicy = {
-        enabled: false,
-        suppressedFindings: [],
-        blockOnCritical: true,
-      };
-    }
-    if (app_security_enabled !== undefined) state.config.appSecurityPolicy.enabled = app_security_enabled;
-    if (app_security_block_on_critical !== undefined)
-      state.config.appSecurityPolicy.blockOnCritical = app_security_block_on_critical;
-    if (app_security_skills !== undefined)
-      state.config.appSecurityPolicy.skills = app_security_skills as (1 | 2 | 3 | 4 | 5)[];
-  }
-
-  // Edge case policy updates (initialize if missing for backward compat)
-  if (
-    edge_case_enabled !== undefined ||
-    edge_case_block_on_critical !== undefined ||
-    edge_case_categories !== undefined
-  ) {
-    if (!state.config.edgeCasePolicy) {
-      state.config.edgeCasePolicy = {
-        enabled: false,
-        suppressedFindings: [],
-        blockOnCritical: false,
-      };
-    }
-    if (edge_case_enabled !== undefined) state.config.edgeCasePolicy.enabled = edge_case_enabled;
-    if (edge_case_block_on_critical !== undefined)
-      state.config.edgeCasePolicy.blockOnCritical = edge_case_block_on_critical;
-    if (edge_case_categories !== undefined) state.config.edgeCasePolicy.categories = edge_case_categories;
-  }
-
   state.updatedAt = new Date().toISOString();
   await saveState(project_path, state);
   audit('config.change', 'post-rc', project_path, {
@@ -156,16 +111,6 @@ export async function postrcConfigure(args: ConfigureInput): Promise<string> {
     Jurisdiction:         ${state.config.legalPolicy?.jurisdiction ?? 'both'}
     Check Licenses:       ${state.config.legalPolicy?.checkLicenses ?? true}
     Check Accessibility:  ${state.config.legalPolicy?.checkAccessibility ?? true}
-
-  APP SECURITY POLICY:
-    Enabled:          ${state.config.appSecurityPolicy?.enabled ?? false}
-    Block Critical:   ${state.config.appSecurityPolicy?.blockOnCritical ?? true}
-    Skills:           ${state.config.appSecurityPolicy?.skills?.join(', ') || 'All (1-5)'}
-
-  EDGE CASE POLICY (Pro):
-    Enabled:          ${state.config.edgeCasePolicy?.enabled ?? false}
-    Block Critical:   ${state.config.edgeCasePolicy?.blockOnCritical ?? false}
-    Categories:       ${state.config.edgeCasePolicy?.categories?.join(', ') || 'All'}
 
   State saved to: post-rc/state/POSTRC-STATE.md
 ===============================================`;

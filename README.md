@@ -1,23 +1,13 @@
-<p align="center">
-  <picture>
-    <source media="(prefers-color-scheme: dark)" srcset="assets/logo-dark.svg" width="160">
-    <source media="(prefers-color-scheme: light)" srcset="assets/logo-light.svg" width="160">
-    <img src="assets/logo-dark.svg" alt="RC Engine" width="160">
-  </picture>
-</p>
+# RC Engine
 
-<h1 align="center">RC Engine</h1>
+[![CI](https://github.com/originalrashmi/rc-engine-product-framework/actions/workflows/ci.yml/badge.svg)](https://github.com/originalrashmi/rc-engine-product-framework/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![Node.js](https://img.shields.io/badge/node-%3E%3D18-brightgreen.svg)](https://nodejs.org)
+[![MCP](https://img.shields.io/badge/MCP-compatible-blue.svg)](https://modelcontextprotocol.io)
 
-<p align="center">
-  <a href="https://github.com/originalrashmi/rc-engine-product-framework/actions/workflows/ci.yml"><img src="https://github.com/originalrashmi/rc-engine-product-framework/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
-  <a href="https://opensource.org/licenses/MIT"><img src="https://img.shields.io/badge/License-MIT-yellow.svg" alt="License: MIT"></a>
-  <a href="https://nodejs.org"><img src="https://img.shields.io/badge/node-%3E%3D18-brightgreen.svg" alt="Node.js"></a>
-  <a href="https://modelcontextprotocol.io"><img src="https://img.shields.io/badge/MCP-compatible-blue.svg" alt="MCP"></a>
-</p>
+**Results through Clarity** -- an AI-native product development pipeline.
 
-<p align="center"><strong>Results through Clarity</strong> -- an AI-native product development pipeline.</p>
-
-Take a one-line product idea through structured research, architecture, build, validation, and traceability -- with 33 orchestrated tools across 4 domains.
+Take a one-line product idea through structured research, architecture, build, validation, and traceability -- with 32 orchestrated tools across 4 domains.
 
 Built for developers, technical founders, and product teams who want structured methodology instead of ad-hoc AI coding.
 
@@ -45,14 +35,12 @@ You never call tools directly. Open your IDE, describe what you want to build, a
 
 | Edition | What You Get | License |
 |---------|-------------|---------|
-| **RC Engine (this repo)** | Full MCP server, 38 tools, pipeline structure, state management, quality gates | MIT (free) |
+| **RC Engine (this repo)** | Full MCP server, 32 tools, pipeline structure, state management, quality gates | MIT (free) |
 | **[RC Engine Pro](https://github.com/originalrashmi/rc-engine-pro)** | 46 methodology knowledge files -- research personas, build skills, UX specialists, security databases | Proprietary |
 
 **Community mode** (without Pro): Tools assemble structured prompts for your IDE's AI to process. Full pipeline discipline at zero cost.
 
 **Pro mode** (with Pro knowledge): Autonomous execution -- the engine calls LLMs directly with methodology-enriched prompts.
-
-**Free tier** includes the Pre-RC research pipeline (1 project/month). Paid tiers unlock the full build pipeline, security scanning, traceability, and Pro knowledge files. See the [RC Engine website](https://toerana.com) for current pricing.
 
 ---
 
@@ -73,7 +61,6 @@ You never call tools directly. Open your IDE, describe what you want to build, a
 
 | Domain | Tools | What It Does |
 |--------|-------|-------------|
-| **Gateway** | 1 | `rc_init` -- unified entry point. Detects project state and routes you to the right tool. Start here |
 | **Pre-RC Research** | 6 | Up to 20 AI specialists analyze your idea across market, users, security, UX, and business |
 | **RC Method Build** | 14 | 8-phase gated pipeline: discover, define, architect, sequence, validate, build, integrate, harden |
 | **Post-RC Validation** | 7 | Security scanning, monitoring readiness, legal compliance review (Pro), override tracking, ship/no-ship gate |
@@ -122,7 +109,7 @@ cp .env.example .env
 
 ### 4. Start building
 
-Open your IDE and describe your product idea. The AI will call `rc_init` to detect your project state and route you to the right starting point -- Pre-RC research by default.
+Open your IDE and describe your product idea. The AI handles the rest.
 
 ---
 
@@ -169,7 +156,7 @@ All deliverables are saved as markdown and HTML files in your project directory.
 
 | Phase | Status | What |
 |-------|--------|------|
-| **CLI/MCP Pipeline** | Available now | Full 33-tool pipeline via Claude Code, Cursor, Windsurf, VS Code |
+| **CLI/MCP Pipeline** | Available now | Full 31-tool pipeline via Claude Code, Cursor, Windsurf, VS Code |
 | **Parallel Synthesis** | Available now | PRD generation runs 8 section groups concurrently for faster output |
 | **Web Dashboard** | Planned | Browser-based project management with real-time pipeline visualization |
 | **Pro Knowledge Marketplace** | Planned | Enhanced research personas, build skills, and security databases |

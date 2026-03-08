@@ -26,17 +26,11 @@ export class ClaudeClient extends BaseLLMClient {
     const userMessages = request.messages.filter((m) => m.role !== 'system');
     const systemContent = request.systemPrompt || request.messages.find((m) => m.role === 'system')?.content || '';
 
-    // Build system blocks with prompt caching.
-    // Anthropic caches the system prompt prefix across calls — subsequent calls
-    // with the same system content pay ~10% of original input token cost.
-    // We split: knowledge (stable, cacheable) + instructions (variable).
-    const systemBlocks = this.buildCachedSystemBlocks(systemContent);
-
     const params = {
       model: this.model,
       max_tokens: request.maxTokens || 4096,
       temperature: request.temperature ?? 0.7,
-      system: systemBlocks,
+      system: systemContent,
       messages: userMessages.map((m) => ({
         role: m.role as 'user' | 'assistant',
         content: m.content,
@@ -50,61 +44,8 @@ export class ClaudeClient extends BaseLLMClient {
     const response = await stream.finalMessage();
 
     const text = response.content[0].type === 'text' ? response.content[0].text : '';
-    const inputTokens = response.usage.input_tokens;
-    const outputTokens = response.usage.output_tokens;
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const usage = response.usage as any;
-    const cacheCreation: number = usage.cache_creation_input_tokens ?? 0;
-    const cacheRead: number = usage.cache_read_input_tokens ?? 0;
+    const tokens = response.usage.input_tokens + response.usage.output_tokens;
 
-    return {
-      content: text,
-      tokensUsed: inputTokens + outputTokens,
-      inputTokens,
-      outputTokens,
-      cacheCreationTokens: cacheCreation,
-      cacheReadTokens: cacheRead,
-      provider: LLMProvider.Claude,
-    };
-  }
-
-  /**
-   * Split system content into cacheable blocks.
-   *
-   * If the content contains a `---` separator (knowledge vs instructions),
-   * the knowledge portion gets cache_control for reuse across calls.
-   * Minimum 1024 tokens (~4K chars) for caching to be worthwhile.
-   */
-  private buildCachedSystemBlocks(
-    systemContent: string,
-  ): Array<{ type: 'text'; text: string; cache_control?: { type: 'ephemeral' } }> {
-    const separator = '\n\n---\n\n';
-    const sepIdx = systemContent.indexOf(separator);
-
-    // If no separator or knowledge portion is too small, use a single cached block
-    if (sepIdx === -1 || sepIdx < 4000) {
-      return [
-        {
-          type: 'text' as const,
-          text: systemContent,
-          cache_control: systemContent.length >= 4000 ? { type: 'ephemeral' as const } : undefined,
-        },
-      ];
-    }
-
-    const knowledgePart = systemContent.slice(0, sepIdx);
-    const instructionPart = systemContent.slice(sepIdx + separator.length);
-
-    return [
-      {
-        type: 'text' as const,
-        text: knowledgePart,
-        cache_control: { type: 'ephemeral' as const },
-      },
-      {
-        type: 'text' as const,
-        text: instructionPart,
-      },
-    ];
+    return { content: text, tokensUsed: tokens, provider: LLMProvider.Claude };
   }
 }

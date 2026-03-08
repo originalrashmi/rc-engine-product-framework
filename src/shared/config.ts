@@ -1,5 +1,5 @@
 import dotenv from 'dotenv';
-import { existsSync, readFileSync } from 'fs';
+import { existsSync } from 'fs';
 import { fileURLToPath } from 'url';
 import { dirname, resolve } from 'path';
 
@@ -37,16 +37,6 @@ export const hasAnyApiKey = hasAnthropicKey || hasOpenAIKey || hasGeminiKey || h
 
 /** True if Anthropic key is configured (used by RC domain for autonomous mode) */
 export const hasApiKey = hasAnthropicKey;
-
-/** Current rc-engine version, read from package.json at startup. */
-let _version = '0.0.0';
-try {
-  const pkg = JSON.parse(readFileSync(resolveFromRoot('package.json'), 'utf-8'));
-  _version = pkg.version || '0.0.0';
-} catch {
-  // Fallback if package.json unreadable (shouldn't happen in normal operation)
-}
-export const version = _version;
 
 /**
  * Resolve a path relative to the package root (where knowledge/ lives).

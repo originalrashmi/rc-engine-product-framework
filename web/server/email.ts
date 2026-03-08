@@ -11,8 +11,6 @@
  *   await sendMagicLinkEmail('user@example.com', token, 'http://localhost:3100');
  */
 
-import { logger, pseudonymize } from './security.js';
-
 // ── Types ───────────────────────────────────────────────────────────────────
 
 interface EmailResult {
@@ -69,8 +67,10 @@ function buildMagicLinkHtml(verifyUrl: string): string {
 
 // ── Send Functions ──────────────────────────────────────────────────────────
 
-async function sendViaConsole(email: string, _token: string, _baseUrl: string): Promise<EmailResult> {
-  logger.info('Magic link generated (console provider)', { email: pseudonymize(email) });
+async function sendViaConsole(email: string, token: string, baseUrl: string): Promise<EmailResult> {
+  const verifyUrl = `${baseUrl}/auth/verify?token=${token}`;
+  console.log(`\n[email] Magic link for ${email}:`);
+  console.log(`  ${verifyUrl}\n`);
   return { success: true, provider: 'console' };
 }
 
@@ -98,7 +98,7 @@ async function sendViaSmtp(email: string, token: string, baseUrl: string): Promi
     return { success: true, provider: 'smtp' };
   } catch (err) {
     const errorMsg = (err as Error).message;
-    logger.error('SMTP send failed', { error: errorMsg });
+    console.error(`[email] SMTP send failed: ${errorMsg}`);
     return { success: false, provider: 'smtp', error: errorMsg };
   }
 }
@@ -131,7 +131,7 @@ async function sendViaResend(email: string, token: string, baseUrl: string): Pro
     return { success: true, provider: 'resend' };
   } catch (err) {
     const errorMsg = (err as Error).message;
-    logger.error('Resend send failed', { error: errorMsg });
+    console.error(`[email] Resend send failed: ${errorMsg}`);
     return { success: false, provider: 'resend', error: errorMsg };
   }
 }

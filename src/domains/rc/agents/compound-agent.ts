@@ -10,22 +10,10 @@ import type { AgentResult, ProjectState } from '../types.js';
  */
 export class CompoundAgent extends BaseAgent {
   async run(state: ProjectState, codeContext?: string): Promise<AgentResult> {
-    // Load PRDs, architecture, and forge contracts (not full implementations)
-    // Full forge outputs would cause O(N²) token growth — load only interfaces/types
+    // Load all project artifacts for context
     let projectContext = '';
 
     for (const artifact of state.artifacts) {
-      const isForgeArtifact = artifact.includes('/forge/');
-      if (isForgeArtifact) {
-        // Only load type definitions, interfaces, and schema files
-        const isContractFile =
-          artifact.endsWith('.d.ts') ||
-          artifact.includes('/types') ||
-          artifact.includes('/schema') ||
-          artifact.includes('/interfaces') ||
-          artifact.includes('/contracts');
-        if (!isContractFile) continue;
-      }
       try {
         const content = this.contextLoader.loadProjectFile(state.projectPath, artifact);
         projectContext += `\n\n--- ${artifact} ---\n\n${content}`;

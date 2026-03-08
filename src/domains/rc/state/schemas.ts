@@ -47,48 +47,6 @@ const DesignSelectionSchema = z.object({
   selectedAt: z.string(),
 });
 
-const TechStackSchema = z.object({
-  language: z.enum(['typescript', 'python', 'ruby', 'go', 'java']),
-  framework: z.string(),
-  uiFramework: z.string().optional(),
-  database: z.string(),
-  orm: z.string().optional(),
-});
-
-const BrandSelectionSchema = z.object({
-  mode: z.enum(['constrained', 'generation']),
-  profilePath: z.string(),
-  importedAt: z.string(),
-});
-
-const DesignIntakeRefSchema = z.object({
-  verdict: z.enum(['proceed', 'proceed_with_adjustments', 'reconsider']),
-  alignmentScore: z.number(),
-  assessmentPath: z.string(),
-  jsonPath: z.string(),
-  completedAt: z.string(),
-  primaryPlatform: z.string().optional(),
-  devicePriority: z.string().optional(),
-  designSystemFramework: z.string().optional(),
-  wcagTarget: z.string().optional(),
-  aesthetic: z.string().optional(),
-  animationLevel: z.string().optional(),
-  keyScreens: z.array(z.string()).optional(),
-  priorityScreens: z.array(z.string()).optional(),
-  criticalFlows: z.array(z.string()).optional(),
-});
-
-const CopyResearchBriefRefSchema = z.object({
-  path: z.string(),
-  generatedAt: z.string(),
-});
-
-const CopySystemRefSchema = z.object({
-  path: z.string(),
-  generatedAt: z.string(),
-  screenCount: z.number(),
-});
-
 export const ProjectStateSchema = z.object({
   projectName: z.string(),
   projectPath: z.string(),
@@ -100,11 +58,6 @@ export const ProjectStateSchema = z.object({
   preRcSource: PreRcSourceSchema.optional(),
   forgeTasks: z.record(z.string(), ForgeTaskRecordSchema).optional(),
   selectedDesign: DesignSelectionSchema.optional(),
-  techStack: TechStackSchema.optional(),
-  brand: BrandSelectionSchema.optional(),
-  designIntake: DesignIntakeRefSchema.optional(),
-  copyResearchBrief: CopyResearchBriefRefSchema.optional(),
-  copySystem: CopySystemRefSchema.optional(),
   // Transient fields -- used for inter-node communication within a graph run.
   // Optional so existing persisted state without them still validates.
   _pendingInput: z.string().optional(),

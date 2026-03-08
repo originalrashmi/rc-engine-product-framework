@@ -10,21 +10,15 @@ import type { RouteRequest, RoutingDecision } from './llm/router.js';
 import type { BaseLLMClient } from './llm/base-client.js';
 import { llmFactory } from './llm/factory.js';
 import { LLMProvider } from './types.js';
-import { getCostTracker } from './cost-tracker.js';
-import { getLearningStore } from '../core/learning/store.js';
 
 let _router: ModelRouter | null = null;
 
 export function getModelRouter(): ModelRouter {
   if (!_router) {
-    // Wire real stores for budget-aware downgrade and learning-based routing.
-    let learningStore = null;
-    try {
-      learningStore = getLearningStore();
-    } catch {
-      // SQLite init can fail in some environments — router still works without it
-    }
-    _router = new ModelRouter(llmFactory, learningStore, getCostTracker());
+    // ModelRouter accepts optional LearningStore and CostTracker.
+    // We pass null for both -- they integrate through their own wrappers.
+    // The router still provides task-type routing and tier-based selection.
+    _router = new ModelRouter(llmFactory, null, null);
   }
   return _router;
 }

@@ -62,10 +62,8 @@ export class GeminiClient extends BaseLLMClient {
 
     const data = (await res.json()) as any;
     const content = data.candidates?.[0]?.content?.parts?.[0]?.text || '';
-    const inputTokens = data.usageMetadata?.promptTokenCount || 0;
-    const outputTokens = data.usageMetadata?.candidatesTokenCount || 0;
-    const tokens = data.usageMetadata?.totalTokenCount || inputTokens + outputTokens;
+    const tokens = data.usageMetadata?.totalTokenCount || 0;
 
-    return { content, tokensUsed: tokens, inputTokens, outputTokens, provider: LLMProvider.Gemini };
+    return { content, tokensUsed: tokens, provider: LLMProvider.Gemini };
   }
 }

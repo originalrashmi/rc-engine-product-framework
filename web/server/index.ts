@@ -46,34 +46,10 @@ import {
   getOrganization,
   getOrgMembers,
   inviteToOrg,
-  auditLog,
 } from './auth.js';
 import { getTier, hasFeature, type TierId } from '../../dist/core/pricing/tiers.js';
 import { registerBillingRoutes } from './billing.js';
 import { sendMagicLinkEmail, getEmailProvider } from './email.js';
-import {
-  validateFileWithinProject,
-  requireValidProjectQuery,
-  requireValidProjectBody,
-  createToolRateLimiter,
-  createProjectReadLimiter,
-  createOrgRateLimiter,
-  createBillingRateLimiter,
-  type RequestWithProject,
-  verifyTurnstile,
-  isCaptchaEnabled,
-  errorHandler,
-  asyncHandler,
-  correlationIdMiddleware,
-  requestLogger,
-  csrfProtection,
-  validateSecrets,
-  logger,
-  pseudonymize,
-  WS_MAX_MESSAGE_SIZE,
-  wsConnectionAllowed,
-  wsConnectionClosed,
-} from './security.js';
 
 // Simple cookie parser for WebSocket auth
 function parseCookies(cookieHeader?: string): Record<string, string> {
@@ -87,49 +63,72 @@ function parseCookies(cookieHeader?: string): Record<string, string> {
 }
 
 // ── Tier Enforcement ─────────────────────────────────────────────────────────
-// Single source of truth: shared with MCP server via core/pricing/tool-requirements.ts
-import { TOOL_FEATURE_REQUIREMENTS } from '../../src/core/pricing/tool-requirements.js';
-
-/** Valid tier IDs for fail-closed validation. */
-const VALID_TIERS = new Set<string>(['free', 'starter', 'pro', 'enterprise']);
-
-/**
- * Normalize a tier string to a valid TierId.
- * Unknown tiers are treated as 'free' (fail-closed).
- */
-function normalizeTier(userTier: string): TierId {
-  return VALID_TIERS.has(userTier) ? (userTier as TierId) : 'free';
-}
+// Maps tool names to required tier features. Tools not listed are available on all tiers.
+const TOOL_FEATURE_REQUIREMENTS: Record<string, keyof ReturnType<typeof getTier>['features']> = {
+  // Build tools require fullPipeline (not available on free tier)
+  rc_start: 'fullPipeline',
+  rc_import_prerc: 'fullPipeline',
+  rc_illuminate: 'fullPipeline',
+  rc_define: 'fullPipeline',
+  rc_architect: 'fullPipeline',
+  rc_sequence: 'fullPipeline',
+  rc_validate: 'fullPipeline',
+  rc_forge_task: 'fullPipeline',
+  rc_gate: 'fullPipeline',
+  // Design tools
+  ux_design: 'designOptions',
+  // Security scanning
+  postrc_scan: 'securityScan',
+  postrc_report: 'securityScan',
+  postrc_override: 'securityScan',
+  postrc_gate: 'securityScan',
+  postrc_configure: 'securityScan',
+  // Stress test (Pro/Enterprise only)
+  prc_stress_test: 'playbook',
+  // Traceability
+  trace_enhance_prd: 'traceability',
+  trace_map_findings: 'traceability',
+  trace_status: 'traceability',
+};
 
 function checkTierAccess(toolName: string, userTier: string): string | null {
   const requiredFeature = TOOL_FEATURE_REQUIREMENTS[toolName];
   if (!requiredFeature) return null; // Tool available on all tiers
-  const tierId = normalizeTier(userTier);
-  if (hasFeature(tierId, requiredFeature)) return null;
-  const tierDef = getTier(tierId);
-  return `Your ${tierDef.name} plan does not include this feature. Upgrade to access ${requiredFeature.replace(/([A-Z])/g, ' $1').toLowerCase()}.`;
-}
-
-/**
- * Check if a user's tier includes a specific feature.
- * Returns null if allowed, or an error message string if blocked.
- * Unknown tiers are treated as 'free' (fail-closed).
- */
-function checkFeatureAccess(
-  userTier: string,
-  feature: keyof ReturnType<typeof getTier>['features'],
-  label: string,
-): string | null {
-  const tierId = normalizeTier(userTier);
-  if (hasFeature(tierId, feature)) return null;
-  const tierDef = getTier(tierId);
-  return `Your ${tierDef.name} plan does not include ${label}. Upgrade to access this feature.`;
+  const tierId = userTier as TierId;
+  try {
+    if (hasFeature(tierId, requiredFeature)) return null;
+    const tierDef = getTier(tierId);
+    return `Your ${tierDef.name} plan does not include this feature. Upgrade to access ${requiredFeature.replace(/([A-Z])/g, ' $1').toLowerCase()}.`;
+  } catch {
+    return null; // Unknown tier -- allow (fail-open for dev)
+  }
 }
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const PORT = parseInt(process.env.RC_WEB_PORT || '3100', 10);
 
-// Path validation is now handled by security.ts -- see validateUserProjectPath()
+/**
+ * Validate that a project path is safe (exists and is a directory).
+ * Prevents path traversal attacks on project-scoped endpoints.
+ */
+function validateProjectPath(projectPath: string): string | null {
+  if (!projectPath || typeof projectPath !== 'string') {
+    return 'Missing project path';
+  }
+  const resolved = path.resolve(projectPath);
+  // Block obvious traversal patterns
+  if (projectPath.includes('..')) {
+    return 'Path traversal blocked';
+  }
+  // Must be an actual directory
+  try {
+    const stat = fs.statSync(resolved);
+    if (!stat.isDirectory()) return 'Not a directory';
+  } catch {
+    return 'Project path not found';
+  }
+  return null; // valid
+}
 
 function extractText(result: { content: Array<{ type: string; text?: string }> }): string {
   return result.content
@@ -142,36 +141,21 @@ async function main() {
   const app = express();
   const httpServer = createServer(app);
 
-  // Security headers (enterprise-grade)
+  // Security headers
   app.use(
     helmet({
       contentSecurityPolicy: {
         directives: {
           defaultSrc: ["'self'"],
-          scriptSrc: ["'self'"],
+          scriptSrc: ["'self'", "'unsafe-inline'"],
           styleSrc: ["'self'", "'unsafe-inline'", 'https://fonts.googleapis.com'],
           fontSrc: ["'self'", 'https://fonts.gstatic.com'],
           imgSrc: ["'self'", 'data:', 'blob:'],
           connectSrc: ["'self'", 'ws:', 'wss:'],
-          frameAncestors: ["'none'"], // Prevent clickjacking
-          baseUri: ["'self'"], // Prevent base tag hijacking
-          formAction: ["'self'"], // Restrict form submissions
-          objectSrc: ["'none'"], // Block Flash/Java embeds
         },
       },
-      hsts: {
-        maxAge: 31536000, // 1 year
-        includeSubDomains: true,
-        preload: true,
-      },
-      referrerPolicy: { policy: 'strict-origin-when-cross-origin' },
-      crossOriginEmbedderPolicy: false, // Allow loading external fonts
     }),
   );
-
-  // Correlation ID + structured request logging
-  app.use(correlationIdMiddleware);
-  app.use(requestLogger);
 
   // CORS -- restrict to same-origin + configurable allowed origins
   const allowedOrigins = process.env.ALLOWED_ORIGINS
@@ -200,43 +184,20 @@ async function main() {
     legacyHeaders: false,
   });
 
-  // Rate limiters for tool execution and project reads
-  const toolLimiter = createToolRateLimiter();
-  const projectReadLimiter = createProjectReadLimiter();
-
   app.use(express.json({ limit: '1mb' }));
   app.use(authMiddleware);
-  app.use(csrfProtection);
-
-  // Rate limiters for org and billing endpoints
-  const orgLimiter = createOrgRateLimiter();
-  const billingLimiter = createBillingRateLimiter();
 
   // --- Auth Routes ---
   app.post('/auth/login', authLimiter, async (req, res) => {
-    const { email, captchaToken } = req.body as { email?: string; captchaToken?: string };
+    const { email } = req.body as { email?: string };
     if (!email || !email.includes('@')) {
       res.status(400).json({ error: 'Valid email required' });
       return;
     }
-
-    // CAPTCHA verification (when configured via TURNSTILE_SECRET_KEY)
-    const captchaValid = await verifyTurnstile(captchaToken, req.ip);
-    if (!captchaValid) {
-      auditLog({
-        action: 'login_captcha_failed',
-        actorEmail: pseudonymize(email),
-        ip: req.ip,
-        success: false,
-      });
-      res.status(403).json({ error: 'CAPTCHA verification failed. Please try again.' });
-      return;
-    }
-
     const token = requestMagicLink(email);
     const baseUrl = `${req.protocol}://${req.get('host')}`;
 
-    if (isAuthBypassed() && process.env.NODE_ENV !== 'production') {
+    if (isAuthBypassed()) {
       res.json({ ok: true, token, message: 'Dev mode: token returned directly' });
     } else {
       // Send via configured email provider (console fallback)
@@ -251,15 +212,13 @@ async function main() {
               : 'Magic link sent to your email',
         });
       } else {
-        logger.error('Failed to send magic link', { provider, error: result.error, email: pseudonymize(email) });
-        res.status(500).json({ error: 'Failed to send magic link. Please try again later.' });
+        res.status(500).json({ error: `Failed to send magic link: ${result.error}` });
       }
     }
   });
 
-  // POST endpoint for client-side token verification (token in body, not URL)
-  app.post('/auth/verify', (req, res) => {
-    const { token } = req.body as { token?: string };
+  app.get('/auth/verify', (req, res) => {
+    const token = req.query.token as string;
     if (!token) {
       res.status(400).json({ error: 'Missing token' });
       return;
@@ -277,18 +236,6 @@ async function main() {
       maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
     });
     res.json({ ok: true, user: { email: result.user.email, tier: result.user.tier } });
-  });
-
-  // GET fallback for email link clicks — redirects to SPA with hash fragment
-  app.get('/auth/verify', (req, res) => {
-    const token = req.query.token as string;
-    if (!token) {
-      res.status(400).json({ error: 'Missing token' });
-      return;
-    }
-    // Redirect to SPA with token in hash fragment (not query string)
-    // Hash fragments are never sent to the server, protecting the token
-    res.redirect(`/#token=${encodeURIComponent(token)}`);
   });
 
   app.post('/auth/logout', (req, res) => {
@@ -317,31 +264,26 @@ async function main() {
     }
   });
 
-  // CAPTCHA config endpoint (frontend uses this to decide whether to show widget)
-  app.get('/auth/captcha-config', (_req, res) => {
-    res.json({
-      enabled: isCaptchaEnabled(),
-      siteKey: process.env.TURNSTILE_SITE_KEY || null,
-    });
-  });
-
   // --- Team / Organization Routes ---
-  app.post('/api/org/create', requireAuth, orgLimiter, (req, res, next) => {
+  app.post('/api/org/create', (req, res) => {
+    if (!req.user) {
+      res.status(401).json({ error: 'Login required' });
+      return;
+    }
     const { name } = req.body as { name?: string };
-    if (!name || typeof name !== 'string' || name.trim().length < 2 || name.trim().length > 100) {
-      res.status(400).json({ error: 'Organization name required (2-100 characters)' });
+    if (!name) {
+      res.status(400).json({ error: 'Organization name required' });
       return;
     }
     try {
-      const org = createOrganization(req.user!.id, name.trim(), req.user!.tier);
+      const org = createOrganization(req.user.id, name, req.user.tier);
       res.json({ ok: true, org });
     } catch (err) {
-      logger.error('Failed to create organization', { error: (err as Error).message, userId: req.user?.id });
-      next(err);
+      res.status(500).json({ error: (err as Error).message });
     }
   });
 
-  app.get('/api/org/members', requireAuth, (req, res, next) => {
+  app.get('/api/org/members', (req, res) => {
     if (!req.user?.orgId) {
       res.json({ members: [] });
       return;
@@ -354,12 +296,11 @@ async function main() {
         members: members.map((m) => ({ email: m.email, name: m.name, role: m.role })),
       });
     } catch (err) {
-      logger.error('Failed to list org members', { error: (err as Error).message, orgId: req.user?.orgId });
-      next(err);
+      res.status(500).json({ error: (err as Error).message });
     }
   });
 
-  app.post('/api/org/invite', requireAuth, orgLimiter, (req, res, next) => {
+  app.post('/api/org/invite', (req, res) => {
     if (!req.user?.orgId) {
       res.status(400).json({ error: 'You are not in an organization' });
       return;
@@ -369,7 +310,7 @@ async function main() {
       return;
     }
     const { email } = req.body as { email?: string };
-    if (!email || typeof email !== 'string' || !email.includes('@') || email.length > 254) {
+    if (!email || !email.includes('@')) {
       res.status(400).json({ error: 'Valid email required' });
       return;
     }
@@ -377,14 +318,7 @@ async function main() {
       const inviteId = inviteToOrg(req.user.orgId, req.user.id, email);
       res.json({ ok: true, inviteId });
     } catch (err) {
-      const msg = (err as Error).message;
-      // Seat limit errors are safe to show — they contain no internals
-      if (msg.includes('seat limit')) {
-        res.status(400).json({ error: msg });
-      } else {
-        logger.error('Failed to send org invite', { error: msg, orgId: req.user?.orgId });
-        next(err);
-      }
+      res.status(400).json({ error: (err as Error).message });
     }
   });
 
@@ -394,9 +328,7 @@ async function main() {
     import('../../src/core/pricing/tiers.js')
       .then(({ TIERS, getTierOrder }) => {
         const order = getTierOrder();
-        res.json({
-          tiers: order.map((id: 'free' | 'starter' | 'pro' | 'enterprise') => TIERS[id]),
-        });
+        res.json({ tiers: order.map((id) => TIERS[id]) });
       })
       .catch(() => {
         res.status(500).json({ error: 'Pricing unavailable' });
@@ -404,7 +336,7 @@ async function main() {
   });
 
   // --- Billing Routes (Stripe) ---
-  registerBillingRoutes(app, billingLimiter);
+  registerBillingRoutes(app);
 
   // --- MCP Bridge (in-process tool execution) ---
   const bridge = await createMcpBridge();
@@ -414,41 +346,17 @@ async function main() {
   const clients = new Set<WebSocket>();
 
   wss.on('connection', (ws, req) => {
-    // Rate limit WebSocket connections per IP
-    const clientIp = req.socket.remoteAddress || 'unknown';
-    if (!wsConnectionAllowed(clientIp)) {
-      logger.warn('WebSocket connection limit exceeded', { ip: clientIp });
-      ws.close(1013, 'Too many connections');
-      return;
-    }
-
     // Authenticate WebSocket connections via session cookie
     if (!isAuthBypassed()) {
       const cookies = parseCookies(req.headers.cookie);
       const sessionId = cookies.rc_session;
       if (!sessionId || !getUserFromSession(sessionId)) {
-        wsConnectionClosed(clientIp);
         ws.close(1008, 'Authentication required');
         return;
       }
     }
-
     clients.add(ws);
-
-    // Enforce message size limits
-    ws.on('message', (data: Buffer | ArrayBuffer | Buffer[]) => {
-      const size = Buffer.isBuffer(data) ? data.length : Array.isArray(data) ? data.reduce((s, b) => s + b.length, 0) : (data as ArrayBuffer).byteLength;
-      if (size > WS_MAX_MESSAGE_SIZE) {
-        logger.warn('WebSocket message too large', { ip: clientIp, size });
-        ws.close(1009, 'Message too large');
-      }
-    });
-
-    ws.on('close', () => {
-      clients.delete(ws);
-      wsConnectionClosed(clientIp);
-    });
-
+    ws.on('close', () => clients.delete(ws));
     ws.send(JSON.stringify({ type: 'connected', tools: bridge.toolNames }));
   });
 
@@ -461,17 +369,8 @@ async function main() {
 
   // --- REST API ---
 
-  // Health check — public endpoint, no sensitive details
+  // Health check + configuration info
   app.get('/api/health', (_req, res) => {
-    res.json({
-      status: 'ok',
-      tools: bridge.toolNames.length,
-      uptime: process.uptime(),
-    });
-  });
-
-  // Detailed config info — requires authentication
-  app.get('/api/health/details', requireAuth, (_req, res) => {
     const envKeys = {
       anthropic: !!process.env.ANTHROPIC_API_KEY,
       openai: !!process.env.OPENAI_API_KEY,
@@ -507,13 +406,17 @@ async function main() {
   });
 
   // List available tools
-  app.get('/api/tools', asyncHandler(async (_req, res) => {
-    const tools = await bridge.listTools();
-    res.json({ tools });
-  }));
+  app.get('/api/tools', async (_req, res) => {
+    try {
+      const tools = await bridge.listTools();
+      res.json({ tools });
+    } catch (err) {
+      res.status(500).json({ error: (err as Error).message });
+    }
+  });
 
   // Execute a tool by name
-  app.post('/api/tools/:name', requireAuth, toolLimiter, async (req, res) => {
+  app.post('/api/tools/:name', requireAuth, async (req, res) => {
     const name = req.params.name as string;
     const args = req.body || {};
 
@@ -522,27 +425,12 @@ async function main() {
       const userTier = req.user?.tier || 'free';
       const tierError = checkTierAccess(name, userTier);
       if (tierError) {
-        auditLog({
-          action: 'tool_blocked_tier',
-          actorId: req.user?.id,
-          actorEmail: req.user?.email ? pseudonymize(req.user.email) : undefined,
-          detail: `tool=${name}, tier=${userTier}`,
-          success: false,
-        });
         res.status(403).json({ error: tierError });
         return;
       }
     }
 
     broadcast({ type: 'tool:start', tool: name, args, timestamp: Date.now() });
-    auditLog({
-      action: 'tool_execute',
-      actorId: req.user?.id,
-      actorEmail: req.user?.email ? pseudonymize(req.user.email) : undefined,
-      targetType: 'tool',
-      targetId: name,
-      ip: req.ip,
-    });
 
     try {
       const result = await bridge.callTool(name, args);
@@ -550,9 +438,8 @@ async function main() {
       res.json({ result });
     } catch (err) {
       const errorMsg = (err as Error).message;
-      logger.error('Tool execution failed', { tool: name, error: errorMsg, userId: req.user?.id });
-      broadcast({ type: 'tool:error', tool: name, error: 'Tool execution failed', timestamp: Date.now() });
-      res.status(500).json({ error: 'Tool execution failed. Please try again.' });
+      broadcast({ type: 'tool:error', tool: name, error: errorMsg, timestamp: Date.now() });
+      res.status(500).json({ error: errorMsg });
     }
   });
 
@@ -581,14 +468,18 @@ async function main() {
       // Also include the user's base dir in the response so the frontend can create projects there
       res.json({ projects, projectsDir: userDir });
     } catch (err) {
-      logger.error('Failed to list projects', { error: (err as Error).message, userId: req.user?.id });
-      res.status(500).json({ error: 'Failed to list projects.' });
+      res.status(500).json({ error: (err as Error).message });
     }
   });
 
   // Structured pipeline state -- calls all status tools and returns parsed JSON
-  app.get('/api/project/state', requireAuth, projectReadLimiter, requireValidProjectQuery, async (req, res) => {
-    const projectPath = (req as RequestWithProject).validatedProjectPath;
+  app.get('/api/project/state', requireAuth, async (req, res) => {
+    const projectPath = req.query.path as string;
+    const pathError = validateProjectPath(projectPath);
+    if (pathError) {
+      res.status(400).json({ error: pathError });
+      return;
+    }
 
     try {
       // Call all status tools in parallel
@@ -616,52 +507,64 @@ async function main() {
 
       res.json({ state });
     } catch (err) {
-      logger.error('Failed to load project state', { error: (err as Error).message });
-      res.status(500).json({ error: 'Failed to load project state.' });
+      res.status(500).json({ error: (err as Error).message });
     }
   });
 
   // List artifacts for a project
-  app.get('/api/project/artifacts', requireAuth, projectReadLimiter, requireValidProjectQuery, (req, res) => {
-    const projectPath = (req as RequestWithProject).validatedProjectPath;
+  app.get('/api/project/artifacts', requireAuth, (req, res) => {
+    const projectPath = req.query.path as string;
+    const pathError = validateProjectPath(projectPath);
+    if (pathError) {
+      res.status(400).json({ error: pathError });
+      return;
+    }
 
     try {
       const artifacts = discoverArtifacts(projectPath);
       res.json({ artifacts });
     } catch (err) {
-      logger.error('Failed to list artifacts', { error: (err as Error).message });
-      res.status(500).json({ error: 'Failed to list artifacts.' });
+      res.status(500).json({ error: (err as Error).message });
     }
   });
 
   // Download a specific artifact
-  app.get('/api/project/download', requireAuth, requireValidProjectQuery, (req, res) => {
-    const projectPath = (req as RequestWithProject).validatedProjectPath;
+  app.get('/api/project/download', requireAuth, (req, res) => {
+    const projectPath = req.query.path as string;
     const filePath = req.query.file as string;
-
-    const fileResult = validateFileWithinProject(projectPath, filePath);
-    if ('error' in fileResult) {
-      res.status(fileResult.status).json({ error: fileResult.error });
+    if (!projectPath || !filePath) {
+      res.status(400).json({ error: 'Missing ?path= or ?file= parameter' });
       return;
     }
 
-    res.download(fileResult.fullPath);
+    // Security: resolve and validate the full path
+    const fullPath = path.resolve(projectPath, filePath);
+    const resolvedProject = path.resolve(projectPath);
+    if (!fullPath.startsWith(resolvedProject)) {
+      res.status(403).json({ error: 'Path traversal blocked' });
+      return;
+    }
+
+    if (!fs.existsSync(fullPath)) {
+      res.status(404).json({ error: 'File not found' });
+      return;
+    }
+
+    res.download(fullPath);
   });
 
   // PDF export -- generates print-ready HTML from project artifacts
-  app.get('/api/project/export', requireAuth, requireValidProjectQuery, (req, res) => {
-    if (!isAuthBypassed()) {
-      const tierError = checkFeatureAccess(req.user?.tier || 'free', 'pdfExport', 'PDF export');
-      if (tierError) {
-        res.status(403).json({ error: tierError });
-        return;
-      }
-    }
-
-    const projectPath = (req as RequestWithProject).validatedProjectPath;
+  app.get('/api/project/export', requireAuth, (req, res) => {
+    const projectPath = req.query.path as string;
     const filesParam = req.query.files as string;
     const title = req.query.title as string | undefined;
     const subtitle = req.query.subtitle as string | undefined;
+
+    const pathError = validateProjectPath(projectPath);
+    if (pathError) {
+      res.status(400).json({ error: pathError });
+      return;
+    }
 
     // Default: export all discoverable artifacts
     let files: string[];
@@ -677,23 +580,20 @@ async function main() {
       res.setHeader('Content-Type', 'text/html; charset=utf-8');
       res.send(html);
     } catch (err) {
-      logger.error('PDF export failed', { error: (err as Error).message });
-      res.status(500).json({ error: 'Export failed. Please try again.' });
+      res.status(500).json({ error: (err as Error).message });
     }
   });
 
   // Playbook / ARD generation -- aggregates all pipeline outputs
-  app.get('/api/project/playbook', requireAuth, requireValidProjectQuery, (req, res) => {
-    if (!isAuthBypassed()) {
-      const tierError = checkFeatureAccess(req.user?.tier || 'free', 'playbook', 'playbook export');
-      if (tierError) {
-        res.status(403).json({ error: tierError });
-        return;
-      }
-    }
-
-    const projectPath = (req as RequestWithProject).validatedProjectPath;
+  app.get('/api/project/playbook', requireAuth, (req, res) => {
+    const projectPath = req.query.path as string;
     const format = req.query.format as string | undefined; // 'html' or default 'md'
+
+    const pathError = validateProjectPath(projectPath);
+    if (pathError) {
+      res.status(400).json({ error: pathError });
+      return;
+    }
 
     try {
       const projectName = path.basename(projectPath);
@@ -713,55 +613,43 @@ async function main() {
         res.json({ markdown: result.markdown, savedPath: result.savedPath });
       }
     } catch (err) {
-      logger.error('Playbook generation failed', { error: (err as Error).message });
-      res.status(500).json({ error: 'Playbook generation failed. Please try again.' });
+      res.status(500).json({ error: (err as Error).message });
     }
   });
 
   // Diagram generation -- creates Mermaid diagrams from task data
-  app.get('/api/project/diagrams', requireAuth, requireValidProjectQuery, async (req, res) => {
-    if (!isAuthBypassed()) {
-      const tierError = checkFeatureAccess(req.user?.tier || 'free', 'diagrams', 'architecture diagrams');
-      if (tierError) {
-        res.status(403).json({ error: tierError });
-        return;
-      }
+  app.get('/api/project/diagrams', requireAuth, async (req, res) => {
+    const projectPath = req.query.path as string;
+    const pathError = validateProjectPath(projectPath);
+    if (pathError) {
+      res.status(400).json({ error: pathError });
+      return;
     }
-
-    const projectPath = (req as RequestWithProject).validatedProjectPath;
 
     try {
       const projectName = path.basename(projectPath);
       const results = await generateDiagrams(projectPath, projectName);
       res.json({
-        diagrams: results.map((d: { diagramType: string; htmlPath: string; mermaidSyntax: string }) => ({
+        diagrams: results.map((d) => ({
           type: d.diagramType,
           htmlPath: d.htmlPath,
           mermaidSyntax: d.mermaidSyntax,
         })),
       });
     } catch (err) {
-      logger.error('Diagram generation failed', { error: (err as Error).message });
-      res.status(500).json({ error: 'Diagram generation failed. Please try again.' });
+      res.status(500).json({ error: (err as Error).message });
     }
   });
 
   // Save selected design option
-  app.post('/api/project/design-select', requireAuth, requireValidProjectBody, async (req, res) => {
-    if (!isAuthBypassed()) {
-      const tierError = checkFeatureAccess(req.user?.tier || 'free', 'designOptions', 'design options');
-      if (tierError) {
-        res.status(403).json({ error: tierError });
-        return;
-      }
-    }
-    const projectPath = (req as RequestWithProject).validatedProjectPath;
-    const { optionId, specPath } = req.body as {
+  app.post('/api/project/design-select', requireAuth, async (req, res) => {
+    const { projectPath, optionId, specPath } = req.body as {
+      projectPath?: string;
       optionId?: string;
       specPath?: string;
     };
-    if (!optionId || !specPath) {
-      res.status(400).json({ error: 'Missing optionId or specPath' });
+    if (!projectPath || !optionId || !specPath) {
+      res.status(400).json({ error: 'Missing projectPath, optionId, or specPath' });
       return;
     }
 
@@ -777,19 +665,18 @@ async function main() {
       );
       res.json({ ok: true, optionId });
     } catch (err) {
-      logger.error('Design selection failed', { error: (err as Error).message });
-      res.status(500).json({ error: 'Failed to save design selection.' });
+      res.status(500).json({ error: (err as Error).message });
     }
   });
 
   // Configure active personas (disable/enable for research)
-  app.post('/api/project/configure-personas', requireAuth, requireValidProjectBody, async (req, res) => {
-    const projectPath = (req as RequestWithProject).validatedProjectPath;
-    const { disabledIds } = req.body as {
+  app.post('/api/project/configure-personas', requireAuth, async (req, res) => {
+    const { projectPath, disabledIds } = req.body as {
+      projectPath?: string;
       disabledIds?: string[];
     };
-    if (!Array.isArray(disabledIds)) {
-      res.status(400).json({ error: 'Missing disabledIds array' });
+    if (!projectPath || !Array.isArray(disabledIds)) {
+      res.status(400).json({ error: 'Missing projectPath or disabledIds array' });
       return;
     }
 
@@ -821,22 +708,18 @@ async function main() {
       fs.writeFileSync(stateFile, JSON.stringify(state, null, 2), 'utf-8');
       res.json({ ok: true, activeCount: state.personaSelection?.totalActive ?? 0 });
     } catch (err) {
-      logger.error('Persona configuration failed', { error: (err as Error).message });
-      res.status(500).json({ error: 'Failed to configure personas.' });
+      res.status(500).json({ error: (err as Error).message });
     }
   });
 
   // Value report for a project (computes human-equivalent savings)
-  app.get('/api/project/value', requireAuth, requireValidProjectQuery, async (req, res) => {
-    if (!isAuthBypassed()) {
-      const tierError = checkFeatureAccess(req.user?.tier || 'free', 'fullPipeline', 'value report');
-      if (tierError) {
-        res.status(403).json({ error: tierError });
-        return;
-      }
+  app.get('/api/project/value', requireAuth, async (req, res) => {
+    const projectPath = req.query.path as string;
+    const pathError = validateProjectPath(projectPath);
+    if (pathError) {
+      res.status(400).json({ error: pathError });
+      return;
     }
-
-    const projectPath = (req as RequestWithProject).validatedProjectPath;
 
     try {
       // Gather state from all domains in parallel
@@ -921,8 +804,7 @@ async function main() {
 
       res.json({ report });
     } catch (err) {
-      logger.error('Value report generation failed', { error: (err as Error).message });
-      res.status(500).json({ error: 'Failed to generate value report.' });
+      res.status(500).json({ error: (err as Error).message });
     }
   });
 
@@ -936,20 +818,12 @@ async function main() {
     });
   }
 
-  // --- Centralized Error Handler (MUST be last middleware) ---
-  app.use(errorHandler);
-
-  // --- Pre-flight checks ---
-  validateSecrets();
+  // --- Start ---
   cleanupExpired(); // Clean expired sessions/tokens on boot
-
   httpServer.listen(PORT, () => {
-    logger.info('Server started', {
-      port: PORT,
-      tools: bridge.toolNames.length,
-      wsPath: `/ws`,
-      authBypassed: isAuthBypassed(),
-    });
+    console.log(`[rc-engine-web] Server running at http://localhost:${PORT}`);
+    console.log(`[rc-engine-web] ${bridge.toolNames.length} tools available`);
+    console.log(`[rc-engine-web] WebSocket at ws://localhost:${PORT}/ws`);
   });
 }
 
@@ -1043,6 +917,6 @@ function discoverArtifacts(projectPath: string): ArtifactInfo[] {
 }
 
 main().catch((err) => {
-  logger.error('Fatal startup error', { error: (err as Error).message, stack: (err as Error).stack?.split('\n').slice(0, 3).join(' | ') });
+  console.error('[rc-engine-web] Fatal error:', err);
   process.exit(1);
 });

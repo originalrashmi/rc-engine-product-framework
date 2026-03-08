@@ -18,9 +18,8 @@
  * Setup: Create these products/prices in the Stripe Dashboard first.
  */
 
-import type { Request, Response, Router, RequestHandler } from 'express';
-import { updateUserTier, requireAuth } from './auth.js';
-import { logger } from './security.js';
+import type { Request, Response, Router } from 'express';
+import { updateUserTier } from './auth.js';
 
 // ── Types ───────────────────────────────────────────────────────────────────
 
@@ -80,7 +79,7 @@ async function getStripe(): Promise<import('stripe').default | null> {
     const { default: Stripe } = await import('stripe');
     return new Stripe(STRIPE_KEY);
   } catch {
-    logger.warn('Stripe SDK not installed. Run: npm install stripe');
+    console.warn('[billing] Stripe SDK not installed. Run: npm install stripe');
     return null;
   }
 }
@@ -88,14 +87,9 @@ async function getStripe(): Promise<import('stripe').default | null> {
 /**
  * Register billing routes on an Express router.
  */
-export function registerBillingRoutes(router: Router, billingLimiter?: RequestHandler): void {
-  // Apply billing rate limiter if provided
-  if (billingLimiter) {
-    router.use('/api/billing', billingLimiter);
-  }
-
+export function registerBillingRoutes(router: Router): void {
   // Get billing status (is Stripe configured, user's current tier)
-  router.get('/api/billing/status', requireAuth, (req: Request, res: Response) => {
+  router.get('/api/billing/status', (req: Request, res: Response) => {
     res.json({
       stripeConfigured: isStripeConfigured(),
       userTier: req.user?.tier || 'free',
@@ -161,7 +155,7 @@ export function registerBillingRoutes(router: Router, billingLimiter?: RequestHa
 
       res.json({ url: session.url });
     } catch (err) {
-      logger.error('Checkout session creation failed', { error: (err as Error).message });
+      console.error('[billing] Checkout error:', err);
       res.status(500).json({ error: 'Failed to create checkout session.' });
     }
   });
@@ -184,7 +178,7 @@ export function registerBillingRoutes(router: Router, billingLimiter?: RequestHa
     try {
       event = stripe.webhooks.constructEvent(req.body, sig, WEBHOOK_SECRET);
     } catch (err) {
-      logger.error('Webhook signature verification failed', { error: (err as Error).message });
+      console.error('[billing] Webhook signature verification failed:', err);
       res.status(400).json({ error: 'Invalid signature.' });
       return;
     }
@@ -200,7 +194,7 @@ export function registerBillingRoutes(router: Router, billingLimiter?: RequestHa
         const tierId = session.metadata?.tierId;
         if (userId && tierId) {
           updateUserTier(userId, tierId);
-          logger.info('User upgraded tier', { userId, tierId });
+          console.log(`[billing] User ${userId} upgraded to ${tierId}`);
         }
         break;
       }
@@ -211,7 +205,7 @@ export function registerBillingRoutes(router: Router, billingLimiter?: RequestHa
         const userId = sub.metadata?.userId;
         if (userId) {
           updateUserTier(userId, 'free');
-          logger.info('User downgraded to free (subscription canceled)', { userId });
+          console.log(`[billing] User ${userId} downgraded to free (subscription canceled)`);
         }
         break;
       }
@@ -220,7 +214,7 @@ export function registerBillingRoutes(router: Router, billingLimiter?: RequestHa
         const invoice = event.data.object as { subscription_details?: { metadata?: { userId?: string } } };
         const userId = invoice.subscription_details?.metadata?.userId;
         if (userId) {
-          logger.warn('Payment failed', { userId });
+          console.warn(`[billing] Payment failed for user ${userId}`);
           // Keep current tier but flag for follow-up
         }
         break;

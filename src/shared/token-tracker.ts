@@ -6,18 +6,13 @@ interface TokenRecord {
   domain: string;
   tool: string;
   tokens: number;
-  inputTokens: number;
-  outputTokens: number;
-  cacheCreationTokens: number;
-  cacheReadTokens: number;
   provider: LLMProvider;
   timestamp: string;
 }
 
 /**
  * Tracks token usage across all domains in the unified pipeline.
- * Writes a running summary to .rc-engine/PIPELINE.md in the project directory.
- * Tracks cache hits/misses for prompt caching visibility.
+ * Writes a running summary to .rc-method/PIPELINE.md in the project directory.
  */
 export class TokenTracker {
   private records: TokenRecord[] = [];
@@ -28,22 +23,12 @@ export class TokenTracker {
     this.projectPath = projectPath;
   }
 
-  /** Record token usage from a tool call (backward-compatible: extra fields optional) */
-  record(
-    domain: string,
-    tool: string,
-    tokens: number,
-    provider: LLMProvider,
-    details?: { inputTokens?: number; outputTokens?: number; cacheCreationTokens?: number; cacheReadTokens?: number },
-  ): void {
+  /** Record token usage from a tool call */
+  record(domain: string, tool: string, tokens: number, provider: LLMProvider): void {
     this.records.push({
       domain,
       tool,
       tokens,
-      inputTokens: details?.inputTokens ?? 0,
-      outputTokens: details?.outputTokens ?? tokens,
-      cacheCreationTokens: details?.cacheCreationTokens ?? 0,
-      cacheReadTokens: details?.cacheReadTokens ?? 0,
       provider,
       timestamp: new Date().toISOString(),
     });
@@ -56,20 +41,6 @@ export class TokenTracker {
         // Non-critical - don't crash if we can't write
       }
     }
-  }
-
-  /** Get total cache tokens saved (read from cache instead of recomputed). */
-  getCacheStats(): { created: number; read: number; savedPercent: number } {
-    let created = 0;
-    let read = 0;
-    let totalInput = 0;
-    for (const r of this.records) {
-      created += r.cacheCreationTokens;
-      read += r.cacheReadTokens;
-      totalInput += r.inputTokens;
-    }
-    const savedPercent = totalInput > 0 ? Math.round((read / totalInput) * 100) : 0;
-    return { created, read, savedPercent };
   }
 
   /** Get total tokens used across all domains */
@@ -128,43 +99,20 @@ export class TokenTracker {
     const byDomain = this.getTokensByDomain();
     const byProvider = this.getTokensByProvider();
     const calls = this.getCallsByDomain();
-    const cache = this.getCacheStats();
-
-    const totalInput = this.records.reduce((s, r) => s + r.inputTokens, 0);
-    const totalOutput = this.records.reduce((s, r) => s + r.outputTokens, 0);
 
     const lines: string[] = [
       '# RC Engine Pipeline - Token Usage',
       '',
-      `**Total Tokens:** ${total.toLocaleString()} (input: ${totalInput.toLocaleString()}, output: ${totalOutput.toLocaleString()})`,
+      `**Total Tokens:** ${total.toLocaleString()}`,
       `**Total Calls:** ${this.records.length}`,
-    ];
-
-    // Cache stats (only shown when caching is active)
-    if (cache.created > 0 || cache.read > 0) {
-      lines.push(
-        '',
-        '## Prompt Cache',
-        `| Metric | Tokens |`,
-        `|--------|--------|`,
-        `| Cache created | ${cache.created.toLocaleString()} |`,
-        `| Cache read (saved) | ${cache.read.toLocaleString()} |`,
-        `| Cache hit rate | ${cache.savedPercent}% of input |`,
-      );
-    }
-
-    lines.push(
       '',
       '## By Domain',
-      '| Domain | Calls | Input | Output | Total |',
-      '|--------|-------|-------|--------|-------|',
-    );
+      '| Domain | Calls | Tokens |',
+      '|--------|-------|--------|',
+    ];
 
     for (const [domain, tokens] of Object.entries(byDomain)) {
-      const domainRecords = this.records.filter((r) => r.domain === domain);
-      const dInput = domainRecords.reduce((s, r) => s + r.inputTokens, 0);
-      const dOutput = domainRecords.reduce((s, r) => s + r.outputTokens, 0);
-      lines.push(`| ${domain} | ${calls[domain] || 0} | ${dInput.toLocaleString()} | ${dOutput.toLocaleString()} | ${tokens.toLocaleString()} |`);
+      lines.push(`| ${domain} | ${calls[domain] || 0} | ${tokens.toLocaleString()} |`);
     }
 
     lines.push('', '## By Provider', '| Provider | Tokens |', '|----------|--------|');
@@ -176,18 +124,13 @@ export class TokenTracker {
       lines.push(
         '',
         '## Recent Calls (last 10)',
-        '| Time | Domain | Tool | In | Out | Cache | Provider |',
-        '|------|--------|------|----|-----|-------|----------|',
+        '| Time | Domain | Tool | Tokens | Provider |',
+        '|------|--------|------|--------|----------|',
       );
       const recent = this.records.slice(-10);
       for (const r of recent) {
         const time = r.timestamp.split('T')[1]?.split('.')[0] || r.timestamp;
-        const cacheLabel = r.cacheReadTokens > 0
-          ? `hit(${r.cacheReadTokens.toLocaleString()})`
-          : r.cacheCreationTokens > 0
-            ? `new(${r.cacheCreationTokens.toLocaleString()})`
-            : '-';
-        lines.push(`| ${time} | ${r.domain} | ${r.tool} | ${r.inputTokens.toLocaleString()} | ${r.outputTokens.toLocaleString()} | ${cacheLabel} | ${r.provider} |`);
+        lines.push(`| ${time} | ${r.domain} | ${r.tool} | ${r.tokens.toLocaleString()} | ${r.provider} |`);
       }
     }
 

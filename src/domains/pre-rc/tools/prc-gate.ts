@@ -115,7 +115,8 @@ function buildApprovalMessage(gateNumber: 1 | 2 | 3, resultState: ResearchState 
   // Count completed stages and artifacts for progress context
   let stageReport = '';
   if (resultState) {
-    const completedStages = Object.entries(resultState.stageStatus).filter(([_, status]) => status === 'completed');
+    const completedStages = Object.entries(resultState.stageStatus)
+      .filter(([_, status]) => status === 'completed');
     const artifactCount = resultState.artifacts.length;
     if (completedStages.length > 0) {
       stageReport = ` ${completedStages.length} research stages completed, ${artifactCount} specialist reports generated.`;

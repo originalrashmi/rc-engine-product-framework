@@ -64,8 +64,7 @@ const CLAIM_PATTERNS: ClaimPattern[] = [
     severity: Severity.Medium,
     description:
       'Claims "20 specialists" without qualifier. Actual count is 3-20 depending on product complexity classification. Simple products activate 3-6 specialists.',
-    remediation:
-      'Change to "up to 20 AI research specialists (3-20 based on complexity)" or similar qualified language.',
+    remediation: 'Change to "up to 20 AI research specialists (3-20 based on complexity)" or similar qualified language.',
   },
 
   // Quantity: tool count mismatch
@@ -109,7 +108,8 @@ const CLAIM_PATTERNS: ClaimPattern[] = [
     severity: Severity.High,
     description:
       'Claims like "100x faster" without stating what the comparison baseline is, measurement methodology, or conditions.',
-    remediation: 'Add comparison baseline: "100x faster than [what], measured by [method]" or remove the claim.',
+    remediation:
+      'Add comparison baseline: "100x faster than [what], measured by [method]" or remove the claim.',
   },
 
   // Performance: percentage claims without data
@@ -118,8 +118,10 @@ const CLAIM_PATTERNS: ClaimPattern[] = [
     category: 'claims-performance',
     title: 'Percentage claim without supporting data',
     severity: Severity.Medium,
-    description: 'Percentage reduction/savings claim without methodology or data source.',
-    remediation: 'Document the methodology or qualify with "estimated" / "typical" / "based on [N] projects".',
+    description:
+      'Percentage reduction/savings claim without methodology or data source.',
+    remediation:
+      'Document the methodology or qualify with "estimated" / "typical" / "based on [N] projects".',
   },
 
   // Capability: "full" completeness claims
@@ -141,7 +143,8 @@ const CLAIM_PATTERNS: ClaimPattern[] = [
     severity: Severity.Medium,
     description:
       'Claims product output is "production-ready". Forge outputs to staging directory, security scanning has coverage gaps, and the tool provides assessment guidance rather than deployment-ready code.',
-    remediation: 'Qualify: "production-readiness assessment" or "structured guidance toward production readiness".',
+    remediation:
+      'Qualify: "production-readiness assessment" or "structured guidance toward production readiness".',
   },
 
   // Capability: OWASP/security completeness
@@ -164,7 +167,8 @@ const CLAIM_PATTERNS: ClaimPattern[] = [
     severity: Severity.Low,
     description:
       'Uses "enterprise-grade" without defining what enterprise requirements are met (SLA, SSO, audit logging, compliance certifications, etc.).',
-    remediation: 'Either define specific enterprise features or remove the term.',
+    remediation:
+      'Either define specific enterprise features or remove the term.',
   },
 
   // Missing AI disclaimer
@@ -175,7 +179,8 @@ const CLAIM_PATTERNS: ClaimPattern[] = [
     severity: Severity.Info,
     description:
       'References AI/LLM capabilities. User-facing documentation should include disclaimers about AI output accuracy and the recommendation for human review.',
-    remediation: 'Ensure nearby text includes: "AI-generated content should be reviewed by a qualified professional."',
+    remediation:
+      'Ensure nearby text includes: "AI-generated content should be reviewed by a qualified professional."',
   },
 ];
 
@@ -226,7 +231,9 @@ function runStaticClaimsScan(docsContent: Map<string, string>, _repoRoot: string
     for (const rule of CLAIM_PATTERNS) {
       if (rule.pattern.test(content)) {
         // Avoid duplicate findings for same rule across files
-        const existingForRule = findings.find((f) => f.category === rule.category && f.title === rule.title);
+        const existingForRule = findings.find(
+          (f) => f.category === rule.category && f.title === rule.title,
+        );
         if (existingForRule) {
           // Append file path to existing finding
           if (existingForRule.filePath && !existingForRule.filePath.includes(filePath)) {
@@ -254,7 +261,10 @@ function runStaticClaimsScan(docsContent: Map<string, string>, _repoRoot: string
 
 // ── Layer 2: LLM Claims Analysis ─────────────────────────────────────────────
 
-async function runLlmClaimsAnalysis(docsContent: Map<string, string>, repoRoot: string): Promise<Finding[]> {
+async function runLlmClaimsAnalysis(
+  docsContent: Map<string, string>,
+  repoRoot: string,
+): Promise<Finding[]> {
   try {
     // Load knowledge
     const knowledgePath = resolveFromRoot('knowledge', 'post-rc', 'legal-context');

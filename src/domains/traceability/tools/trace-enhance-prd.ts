@@ -179,15 +179,15 @@ export async function traceEnhancePrd(args: EnhancePrdInput): Promise<string> {
         maxTokens: 4096,
       });
 
-      tokenTracker.record('traceability', 'trace_enhance_prd', response.tokensUsed, response.provider, { inputTokens: response.inputTokens, outputTokens: response.outputTokens });
+      tokenTracker.record('traceability', 'trace_enhance_prd', response.tokensUsed, response.provider);
       recordCost({
         pipelineId: 'trace-session',
         domain: 'traceability',
         tool: 'trace_enhance_prd',
         provider: response.provider,
         model: client.getModel(),
-        inputTokens: response.inputTokens ?? 0,
-        outputTokens: response.outputTokens ?? response.tokensUsed,
+        inputTokens: 0,
+        outputTokens: response.tokensUsed,
       });
       recordModelPerformance({
         provider: response.provider,
@@ -269,7 +269,7 @@ export async function traceEnhancePrd(args: EnhancePrdInput): Promise<string> {
 ===============================================
 
   Source PRD: ${filename}
-  Mode: ${hasApiKey ? 'Automatic' : 'Manual'}
+  Mode: ${hasApiKey ? 'AUTONOMOUS' : 'PASSTHROUGH'}
 
   REQUIREMENTS EXTRACTED: ${requirements.length}
 
@@ -290,7 +290,7 @@ export async function traceEnhancePrd(args: EnhancePrdInput): Promise<string> {
 
   if (!hasApiKey) {
     output += `
-  MANUAL MODE:
+  PASSTHROUGH MODE:
     Acceptance criteria were NOT generated (no API key).
     To generate Given/When/Then criteria:
     1. Set ANTHROPIC_API_KEY and re-run, OR

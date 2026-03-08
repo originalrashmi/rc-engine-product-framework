@@ -55,11 +55,6 @@ export function createDefaultState(projectPath: string, projectName: string): Po
         checkLicenses: true,
         checkAccessibility: true,
       },
-      edgeCasePolicy: {
-        enabled: false,
-        suppressedFindings: [],
-        blockOnCritical: false,
-      },
     },
     scans: [],
     overrides: [],
@@ -110,11 +105,11 @@ async function migrateFromMarkdown(projectPath: string): Promise<PostRCState> {
     store.save(pipelineId, NODE_IDS.POST_RC_STATE, validated);
     return validated;
   } catch (err) {
-    throw new Error(
-      `Post-RC state migration failed for ${statePath}: ${(err as Error).message}. ` +
-        `Delete or fix the state file and retry.`,
-      { cause: err },
+    console.error(
+      `[post-rc] WARNING: Failed to migrate state from ${statePath}. ` +
+        `Returning default state. Error: ${(err as Error).message}`,
     );
+    return createDefaultState(projectPath, '');
   }
 }
 
@@ -169,14 +164,6 @@ function serializeState(state: PostRCState): string {
     md += `- Check Licenses: ${state.config.legalPolicy.checkLicenses}\n`;
     md += `- Check Accessibility: ${state.config.legalPolicy.checkAccessibility}\n`;
     md += `- Suppressed Findings: ${state.config.legalPolicy.suppressedFindings.length > 0 ? state.config.legalPolicy.suppressedFindings.join(', ') : 'None'}\n\n`;
-  }
-
-  if (state.config.edgeCasePolicy) {
-    md += `## Edge Case Policy\n`;
-    md += `- Enabled: ${state.config.edgeCasePolicy.enabled}\n`;
-    md += `- Block on Critical: ${state.config.edgeCasePolicy.blockOnCritical}\n`;
-    md += `- Categories: ${state.config.edgeCasePolicy.categories?.join(', ') || 'All'}\n`;
-    md += `- Suppressed Findings: ${state.config.edgeCasePolicy.suppressedFindings.length > 0 ? state.config.edgeCasePolicy.suppressedFindings.join(', ') : 'None'}\n\n`;
   }
 
   md += `## Scan History (${state.scans.length} scans)\n`;

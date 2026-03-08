@@ -105,7 +105,7 @@ ${summary}
   const toolList = await client.listTools();
   const toolNames = toolList.tools.map((t) => t.name);
 
-  // Logged via structured logger in index.ts at startup
+  console.log(`[mcp-bridge] Connected with ${toolNames.length} tools`);
 
   return {
     async callTool(name: string, args: Record<string, unknown>): Promise<ToolResult> {

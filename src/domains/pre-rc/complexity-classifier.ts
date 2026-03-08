@@ -38,15 +38,15 @@ export class ComplexityClassifier {
     );
 
     console.error(`[ComplexityClassifier] Classification complete: ${response.tokensUsed} tokens`);
-    tokenTracker.record('pre-rc', 'prc_classify', response.tokensUsed, response.provider, { inputTokens: response.inputTokens, outputTokens: response.outputTokens });
+    tokenTracker.record('pre-rc', 'prc_classify', response.tokensUsed, response.provider);
     recordCost({
       pipelineId: 'pre-rc-session',
       domain: 'pre-rc',
       tool: 'prc_classify',
       provider: response.provider,
       model: client.getModel(),
-      inputTokens: response.inputTokens ?? 0,
-      outputTokens: response.outputTokens ?? response.tokensUsed,
+      inputTokens: 0,
+      outputTokens: response.tokensUsed,
     });
     recordModelPerformance({
       provider: response.provider,

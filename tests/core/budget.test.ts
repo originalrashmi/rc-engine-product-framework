@@ -252,18 +252,15 @@ describe('CostTracker', () => {
     it('detects over-budget pipelines', () => {
       tracker.setBudget('pipe-1', { maxCostUsd: 0.001 });
 
-      // record() throws BudgetExceededError when budget is exceeded
-      expect(() =>
-        tracker.record({
-          pipelineId: 'pipe-1',
-          domain: 'rc',
-          tool: 'A',
-          provider: 'claude',
-          model: 'claude-sonnet-4-5-20250929',
-          inputTokens: 10_000,
-          outputTokens: 5_000,
-        }),
-      ).toThrow(/exceeded budget/i);
+      tracker.record({
+        pipelineId: 'pipe-1',
+        domain: 'rc',
+        tool: 'A',
+        provider: 'claude',
+        model: 'claude-sonnet-4-5-20250929',
+        inputTokens: 10_000,
+        outputTokens: 5_000,
+      });
 
       expect(tracker.isOverBudget('pipe-1')).toBe(true);
     });
@@ -294,20 +291,16 @@ describe('CostTracker', () => {
 
       tracker.setBudget('pipe-1', { maxCostUsd: 0.01, warnThreshold: 0.5 });
 
-      // Record a call that costs ~$0.0105 (exceeds $0.01 budget) — throws BudgetExceededError
-      try {
-        tracker.record({
-          pipelineId: 'pipe-1',
-          domain: 'rc',
-          tool: 'A',
-          provider: 'claude',
-          model: 'claude-sonnet-4-5-20250929',
-          inputTokens: 1000,
-          outputTokens: 500,
-        });
-      } catch {
-        // Expected: BudgetExceededError
-      }
+      // Record a call that costs ~$0.0105 (exceeds $0.01 budget)
+      tracker.record({
+        pipelineId: 'pipe-1',
+        domain: 'rc',
+        tool: 'A',
+        provider: 'claude',
+        model: 'claude-sonnet-4-5-20250929',
+        inputTokens: 1000,
+        outputTokens: 500,
+      });
 
       // Should have emitted an exceeded event (not just warn, since we blew past both)
       expect(events.length).toBeGreaterThanOrEqual(1);
@@ -345,20 +338,15 @@ describe('CostTracker', () => {
       tracker.setBudget('pipe-1', { maxCostUsd: 0.001 });
       unsub();
 
-      // record() throws BudgetExceededError, but listener was unsubscribed
-      try {
-        tracker.record({
-          pipelineId: 'pipe-1',
-          domain: 'rc',
-          tool: 'A',
-          provider: 'claude',
-          model: 'claude-sonnet-4-5-20250929',
-          inputTokens: 10_000,
-          outputTokens: 5_000,
-        });
-      } catch {
-        // Expected: BudgetExceededError
-      }
+      tracker.record({
+        pipelineId: 'pipe-1',
+        domain: 'rc',
+        tool: 'A',
+        provider: 'claude',
+        model: 'claude-sonnet-4-5-20250929',
+        inputTokens: 10_000,
+        outputTokens: 5_000,
+      });
 
       expect(events).toHaveLength(0);
     });

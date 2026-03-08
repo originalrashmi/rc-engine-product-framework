@@ -29,10 +29,6 @@ web/.rc-engine/
 GTM-REPORT.md
 generate-workshop-pptx.mjs
 
-## Internal backlog and eval docs (keep local, not in public repo)
-docs/BACKLOG*.md
-docs/DESIGN-UPGRADE*.md
-
 ## Pro knowledge files (proprietary -- lives in rc-engine-pro)
 ## README.md is committed; actual knowledge files are not
 knowledge/pre-rc/

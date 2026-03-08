@@ -162,7 +162,11 @@ async function loadProductContent(projectPath: string, codeContext?: string): Pr
 
 // ── Layer 1: Static Legal Checks ─────────────────────────────────────────────
 
-function runStaticLegalChecks(allText: string, content: ProductContent, policy: LegalPolicy): Finding[] {
+function runStaticLegalChecks(
+  allText: string,
+  content: ProductContent,
+  policy: LegalPolicy,
+): Finding[] {
   const findings: Finding[] = [];
   const nextId = createIdGenerator('LGL');
 
@@ -224,8 +228,7 @@ function runStaticLegalChecks(allText: string, content: ProductContent, policy: 
   // ── AI component checks ────────────────────────────────────────────────
 
   if (hasAiComponents) {
-    const hasAiDisclaimer =
-      /AI[- ](?:generated|disclaimer|accuracy|limitation)|not\s+(?:legal|medical|financial)\s+advice/i.test(allText);
+    const hasAiDisclaimer = /AI[- ](?:generated|disclaimer|accuracy|limitation)|not\s+(?:legal|medical|financial)\s+advice/i.test(allText);
     if (!hasAiDisclaimer) {
       findings.push({
         id: nextId(),
@@ -288,7 +291,8 @@ function runStaticLegalChecks(allText: string, content: ProductContent, policy: 
         module: ValidationModule.LegalProduct,
         severity: Severity.High,
         title: 'Payment processing without PCI-DSS compliance requirements',
-        description: 'Product handles payments or card data but no PCI-DSS compliance requirements are specified.',
+        description:
+          'Product handles payments or card data but no PCI-DSS compliance requirements are specified.',
         remediation:
           'Add PCI-DSS requirements: use a compliant payment processor (Stripe, etc.), never store raw card numbers, tokenize card data, implement SAQ documentation.',
         category: 'pci-dss',
@@ -325,7 +329,8 @@ function runStaticLegalChecks(allText: string, content: ProductContent, policy: 
         module: ValidationModule.LegalProduct,
         severity: Severity.High,
         title: 'Education product without FERPA compliance requirements',
-        description: 'Product handles student/educational records but no FERPA compliance requirements are specified.',
+        description:
+          'Product handles student/educational records but no FERPA compliance requirements are specified.',
         remediation:
           'Add FERPA requirements: written consent for disclosure, annual notification of rights, access rights for parents/eligible students, amendment process.',
         category: 'ferpa',
@@ -337,10 +342,7 @@ function runStaticLegalChecks(allText: string, content: ProductContent, policy: 
 
   if (policy.jurisdiction === 'eu' || policy.jurisdiction === 'both') {
     if (collectsUserData) {
-      const hasGdpr =
-        /GDPR|data\s*protection\s*(?:officer|impact|agreement)|DPA|right\s*to\s*erasure|data\s*portability/i.test(
-          allText,
-        );
+      const hasGdpr = /GDPR|data\s*protection\s*(?:officer|impact|agreement)|DPA|right\s*to\s*erasure|data\s*portability/i.test(allText);
       if (!hasGdpr) {
         findings.push({
           id: nextId(),
@@ -513,7 +515,12 @@ const COPYLEFT_LICENSES = new Set([
   'SSPL-1.0',
 ]);
 
-const SAAS_RISK_LICENSES = new Set(['AGPL-3.0', 'AGPL-3.0-only', 'AGPL-3.0-or-later', 'SSPL-1.0']);
+const SAAS_RISK_LICENSES = new Set([
+  'AGPL-3.0',
+  'AGPL-3.0-only',
+  'AGPL-3.0-or-later',
+  'SSPL-1.0',
+]);
 
 async function runLicenseScan(projectPath: string): Promise<Finding[]> {
   const findings: Finding[] = [];
@@ -535,8 +542,7 @@ async function runLicenseScan(projectPath: string): Promise<Finding[]> {
         title: 'Project has no license specified',
         description:
           'package.json does not specify a license field. Without a license, the project defaults to "all rights reserved" which creates ambiguity about IP ownership and usage rights.',
-        remediation:
-          'Add a "license" field to package.json (e.g., "MIT", "Apache-2.0", or "UNLICENSED" for proprietary).',
+        remediation: 'Add a "license" field to package.json (e.g., "MIT", "Apache-2.0", or "UNLICENSED" for proprietary).',
         category: 'licensing',
         filePath: 'package.json',
       });
@@ -580,7 +586,8 @@ async function runLicenseScan(projectPath: string): Promise<Finding[]> {
               module: ValidationModule.LegalProduct,
               severity: Severity.Medium,
               title: `Dependency "${depName}" has no license`,
-              description: `Dependency "${depName}" does not specify a license. Without a license, it defaults to "all rights reserved" and cannot legally be used.`,
+              description:
+                `Dependency "${depName}" does not specify a license. Without a license, it defaults to "all rights reserved" and cannot legally be used.`,
               remediation: `Contact the maintainer to add a license, or replace with an explicitly licensed alternative.`,
               category: 'licensing',
               filePath: 'package.json',
@@ -600,7 +607,10 @@ async function runLicenseScan(projectPath: string): Promise<Finding[]> {
 
 // ── Layer 3: LLM Legal Analysis ──────────────────────────────────────────────
 
-async function runLlmLegalAnalysis(content: ProductContent, policy: LegalPolicy): Promise<Finding[]> {
+async function runLlmLegalAnalysis(
+  content: ProductContent,
+  policy: LegalPolicy,
+): Promise<Finding[]> {
   try {
     // Load knowledge files
     const knowledgePath = resolveFromRoot('knowledge', 'post-rc', 'legal-context');

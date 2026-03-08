@@ -168,6 +168,5 @@ Server needs:
 
 ## Topic Files
 
-- See `architecture-decisions.md` for detailed ADRs with before/after, rationale, and file lists (private, gitignored)
 - See `debugging.md` for recurring issues and fixes
 - See `patterns.md` for architectural decisions

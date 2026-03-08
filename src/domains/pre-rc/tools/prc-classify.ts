@@ -80,13 +80,9 @@ After you have the result, provide it and I'll continue.`;
 
 function buildGate1Presentation(classification: any, selection: any, _llm: LLMFactory): string {
   const complexityLabel =
-    classification.domain === 'clear'
-      ? 'straightforward'
-      : classification.domain === 'complicated'
-        ? 'moderately complex'
-        : classification.domain === 'complex'
-          ? 'complex'
-          : 'highly uncertain';
+    classification.domain === 'clear' ? 'straightforward' :
+    classification.domain === 'complicated' ? 'moderately complex' :
+    classification.domain === 'complex' ? 'complex' : 'highly uncertain';
 
   return `**Complexity Assessment: ${classification.domain}**
 

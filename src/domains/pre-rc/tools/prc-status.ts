@@ -3,7 +3,6 @@ import type { StatePersistence } from '../state/state-persistence.js';
 import { tokenTracker } from '../../../shared/token-tracker.js';
 import { formatRecentActivity } from '../../../shared/audit.js';
 import { formatCostSummary } from '../../../shared/cost-tracker.js';
-import { formatTokenReport } from '../../../shared/token-report.js';
 import { getLearningSummary } from '../../../shared/learning.js';
 
 // Pre-RC phase labels for each research stage
@@ -74,13 +73,13 @@ export async function prcStatus(persistence: StatePersistence, projectPath: stri
   const pipelineProgress = getPipelineProgress(state.stageStatus);
 
   return `
-════════════════════════════════════════════════════════════════════════════════
+===============================================
   PRE-RC RESEARCH STATUS
-════════════════════════════════════════════════════════════════════════════════
+===============================================
 
-  Project:  ${state.projectName}
-  Created:  ${state.createdAt}
-  Updated:  ${state.updatedAt}
+  Project: ${state.projectName}
+  Created: ${state.createdAt}
+  Updated: ${state.updatedAt}
 
   PIPELINE:
   ${pipelineProgress}
@@ -97,9 +96,8 @@ ${stageLines}
   GATES:
 ${gateLines}${pendingNotice}
 
-  ARTIFACTS:  ${state.artifacts.length} generated
-  TOKENS:     ${state.artifacts.reduce((sum, a) => sum + a.tokenCount, 0).toLocaleString()}
-${tokenTracker.getDomainSummary('pre-rc')}${formatTokenReport()}${formatCostSummary()}${getLearningSummary()}${formatRecentActivity(projectPath)}
-
-════════════════════════════════════════════════════════════════════════════════`;
+  ARTIFACTS: ${state.artifacts.length} generated
+  ARTIFACT TOKENS: ${state.artifacts.reduce((sum, a) => sum + a.tokenCount, 0)}
+${tokenTracker.getDomainSummary('pre-rc')}${formatCostSummary()}${getLearningSummary()}${formatRecentActivity(projectPath)}
+===============================================`;
 }

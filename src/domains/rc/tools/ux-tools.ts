@@ -1,10 +1,14 @@
 import { z } from 'zod';
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
+import { Orchestrator } from '../orchestrator.js';
 import { estimateDesignCost } from '../design-types.js';
 import type { DesignInput } from '../design-types.js';
-import type { ChallengeInput } from '../challenger-types.js';
-import { getOrchestrator, loadPrdContext, loadResearchContext } from './shared-loaders.js';
-import { resolveTierCapabilities, getUxDepthLabel } from '../../../shared/tier-capabilities.js';
+
+let _orchestrator: Orchestrator | null = null;
+function getOrchestrator(): Orchestrator {
+  if (!_orchestrator) _orchestrator = new Orchestrator();
+  return _orchestrator;
+}
 
 export function registerRcUxTools(server: McpServer): void {
   // ux_score - Score UX complexity and get routing recommendation
@@ -12,22 +16,14 @@ export function registerRcUxTools(server: McpServer): void {
     'ux_score',
     {
       description:
-        'Score UX complexity for a feature list. Auto-called during rc_define, but can also be called manually. Pass the feature list from the PRD. Returns: numeric score, mode (standard/selective/deep_dive), and which UX specialist modules to load. If project_path is provided, persists score to project state. Use the result to decide whether to call ux_generate (for deep_dive/selective) or skip UX child PRD (for standard).',
+        'OPTIONAL — call during Phase 2 (Define) to assess UX complexity. Pass the feature list from the PRD. Returns: numeric score, mode (standard/selective/deep_dive), and which UX specialist modules to load. Use the result to decide whether to call ux_generate (for deep_dive/selective) or skip UX child PRD (for standard). Does NOT require project_path — works on any feature list. Read-only analysis.',
       inputSchema: {
         feature_list: z.string().describe('List of features/screens to score for UX complexity'),
-        project_path: z.string().optional().describe('Optional project path to persist score to state'),
-      },
-      annotations: {
-        title: 'UX Complexity Score',
-        readOnlyHint: false,
-        destructiveHint: false,
-        idempotentHint: true,
-        openWorldHint: true,
       },
     },
-    async ({ feature_list, project_path }) => {
+    async ({ feature_list }) => {
       try {
-        const result = await getOrchestrator().uxScore(feature_list, project_path);
+        const result = await getOrchestrator().uxScore(feature_list);
         return { content: [{ type: 'text' as const, text: result.text }] };
       } catch (err) {
         return {
@@ -43,7 +39,7 @@ export function registerRcUxTools(server: McpServer): void {
     'ux_audit',
     {
       description:
-        'Audit UI code or a screen description against UX rules. Community tier uses 12 core rules; Pro tier uses 42 rules with 8 specialist modules. Call during or after Forge (Phase 6) to check implementation quality. task_type controls which specialist modules load (Pro only): form, dashboard, onboarding, admin, payment, component_library, content, navigation, or "audit" to load all. Returns findings with severity, rule citations, and fix suggestions. Pass project_path to enable tier-aware analysis depth.',
+        'Audit UI code or a screen description against 42 core UX rules plus specialist modules. Call during or after Forge (Phase 6) to check implementation quality. task_type controls which specialist modules load: form, dashboard, onboarding, admin, payment, component_library, content, navigation, or "audit" to load all. Returns findings with severity, rule citations, and fix suggestions. Use this to catch UX issues before postrc_scan.',
       inputSchema: {
         code_or_description: z.string().describe('UI code snippet or description to audit'),
         task_type: z
@@ -51,26 +47,12 @@ export function registerRcUxTools(server: McpServer): void {
           .describe(
             'Type of UI task for specialist routing: form, dashboard, onboarding, admin, payment, component_library, content, navigation, or audit (loads all)',
           ),
-        project_path: z.string().optional().describe('Optional project path to enable tier-aware analysis depth'),
-      },
-      annotations: {
-        title: 'UX Audit',
-        readOnlyHint: true,
-        destructiveHint: false,
-        idempotentHint: true,
-        openWorldHint: true,
       },
     },
-    async ({ code_or_description, task_type, project_path }) => {
+    async ({ code_or_description, task_type }) => {
       try {
-        const caps = typeof project_path === 'string'
-          ? resolveTierCapabilities(project_path)
-          : null;
         const result = await getOrchestrator().uxAudit(code_or_description, task_type);
-        const depthNote = caps
-          ? `\n\n---\n*${getUxDepthLabel(caps)}*${caps.outputAnnotation}`
-          : '\n\n---\n*Analysis depth: community (12 core rules). Pass project_path for tier-aware depth.*';
-        return { content: [{ type: 'text' as const, text: result.text + depthNote }] };
+        return { content: [{ type: 'text' as const, text: result.text }] };
       } catch (err) {
         return {
           content: [{ type: 'text' as const, text: `Error: ${(err as Error).message}` }],
@@ -89,13 +71,6 @@ export function registerRcUxTools(server: McpServer): void {
       inputSchema: {
         project_path: z.string().describe('Absolute path to the project directory'),
         screens_description: z.string().describe('Description of the screens and flows that need UX specification'),
-      },
-      annotations: {
-        title: 'Generate UX PRD',
-        readOnlyHint: false,
-        destructiveHint: false,
-        idempotentHint: true,
-        openWorldHint: true,
       },
     },
     async ({ project_path, screens_description }) => {
@@ -116,7 +91,7 @@ export function registerRcUxTools(server: McpServer): void {
     'ux_design',
     {
       description:
-        '[Starter+] Generate visual design options with HTML wireframes. Call after PRD is created (Phase 2+). Produces 1 or 3 design options based on ICP, competitor gaps, and design trends. Each option includes a design spec (colors, typography, layout) and self-contained HTML wireframes (lo-fi + hi-fi). Saves to rc-method/design/. Pass option_count=1 for budget-conscious, option_count=3 for full comparison.',
+        'Generate visual design options with HTML wireframes. Call after PRD is created (Phase 2+). Produces 1 or 3 design options based on ICP, competitor gaps, and design trends. Each option includes a design spec (colors, typography, layout) and self-contained HTML wireframes (lo-fi + hi-fi). Saves to rc-method/design/. Pass option_count=1 for budget-conscious, option_count=3 for full comparison.',
       inputSchema: {
         project_path: z.string().describe('Absolute path to the project directory'),
         option_count: z.number().min(1).max(3).describe('Number of design options to generate (1 or 3)'),
@@ -124,13 +99,6 @@ export function registerRcUxTools(server: McpServer): void {
           .string()
           .optional()
           .describe('Optional user-provided design references, style preferences, or URLs for inspiration'),
-      },
-      annotations: {
-        title: 'Generate Design Options',
-        readOnlyHint: false,
-        destructiveHint: false,
-        idempotentHint: false,
-        openWorldHint: true,
       },
     },
     async ({ project_path, option_count, inspiration }) => {
@@ -145,63 +113,13 @@ export function registerRcUxTools(server: McpServer): void {
         // Provide cost estimate in response
         const cost = estimateDesignCost(optionCount);
 
-        // Auto-detect brand profile, copy system, and font embed
-        const fs = await import('node:fs');
-        const pathMod = await import('node:path');
-
-        let brandProfilePath: string | undefined;
-        const brandCandidate = pathMod.join(project_path, 'rc-method', 'design', 'BRAND-PROFILE.json');
-        if (fs.existsSync(brandCandidate)) brandProfilePath = brandCandidate;
-
-        let copySystemPath: string | undefined;
-        const copyCandidate = pathMod.join(project_path, 'rc-method', 'copy', 'COPY-SYSTEM.md');
-        if (fs.existsSync(copyCandidate)) copySystemPath = copyCandidate;
-
-        let designIntakePath: string | undefined;
-        const intakeCandidate = pathMod.join(project_path, 'rc-method', 'design', 'DESIGN-INTAKE.md');
-        if (fs.existsSync(intakeCandidate)) designIntakePath = intakeCandidate;
-
-        // Auto-enrich inspiration with screen inventory from intake if available
-        let enrichedInspiration = inspiration;
-        const intakeJsonCandidate = pathMod.join(project_path, 'rc-method', 'design', 'DESIGN-INTAKE.json');
-        if (fs.existsSync(intakeJsonCandidate)) {
-          try {
-            const intakeAssessment = JSON.parse(fs.readFileSync(intakeJsonCandidate, 'utf-8'));
-            const screenInv = intakeAssessment.extractedConstraints?.screenInventory;
-            if (screenInv?.keyScreens?.length) {
-              const screenContext = `\n\n[From Design Intake] Key screens: ${screenInv.keyScreens.join(', ')}` +
-                (screenInv.priorityScreens?.length ? `\nPriority screens: ${screenInv.priorityScreens.join(', ')}` : '') +
-                (screenInv.criticalFlows?.length ? `\nCritical flows: ${screenInv.criticalFlows.join('; ')}` : '');
-              enrichedInspiration = (enrichedInspiration ?? '') + screenContext;
-            }
-          } catch { /* continue without intake enrichment */ }
-        }
-
-        // Load font embed HTML from brand profile if available
-        let fontEmbedHtml: string | undefined;
-        if (brandProfilePath) {
-          try {
-            const brand = JSON.parse(fs.readFileSync(brandProfilePath, 'utf-8'));
-            const fonts = [brand.typography?.headingFont?.family, brand.typography?.bodyFont?.family]
-              .filter(Boolean)
-              .map((f: string) => f.replace(/\s+/g, '+'));
-            if (fonts.length > 0) {
-              fontEmbedHtml = `<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=${fonts.join('&family=')}&display=swap" rel="stylesheet">`;
-            }
-          } catch { /* continue without fonts */ }
-        }
-
         const input: DesignInput = {
           projectPath: project_path,
           optionCount,
-          inspiration: enrichedInspiration,
+          inspiration,
           prdContext,
           icpData,
           competitorData,
-          brandProfilePath,
-          copySystemPath,
-          designIntakePath,
-          fontEmbedHtml,
         };
 
         const result = await orchestrator.designGenerate(input);
@@ -217,93 +135,68 @@ export function registerRcUxTools(server: McpServer): void {
       }
     },
   );
+}
 
-  // design_challenge - Brutal multi-lens design review
-  server.registerTool(
-    'design_challenge',
-    {
-      description:
-        'Run the Design Challenger: a brutal, multi-lens review of the entire design output. 5 parallel sub-agents (Pro) or 3 (community) challenge the design from adversarial angles: ICP Alignment, Copy Quality, Design Decisions, Conversion Path, and Accessibility. Returns a Challenge Report with verdict (READY / NOT READY / CRITICAL FAILURES) and ranked findings. Call AFTER ux_design and copy_generate are complete. Optional — use when you want honest critique before shipping.',
-      inputSchema: {
-        project_path: z.string().describe('Absolute path to the project directory'),
-        screen_descriptions: z
-          .string()
-          .optional()
-          .describe(
-            'Optional: text descriptions of screens to review (if no wireframes exist yet)',
-          ),
-      },
-      annotations: {
-        title: 'Design Challenger',
-        readOnlyHint: false,
-        destructiveHint: false,
-        idempotentHint: false,
-        openWorldHint: true,
-      },
-    },
-    async ({ project_path, screen_descriptions }) => {
-      try {
-        const prdContext = await loadPrdContext(project_path);
-        const { icpData, competitorData } = await loadResearchContext(project_path);
+/** Load PRD content from a project for design context */
+async function loadPrdContext(projectPath: string): Promise<string> {
+  const fs = await import('node:fs');
+  const path = await import('node:path');
+  const prdsDir = path.join(projectPath, 'rc-method', 'prds');
 
-        // Auto-detect design spec and copy system paths
-        const fs = await import('node:fs');
-        const pathMod = await import('node:path');
-
-        let designSpecPath: string | undefined;
-        const specCandidate = pathMod.join(project_path, 'rc-method', 'design', 'DESIGN-SPEC.json');
-        if (fs.existsSync(specCandidate)) designSpecPath = specCandidate;
-
-        let copySystemPath: string | undefined;
-        const copyCandidate = pathMod.join(project_path, 'rc-method', 'copy', 'COPY-SYSTEM.md');
-        if (fs.existsSync(copyCandidate)) copySystemPath = copyCandidate;
-
-        // Auto-detect wireframe HTML from the recommended design option
-        let wireframeHtml: string | undefined;
-        if (designSpecPath && fs.existsSync(designSpecPath)) {
-          try {
-            const spec = JSON.parse(fs.readFileSync(designSpecPath, 'utf-8'));
-            const optionId: string = spec?.recommendation?.optionId ?? 'a';
-            const optionDir = pathMod.join(
-              project_path, 'rc-method', 'design', `option-${optionId.toLowerCase()}`,
-            );
-            if (fs.existsSync(optionDir)) {
-              const htmlFiles = fs.readdirSync(optionDir).filter(
-                (f: string) => f.endsWith('-hifi.html'),
-              );
-              const parts: string[] = [];
-              let totalLen = 0;
-              const MAX_WIREFRAME_CHARS = 5000;
-              for (const hf of htmlFiles) {
-                if (totalLen >= MAX_WIREFRAME_CHARS) break;
-                const content = fs.readFileSync(pathMod.join(optionDir, hf), 'utf-8');
-                const truncated = content.slice(0, MAX_WIREFRAME_CHARS - totalLen);
-                parts.push(`<!-- ${hf} -->\n${truncated}`);
-                totalLen += truncated.length;
-              }
-              if (parts.length > 0) wireframeHtml = parts.join('\n\n');
-            }
-          } catch { /* continue without wireframe HTML */ }
+  try {
+    if (!fs.existsSync(prdsDir)) {
+      // Try Pre-RC PRD
+      const preRcDir = path.join(projectPath, 'pre-rc-research');
+      if (fs.existsSync(preRcDir)) {
+        const files = fs.readdirSync(preRcDir).filter((f: string) => f.endsWith('.md') && f.includes('prd'));
+        if (files.length > 0) {
+          return fs.readFileSync(path.join(preRcDir, files[0]), 'utf-8');
         }
-
-        const input: ChallengeInput = {
-          projectPath: project_path,
-          prdContext,
-          icpData,
-          designSpecPath,
-          copySystemPath,
-          wireframeHtml,
-          screenDescriptions: screen_descriptions,
-        };
-
-        const result = await getOrchestrator().designChallenge(input);
-        return { content: [{ type: 'text' as const, text: result.text }] };
-      } catch (err) {
-        return {
-          content: [{ type: 'text' as const, text: `Error: ${(err as Error).message}` }],
-          isError: true,
-        };
       }
-    },
-  );
+      return 'No PRD found. Design will be based on project description only.';
+    }
+
+    const files = fs.readdirSync(prdsDir).filter((f: string) => f.endsWith('.md'));
+    return files.map((f: string) => fs.readFileSync(path.join(prdsDir, f), 'utf-8')).join('\n\n---\n\n');
+  } catch {
+    return 'Could not load PRD files.';
+  }
+}
+
+/** Load ICP and competitor data from Pre-RC research */
+async function loadResearchContext(projectPath: string): Promise<{
+  icpData: string | undefined;
+  competitorData: string | undefined;
+}> {
+  const fs = await import('node:fs');
+  const path = await import('node:path');
+  const researchDir = path.join(projectPath, 'pre-rc-research');
+
+  let icpData: string | undefined;
+  let competitorData: string | undefined;
+
+  try {
+    if (fs.existsSync(researchDir)) {
+      const files = fs.readdirSync(researchDir);
+      // Look for ICP/persona research
+      const icpFile = files.find(
+        (f: string) => f.includes('icp') || f.includes('persona') || f.includes('user-research'),
+      );
+      if (icpFile) {
+        icpData = fs.readFileSync(path.join(researchDir, icpFile), 'utf-8');
+      }
+
+      // Look for competitor analysis
+      const compFile = files.find(
+        (f: string) => f.includes('competitor') || f.includes('market') || f.includes('landscape'),
+      );
+      if (compFile) {
+        competitorData = fs.readFileSync(path.join(researchDir, compFile), 'utf-8');
+      }
+    }
+  } catch {
+    // Non-fatal
+  }
+
+  return { icpData, competitorData };
 }

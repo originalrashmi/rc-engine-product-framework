@@ -19,22 +19,10 @@ export class ConnectAgent extends BaseAgent {
       };
     }
 
-    // Load PRDs, architecture doc, and forge contracts (not full implementations)
-    // Full forge outputs would cause O(N²) token growth — load only interfaces/types
+    // Load forge outputs, PRDs, and architecture doc
     let projectContext = '';
 
     for (const artifact of state.artifacts) {
-      const isForgeArtifact = artifact.startsWith(forgeDir);
-      if (isForgeArtifact) {
-        // Only load type definitions, interfaces, and schema files
-        const isContractFile =
-          artifact.endsWith('.d.ts') ||
-          artifact.includes('/types') ||
-          artifact.includes('/schema') ||
-          artifact.includes('/interfaces') ||
-          artifact.includes('/contracts');
-        if (!isContractFile) continue;
-      }
       try {
         const content = this.contextLoader.loadProjectFile(state.projectPath, artifact);
         projectContext += `\n\n--- ${artifact} ---\n\n${content}`;

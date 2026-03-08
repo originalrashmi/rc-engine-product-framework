@@ -1,7 +1,7 @@
 /**
  * Post-RC Graph Definition -- validation pipeline.
  *
- * Topology: scan-fanout -> [security, monitoring, legal-claims, legal-product, edge-case, app-security] -> scan-fanin ->
+ * Topology: scan-fanout -> [security, monitoring, legal-claims, legal-product] -> scan-fanin ->
  * ship-gate
  *
  * Parallelizes scan modules via fan-out/fan-in.
@@ -20,8 +20,6 @@ export interface PostRcNodeHandlers {
   scanMonitoring: NodeExecuteFn<PostRCState>;
   scanLegalClaims: NodeExecuteFn<PostRCState>;
   scanLegalProduct: NodeExecuteFn<PostRCState>;
-  scanEdgeCase: NodeExecuteFn<PostRCState>;
-  scanAppSecurity: NodeExecuteFn<PostRCState>;
   mergeScans: (states: PostRCState[], original: PostRCState) => PostRCState;
 }
 
@@ -79,26 +77,6 @@ export function buildPostRcGraph(handlers: PostRcNodeHandlers): GraphDefinition<
     retry: { maxRetries: 1, baseDelayMs: 2000 },
   });
 
-  // Edge case analysis module (Pro tier)
-  builder.addNode({
-    id: 'scan-edge-case',
-    name: 'Edge Case Analysis',
-    type: 'action',
-    execute: handlers.scanEdgeCase,
-    errorStrategy: 'skip-and-continue',
-    retry: { maxRetries: 1, baseDelayMs: 2000 },
-  });
-
-  // Application security auditor
-  builder.addNode({
-    id: 'scan-app-security',
-    name: 'Application Security Audit',
-    type: 'action',
-    execute: handlers.scanAppSecurity,
-    errorStrategy: 'skip-and-continue',
-    retry: { maxRetries: 1, baseDelayMs: 2000 },
-  });
-
   // Fan-in: merge parallel results
   builder.addNode({
     id: 'scan-fanin',
@@ -119,14 +97,10 @@ export function buildPostRcGraph(handlers: PostRcNodeHandlers): GraphDefinition<
   builder.addEdge('scan-fanout', 'scan-monitoring');
   builder.addEdge('scan-fanout', 'scan-legal-claims');
   builder.addEdge('scan-fanout', 'scan-legal-product');
-  builder.addEdge('scan-fanout', 'scan-edge-case');
-  builder.addEdge('scan-fanout', 'scan-app-security');
   builder.addEdge('scan-security', 'scan-fanin');
   builder.addEdge('scan-monitoring', 'scan-fanin');
   builder.addEdge('scan-legal-claims', 'scan-fanin');
   builder.addEdge('scan-legal-product', 'scan-fanin');
-  builder.addEdge('scan-edge-case', 'scan-fanin');
-  builder.addEdge('scan-app-security', 'scan-fanin');
   builder.addEdge('scan-fanin', 'ship-gate');
 
   builder.setEntry('scan-fanout');

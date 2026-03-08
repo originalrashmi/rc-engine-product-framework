@@ -54,13 +54,6 @@ export function registerPreRcTools(server: McpServer): void {
     'prc_start',
     'FIRST STEP of Pre-RC research. Call when the user describes a product idea and you want deep research before building. Creates the pre-rc-research/ directory and initializes project state. Prerequisites: none — this is the entry point. After success: MUST call prc_classify next. Never skip to prc_run_stage without classifying first.',
     PrcStartSchema.shape,
-    {
-      title: 'Start Pre-RC Research',
-      readOnlyHint: false,
-      destructiveHint: false,
-      idempotentHint: false,
-      openWorldHint: true,
-    },
     async (args) => {
       try {
         const result = await prcStart(persistence, args.project_path, args.project_name, args.brief);
@@ -79,13 +72,6 @@ export function registerPreRcTools(server: McpServer): void {
     'prc_classify',
     'Call AFTER prc_start. Classifies the product idea using Cynefin framework (Clear/Complicated/Complex/Chaotic) and activates the appropriate subset of 20 research specialists. Returns: complexity domain, activated specialist list, estimated cost budget, and which stages to run. After success: present the classification to the user as Checkpoint 1 -- call prc_gate with their decision. Read-only analysis, no side effects beyond state update.',
     PrcClassifySchema.shape,
-    {
-      title: 'Classify Complexity',
-      readOnlyHint: false,
-      destructiveHint: false,
-      idempotentHint: true,
-      openWorldHint: true,
-    },
     async (args) => {
       try {
         const result = await prcClassify(
@@ -112,13 +98,6 @@ export function registerPreRcTools(server: McpServer): void {
     'prc_gate',
     'Submit a checkpoint decision for the current Pre-RC research stage. NEVER call without presenting the checkpoint context to the user first and getting their explicit decision. Three checkpoints exist: Checkpoint 1 (after classify -- is research scope right?), Checkpoint 2 (after stages 1-4 -- is research accurate?), Checkpoint 3 (after all stages -- ready to build?). Valid decisions: "approve" to proceed, "reject" with feedback to revise, "question" to pause for clarification. After approve: proceed to next stage or prc_synthesize (after Checkpoint 3). After reject: re-run the relevant stage with user feedback.',
     PrcGateSchema.shape,
-    {
-      title: 'Pre-RC Checkpoint Decision',
-      readOnlyHint: false,
-      destructiveHint: true,
-      idempotentHint: false,
-      openWorldHint: false,
-    },
     async (args) => {
       try {
         const result = await prcGate(persistence, args.project_path, args.decision, args.feedback, coordDeps);
@@ -137,13 +116,6 @@ export function registerPreRcTools(server: McpServer): void {
     'prc_run_stage',
     'Re-run a specific research stage. In normal flow, stages execute automatically when you approve a checkpoint via prc_gate. Use this tool ONLY to re-run a failed or incomplete stage. Valid stages: "stage-1-meta", "stage-2-user-intelligence", "stage-3-business-market" (uses web search), "stage-4-technical", "stage-5-ux-cognitive", "stage-6-validation". Prerequisites: prc_classify must be complete and relevant checkpoints approved. Returns research specialist results with success/failure markers.',
     PrcRunStageSchema.shape,
-    {
-      title: 'Run Research Stage',
-      readOnlyHint: false,
-      destructiveHint: false,
-      idempotentHint: true,
-      openWorldHint: true,
-    },
     async (args) => {
       try {
         const result = await prcRunStage(coordDeps, args.project_path, args.stage);
@@ -162,7 +134,6 @@ export function registerPreRcTools(server: McpServer): void {
     'prc_status',
     'Check Pre-RC research progress. Read-only, safe to call anytime. Returns: current stage, completed stages, gate statuses, persona results, token usage. Use this to orient yourself when resuming a session or when the user asks "where are we?" Call this BEFORE deciding which prc_ tool to call next if you are unsure of the current state.',
     PrcStatusSchema.shape,
-    { title: 'Pre-RC Status', readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: false },
     async (args) => {
       try {
         const result = await prcStatus(persistence, args.project_path);
@@ -181,13 +152,6 @@ export function registerPreRcTools(server: McpServer): void {
     'prc_synthesize',
     'FINAL STEP of Pre-RC. Call ONLY after Gate 3 is approved (all 6 stages complete). Synthesizes all persona research into deliverables: 19-section PRD (markdown), HTML consulting deck, task list, DOCX document, and research index. LONG-RUNNING: involves multiple LLM calls for synthesis. Set include_task_deck=true to also generate a visual task breakdown deck. After success: present deliverables to user. To continue into RC Method, call rc_import_prerc. This is a natural stopping point — user may choose to stop here with just the PRD.',
     PrcSynthesizeSchema.shape,
-    {
-      title: 'Synthesize Research',
-      readOnlyHint: false,
-      destructiveHint: false,
-      idempotentHint: true,
-      openWorldHint: true,
-    },
     async (args) => {
       try {
         const result = await prcSynthesize(persistence, llmFactory, ctx, args.project_path, args.include_task_deck);
@@ -204,15 +168,8 @@ export function registerPreRcTools(server: McpServer): void {
   // ─── prc_stress_test ─────────────────────────────────────────────
   server.tool(
     'prc_stress_test',
-    "[Pro+] OPTIONAL Pro-tier tool. Call AFTER prc_synthesize to stress-test the product idea before building. Runs a VC-level devil's advocate analysis: challenges market assumptions, fact-checks claims with live web data, evaluates business model, technical risk, and differentiation. Returns GO/NO-GO/CONDITIONAL verdict with confidence score. LONG-RUNNING: involves 3 LLM calls (analysis, web fact-check, verdict synthesis). Prerequisites: Gate 3 approved, prc_synthesize complete. After success: present the verdict to the user. If GO or CONDITIONAL (with conditions met), proceed to rc_import_prerc. If NO-GO, discuss alternatives with the user.",
+    "OPTIONAL Pro-tier tool. Call AFTER prc_synthesize to stress-test the product idea before building. Runs a VC-level devil's advocate analysis: challenges market assumptions, fact-checks claims with live web data, evaluates business model, technical risk, and differentiation. Returns GO/NO-GO/CONDITIONAL verdict with confidence score. LONG-RUNNING: involves 3 LLM calls (analysis, web fact-check, verdict synthesis). Prerequisites: Gate 3 approved, prc_synthesize complete. After success: present the verdict to the user. If GO or CONDITIONAL (with conditions met), proceed to rc_import_prerc. If NO-GO, discuss alternatives with the user.",
     PrcStressTestSchema.shape,
-    {
-      title: 'Stress Test Idea',
-      readOnlyHint: false,
-      destructiveHint: false,
-      idempotentHint: true,
-      openWorldHint: true,
-    },
     async (args) => {
       try {
         const result = await prcStressTest(persistence, llmFactory, ctx, args.project_path);

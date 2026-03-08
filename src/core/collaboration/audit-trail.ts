@@ -23,7 +23,6 @@ import fs from 'node:fs';
 
 export type AuditAction =
   | 'project.create'
-  | 'project.reset'
   | 'project.outcome'
   | 'phase.start'
   | 'phase.complete'

@@ -63,8 +63,8 @@ export abstract class BaseLLMClient {
           provider: this.provider,
           model: this.model,
           tool: '',
-          inputTokens: response.inputTokens ?? 0,
-          outputTokens: response.outputTokens ?? response.tokensUsed,
+          inputTokens: 0,
+          outputTokens: response.tokensUsed,
           costUsd: 0,
           durationMs,
         });

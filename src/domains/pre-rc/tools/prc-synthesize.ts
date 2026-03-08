@@ -240,7 +240,7 @@ async function synthesizeSectionGroup(
   prdTemplate: string,
   synthesisInstructions: string,
   client: any,
-): Promise<{ content: string; tokensUsed: number; inputTokens: number; outputTokens: number; provider: LLMProvider }> {
+): Promise<{ content: string; tokensUsed: number; provider: LLMProvider }> {
   // Filter artifacts to those relevant to this group
   let relevantArtifacts = artifacts.filter((a: any) => group.personaIds.includes(a.personaId));
 
@@ -302,8 +302,6 @@ Write in plain language for a non-technical product owner. Do not include any ot
   return {
     content: response.content,
     tokensUsed: response.tokensUsed,
-    inputTokens: response.inputTokens ?? 0,
-    outputTokens: response.outputTokens ?? response.tokensUsed,
     provider: response.provider,
   };
 }
@@ -392,20 +390,18 @@ export async function prcSynthesize(
       const group = SECTION_GROUPS[i];
 
       if (result.status === 'fulfilled') {
-        const { content, tokensUsed, inputTokens, outputTokens, provider } = result.value;
+        const { content, tokensUsed, provider } = result.value;
         totalPrdTokens += tokensUsed;
 
-        tokenTracker.record('pre-rc', `prc_synthesize:prd:${group.id}`, tokensUsed, provider, {
-          inputTokens, outputTokens,
-        });
+        tokenTracker.record('pre-rc', `prc_synthesize:prd:${group.id}`, tokensUsed, provider);
         recordCost({
           pipelineId: 'pre-rc-session',
           domain: 'pre-rc',
           tool: `prc_synthesize:prd:${group.id}`,
           provider,
           model: client.getModel(),
-          inputTokens,
-          outputTokens,
+          inputTokens: 0,
+          outputTokens: tokensUsed,
         });
         recordModelPerformance({
           provider,
@@ -452,7 +448,6 @@ export async function prcSynthesize(
           `prc_synthesize:prd:${group.id}:retry`,
           retryResult.tokensUsed,
           retryResult.provider,
-          { inputTokens: retryResult.inputTokens, outputTokens: retryResult.outputTokens },
         );
         recordCost({
           pipelineId: 'pre-rc-session',
@@ -460,8 +455,8 @@ export async function prcSynthesize(
           tool: `prc_synthesize:prd:${group.id}:retry`,
           provider: retryResult.provider,
           model: client.getModel(),
-          inputTokens: retryResult.inputTokens,
-          outputTokens: retryResult.outputTokens,
+          inputTokens: 0,
+          outputTokens: retryResult.tokensUsed,
         });
 
         for (const sectionNum of group.sections) {
@@ -551,7 +546,6 @@ Write ONLY these sections. Start each with "## N. Title".`;
           'prc_synthesize:prd:continuation',
           contResponse.tokensUsed,
           contResponse.provider,
-          { inputTokens: contResponse.inputTokens, outputTokens: contResponse.outputTokens },
         );
         recordCost({
           pipelineId: 'pre-rc-session',
@@ -559,8 +553,8 @@ Write ONLY these sections. Start each with "## N. Title".`;
           tool: 'prc_synthesize:prd:continuation',
           provider: contResponse.provider,
           model: client.getModel(),
-          inputTokens: contResponse.inputTokens ?? 0,
-          outputTokens: contResponse.outputTokens ?? contResponse.tokensUsed,
+          inputTokens: 0,
+          outputTokens: contResponse.tokensUsed,
         });
         console.error(`[prc_synthesize] Continuation added: ${contResponse.tokensUsed} tokens`);
 
@@ -625,17 +619,15 @@ Output ONLY the markdown task list, nothing else.`;
 
     taskContent = taskResponse.content;
     taskTokens = taskResponse.tokensUsed;
-    tokenTracker.record('pre-rc', 'prc_synthesize:tasks', taskTokens, taskResponse.provider, {
-      inputTokens: taskResponse.inputTokens, outputTokens: taskResponse.outputTokens,
-    });
+    tokenTracker.record('pre-rc', 'prc_synthesize:tasks', taskTokens, taskResponse.provider);
     recordCost({
       pipelineId: 'pre-rc-session',
       domain: 'pre-rc',
       tool: 'prc_synthesize:tasks',
       provider: taskResponse.provider,
       model: client.getModel(),
-      inputTokens: taskResponse.inputTokens ?? 0,
-      outputTokens: taskResponse.outputTokens ?? taskTokens,
+      inputTokens: 0,
+      outputTokens: taskTokens,
     });
     recordModelPerformance({
       provider: taskResponse.provider,
@@ -783,6 +775,7 @@ Return ONLY the JSON object. No explanation, no markdown fences.`;
   }
 
   // Generate HTML task list deck (optional)
+  let taskDeckPath = '';
   if (includeTaskDeck && taskContent) {
     try {
       console.error('[prc_synthesize] Generating HTML task list deck...');
@@ -845,6 +838,8 @@ Return ONLY the JSON object. No explanation, no markdown fences.`;
       const taskHtmlContent = generateHtmlTaskList(state, taskSections);
       const taskHtmlPath = `tasks-${projectSlug}.html`;
       await persistence.writeArtifact(projectPath, taskHtmlPath, taskHtmlContent);
+      taskDeckPath = taskHtmlPath;
+
       console.error(`[prc_synthesize] HTML task list deck generated: ${taskHtmlPath}`);
     } catch (taskHtmlErr) {
       const errMsg = taskHtmlErr instanceof Error ? taskHtmlErr.message : String(taskHtmlErr);
@@ -853,11 +848,12 @@ Return ONLY the JSON object. No explanation, no markdown fences.`;
   }
 
   // Generate McKinsey-format Word document from PRD
+  let docxPath = '';
   if (prdContent) {
     try {
       console.error('[prc_synthesize] Generating McKinsey-format docx from PRD...');
       const docxFilename = `${state.projectName.replace(/[^a-zA-Z0-9]+/g, '_')}_PRD.docx`;
-      const docxOutputPath = `${projectPath}/pre-rc-research/${docxFilename}`;
+      docxPath = `${projectPath}/pre-rc-research/${docxFilename}`;
 
       await generatePrdDocx(
         {
@@ -870,12 +866,13 @@ Return ONLY the JSON object. No explanation, no markdown fences.`;
           cynefinDomain: state.classification?.domain,
           productClass: state.classification?.productClass,
         },
-        docxOutputPath,
+        docxPath,
       );
-      console.error(`[prc_synthesize] Docx generated: ${docxOutputPath}`);
+      console.error(`[prc_synthesize] Docx generated: ${docxPath}`);
     } catch (docxErr) {
       const msg = docxErr instanceof Error ? docxErr.message : String(docxErr);
       console.error(`[prc_synthesize] Docx generation failed (non-fatal): ${msg}`);
+      docxPath = '';
     }
   }
 
@@ -973,17 +970,15 @@ async function parseJsonWithRetry<T>(
         1,
       );
 
-      tokenTracker.record('pre-rc', `prc_synthesize:json_parse_${label}`, response.tokensUsed, response.provider, {
-        inputTokens: response.inputTokens, outputTokens: response.outputTokens,
-      });
+      tokenTracker.record('pre-rc', `prc_synthesize:json_parse_${label}`, response.tokensUsed, response.provider);
       recordCost({
         pipelineId: 'pre-rc-session',
         domain: 'pre-rc',
         tool: `prc_synthesize:json_parse_${label}`,
         provider: response.provider,
         model: client.getModel ? client.getModel() : 'unknown',
-        inputTokens: response.inputTokens ?? 0,
-        outputTokens: response.outputTokens ?? response.tokensUsed,
+        inputTokens: 0,
+        outputTokens: response.tokensUsed,
       });
       recordModelPerformance({
         provider: response.provider,
