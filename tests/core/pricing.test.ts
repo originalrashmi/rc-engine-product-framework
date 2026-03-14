@@ -14,9 +14,9 @@ describe('Pricing Tiers', () => {
     const free = getTier('free');
     expect(free.monthlyPriceUsd).toBe(0);
     expect(free.projectsPerMonth).toBe(1);
-    expect(free.features.fullPipeline).toBe(false);
+    expect(free.features.fullPipeline).toBe(true);
     expect(free.features.designOptions).toBe(0);
-    expect(free.features.securityScan).toBe(false);
+    expect(free.features.securityScan).toBe(true);
   });
 
   it('pro tier has unlimited projects and all features', () => {
@@ -47,10 +47,12 @@ describe('Pricing Tiers', () => {
   });
 
   it('hasFeature checks boolean and numeric features', () => {
-    expect(hasFeature('free', 'fullPipeline')).toBe(false);
+    expect(hasFeature('free', 'fullPipeline')).toBe(true);
     expect(hasFeature('pro', 'fullPipeline')).toBe(true);
     expect(hasFeature('free', 'designOptions')).toBe(false); // 0 = false
     expect(hasFeature('pro', 'designOptions')).toBe(true); // 3 = true
+    expect(hasFeature('free', 'stressTest')).toBe(false); // Pro-only feature
+    expect(hasFeature('pro', 'stressTest')).toBe(true);
   });
 
   it('formatTierPrice returns correct strings', () => {

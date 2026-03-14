@@ -29,11 +29,7 @@ web/.rc-engine/
 GTM-REPORT.md
 generate-workshop-pptx.mjs
 
-## Pro knowledge files (proprietary -- lives in rc-engine-pro)
-## README.md is committed; actual knowledge files are not
-knowledge/pre-rc/
-knowledge/rc/
-knowledge/post-rc/
+## Pro-only knowledge overlay (cloned separately into knowledge-pro/)
 knowledge-pro/
 
 ## Secrets (NEVER commit)

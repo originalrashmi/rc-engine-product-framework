@@ -27,6 +27,19 @@ interface KnowledgeManifest {
   };
 }
 
+/** Recursively count .md files in a directory */
+function countMdFilesRecursive(dir: string): number {
+  let count = 0;
+  for (const entry of readdirSync(dir, { withFileTypes: true })) {
+    if (entry.isDirectory()) {
+      count += countMdFilesRecursive(join(dir, entry.name));
+    } else if (entry.name.endsWith('.md')) {
+      count++;
+    }
+  }
+  return count;
+}
+
 /** Probe a directory for knowledge files and return counts */
 function probeDirectory(basePath: string): KnowledgeManifest {
   const manifest: KnowledgeManifest = {
@@ -57,10 +70,10 @@ function probeDirectory(basePath: string): KnowledgeManifest {
   // Pre-RC complexity framework
   manifest.domains.preRc.framework = existsSync(join(basePath, 'pre-rc', 'complexity-framework.md'));
 
-  // RC skills
+  // RC skills (count recursively - skills are organized in subdirectories)
   const skillsDir = join(basePath, 'rc', 'skills');
   if (existsSync(skillsDir)) {
-    manifest.domains.rc.skills = readdirSync(skillsDir).filter((f) => f.endsWith('.md')).length;
+    manifest.domains.rc.skills = countMdFilesRecursive(skillsDir);
   }
 
   // RC UX specialists
@@ -170,7 +183,7 @@ export function logKnowledgeStatus(): void {
       `[rc-engine]   Post-RC: ${m.domains.postRc.security} security, ${m.domains.postRc.monitoring} monitoring`,
     );
   } else {
-    console.error('[rc-engine] Knowledge: community mode (passthrough only)');
-    console.error('[rc-engine]   Install rc-engine-pro for autonomous mode with 52 methodology files');
+    console.error('[rc-engine] Knowledge: community mode (limited knowledge files)');
+    console.error('[rc-engine]   Add knowledge files to knowledge/ for full autonomous mode');
   }
 }

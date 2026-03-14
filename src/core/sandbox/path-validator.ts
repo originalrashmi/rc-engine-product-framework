@@ -12,6 +12,7 @@
  * - System path blocklist (prevents reading/writing /etc, ~/.ssh, etc.)
  */
 
+import fs from 'node:fs';
 import path from 'node:path';
 
 // ── Types ───────────────────────────────────────────────────────────────────
@@ -151,13 +152,19 @@ export class PathValidator {
 
   /**
    * Resolve a path relative to the project root, canonicalizing it.
-   * This eliminates `..`, `.`, and resolves symlinks at the path level.
+   * Uses fs.realpathSync to resolve symlinks to their actual targets,
+   * preventing symlink-based directory traversal attacks.
    */
   resolve(inputPath: string): string {
-    if (path.isAbsolute(inputPath)) {
-      return path.resolve(inputPath);
+    const resolved = path.isAbsolute(inputPath)
+      ? path.resolve(inputPath)
+      : path.resolve(this.projectRoot, inputPath);
+    try {
+      return fs.realpathSync(resolved);
+    } catch {
+      // Path doesn't exist yet (e.g. creating a new file) - fall back to path.resolve
+      return resolved;
     }
-    return path.resolve(this.projectRoot, inputPath);
   }
 
   /**

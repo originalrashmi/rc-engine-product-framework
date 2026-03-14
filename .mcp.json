@@ -1,9 +1,8 @@
 {
   "mcpServers": {
     "rc-engine": {
-      "command": "node",
-      "args": ["dist/index.js"],
-      "cwd": "."
+      "command": "npx",
+      "args": ["-y", "rc-engine"]
     },
     "context7": {
       "command": "npx",

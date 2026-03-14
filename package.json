@@ -27,10 +27,18 @@
     "build-methodology",
     "quality-gates"
   ],
+  "files": [
+    "dist/",
+    "knowledge/",
+    "README.md",
+    "LICENSE",
+    "CHANGELOG.md"
+  ],
   "bin": {
     "rc-engine": "dist/index.js"
   },
   "scripts": {
+    "prepublishOnly": "npm run check && npm run build",
     "build": "tsc",
     "dev": "tsc --watch",
     "start": "node dist/index.js",

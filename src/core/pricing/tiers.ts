@@ -70,13 +70,13 @@ export const TIERS: Record<TierId, TierDefinition> = {
     overagePerProjectUsd: 0, // No overage on free - hard limit
     description: 'Try RC Engine with one project per month.',
     features: {
-      fullPipeline: false, // Research only
+      fullPipeline: true, // Community: full pipeline (research + build + validate)
       designOptions: 0,
       diagrams: false,
       playbook: false,
       pdfExport: false,
-      securityScan: false,
-      traceability: false,
+      securityScan: true, // Community: security scanning included
+      traceability: true, // Community: traceability included
       priorityRouting: false,
       customKnowledge: false,
       teamSeats: 1,
