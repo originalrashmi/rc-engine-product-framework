@@ -1,12 +1,17 @@
 import { BaseAgent } from './base-agent.js';
 import type { AgentResult, ProjectState } from '../types.js';
 
+/** Maximum PRD length before truncation (characters). */
+const PRD_TRUNCATE_THRESHOLD = 5000;
+
 /**
  * Phase 7: Connect - Integration Wiring.
  *
- * Loads all forge artifacts plus the architecture doc, then generates
+ * Loads forge artifacts, architecture doc, and a PRD summary, then generates
  * an integration report covering API wiring, service boundaries,
  * authentication flows, and cross-component dependencies.
+ *
+ * Token optimization: only loads relevant artifacts instead of everything.
  */
 export class ConnectAgent extends BaseAgent {
   async run(state: ProjectState): Promise<AgentResult> {
@@ -19,13 +24,39 @@ export class ConnectAgent extends BaseAgent {
       };
     }
 
-    // Load forge outputs, PRDs, and architecture doc
+    // Token optimization: only load forge outputs, architecture, and PRD summary
+    // instead of ALL project artifacts.
+    const relevantArtifacts = state.artifacts.filter(
+      (a) =>
+        a.startsWith('rc-method/forge/') ||
+        a.startsWith('rc-method/artifacts/') ||
+        a.includes('architecture') ||
+        a.includes('architect'),
+    );
+
     let projectContext = '';
 
-    for (const artifact of state.artifacts) {
+    for (const artifact of relevantArtifacts) {
       try {
         const content = this.contextLoader.loadProjectFile(state.projectPath, artifact);
         projectContext += `\n\n--- ${artifact} ---\n\n${content}`;
+      } catch {
+        // skip missing files
+      }
+    }
+
+    // Load PRD with truncation for large documents
+    const prdArtifacts = state.artifacts.filter(
+      (a) => a.includes('/prds/PRD-') && !a.includes('-ux.md'),
+    );
+    for (const prd of prdArtifacts) {
+      try {
+        const content = this.contextLoader.loadProjectFile(state.projectPath, prd);
+        if (content.length > PRD_TRUNCATE_THRESHOLD) {
+          projectContext += `\n\n--- ${prd} (summary) ---\n\n${content.slice(0, 2000)}\n\n... [truncated, ${content.length} chars total]`;
+        } else {
+          projectContext += `\n\n--- ${prd} ---\n\n${content}`;
+        }
       } catch {
         // skip missing files
       }

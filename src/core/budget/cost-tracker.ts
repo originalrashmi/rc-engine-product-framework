@@ -78,8 +78,10 @@ export type BudgetListener = (event: BudgetEvent) => void;
  */
 const DEFAULT_COST_RATES: Record<string, ModelCostRate> = {
   // Claude (Anthropic)
+  'claude-opus-4-6-20250527': { inputPerMTok: 15.0, outputPerMTok: 75.0 },
   'claude-sonnet-4-5-20250929': { inputPerMTok: 3.0, outputPerMTok: 15.0 },
   'claude-sonnet-4-20250514': { inputPerMTok: 3.0, outputPerMTok: 15.0 },
+  'claude-haiku-4-5-20251001': { inputPerMTok: 0.8, outputPerMTok: 4.0 },
   'claude-haiku-3-5-20241022': { inputPerMTok: 0.8, outputPerMTok: 4.0 },
 
   // OpenAI

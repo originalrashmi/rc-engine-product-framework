@@ -53,8 +53,8 @@ export abstract class BaseAgent {
         tool: this.constructor.name,
         provider: response.provider,
         model: client.getModel(),
-        inputTokens: 0,
-        outputTokens: response.tokensUsed,
+        inputTokens: response.inputTokens ?? 0,
+        outputTokens: response.outputTokens ?? response.tokensUsed,
       });
       recordModelPerformance({
         provider: response.provider,

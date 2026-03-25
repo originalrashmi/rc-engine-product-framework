@@ -42,9 +42,10 @@ RULES:
   }
 
   /** Run a UX audit on code or a UI description using routed specialists */
-  async audit(codeOrDescription: string, taskType: string): Promise<AgentResult> {
+  async audit(codeOrDescription: string, taskType: string, uxMode?: UxMode | null): Promise<AgentResult> {
     // Load UX context with dynamic specialist routing
-    const uxContext = this.contextLoader.loadUxContext(taskType);
+    // Token optimization: standard mode skips specialist modules
+    const uxContext = this.contextLoader.loadUxContext(taskType, uxMode);
     const specialists = this.contextLoader.getSpecialistsForTask(taskType);
 
     const specialistNote =
@@ -87,8 +88,9 @@ RULES:
       }
     }
 
-    // Load full audit-level UX context for generation
-    const uxContext = this.contextLoader.loadUxContext('audit');
+    // Load UX context scoped to the project's UX mode
+    // Token optimization: standard mode loads only core 42 rules
+    const uxContext = this.contextLoader.loadUxContext('audit', state.uxMode);
 
     const instructions = `You are the RC Method UX PRD Generator. Generate a complete UX child PRD using the template from rc-ux-core.md.
 

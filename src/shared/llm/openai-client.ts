@@ -55,8 +55,10 @@ export class OpenAIClient extends BaseLLMClient {
 
     const data = (await res.json()) as any;
     const content = data.choices[0].message.content;
-    const tokens = data.usage?.total_tokens || 0;
+    const inputTokens = (data.usage?.prompt_tokens as number | undefined) ?? 0;
+    const outputTokens = (data.usage?.completion_tokens as number | undefined) ?? 0;
+    const tokens = data.usage?.total_tokens || inputTokens + outputTokens;
 
-    return { content, tokensUsed: tokens, provider: LLMProvider.OpenAI };
+    return { content, tokensUsed: tokens, inputTokens, outputTokens, provider: LLMProvider.OpenAI };
   }
 }

@@ -44,8 +44,10 @@ export class ClaudeClient extends BaseLLMClient {
     const response = await stream.finalMessage();
 
     const text = response.content[0].type === 'text' ? response.content[0].text : '';
-    const tokens = response.usage.input_tokens + response.usage.output_tokens;
+    const inputTokens = response.usage.input_tokens;
+    const outputTokens = response.usage.output_tokens;
+    const tokens = inputTokens + outputTokens;
 
-    return { content: text, tokensUsed: tokens, provider: LLMProvider.Claude };
+    return { content: text, tokensUsed: tokens, inputTokens, outputTokens, provider: LLMProvider.Claude };
   }
 }

@@ -1,6 +1,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { resolveFromRoot } from '../../shared/config.js';
+import type { UxMode } from './types.js';
 import { UX_ROUTING_TABLE } from './types.js';
 
 export class ContextLoader {
@@ -25,9 +26,21 @@ export class ContextLoader {
     return relativePaths.map((p) => this.loadFile(p)).join('\n\n---\n\n');
   }
 
-  /** Load UX core rules + dynamically selected specialist modules */
-  loadUxContext(taskType: string): string {
+  /**
+   * Load UX core rules + dynamically selected specialist modules.
+   *
+   * Token optimization: when uxMode is 'standard', only the core 42 rules
+   * are loaded. Specialist modules are only loaded for 'selective' or
+   * 'deep_dive' modes, saving significant tokens on simpler projects.
+   */
+  loadUxContext(taskType: string, uxMode?: UxMode | null): string {
     const core = this.loadFile('skills/rc-ux-core.md');
+
+    // Standard mode: core rules only, skip specialist modules
+    if (uxMode === 'standard') {
+      return core;
+    }
+
     const specialists = this.getSpecialistsForTask(taskType);
 
     if (specialists.length === 0) {
