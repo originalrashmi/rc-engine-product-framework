@@ -683,8 +683,47 @@ ${testScriptKnowledge}`;
   }
 
   /** Process a gate decision - pure state manipulation, no LLM needed */
-  async gate(projectPath: string, decision: string, feedback?: string): Promise<AgentResult> {
+  async gate(projectPath: string, decision: string, feedback?: string, force?: boolean): Promise<AgentResult> {
     const state = this.stateManager.load(projectPath);
+
+    // Design intelligence gate blocking (ARCH-001/ARCH-004):
+    // At checkpoints 2-5, block approval if project has high UX complexity but no design work.
+    const normalizedDec = decision.toLowerCase().trim();
+    const DESIGN_GATED_PHASES = [2, 3, 4, 5];
+    if (
+      normalizedDec === 'approve' &&
+      DESIGN_GATED_PHASES.includes(state.currentPhase) &&
+      state.uxScore !== null &&
+      state.uxScore >= 4
+    ) {
+      const hasDesignWork =
+        !!state.selectedDesign ||
+        !!state.designIntake ||
+        this.hasDesignFiles(projectPath);
+
+      if (!hasDesignWork) {
+        if (force) {
+          // User chose to bypass - log to audit trail and continue
+          audit('gate.design-bypass', 'rc', projectPath, {
+            phase: state.currentPhase,
+            uxScore: state.uxScore,
+          }, `gate-${state.currentPhase}`);
+        } else {
+          return {
+            text: `**Checkpoint ${state.currentPhase} - Design work required**
+
+This project has high UX complexity (score: ${state.uxScore}/5). Before proceeding, you should run design tools to ensure the user experience is well-defined.
+
+Recommended next steps:
+- Run ux_design to generate visual design options
+- Run design_intake to capture design preferences
+
+To proceed anyway, re-approve with force=true.`,
+          };
+        }
+      }
+    }
+
     const result = await this.gateAgent.processDecision(state, decision, feedback);
     this.stateManager.save(projectPath, state);
     const normalized = decision.toLowerCase().trim();
@@ -929,6 +968,18 @@ ${tokenTracker.getDomainSummary('rc')}${formatCostSummary()}${getLearningSummary
     return {
       text: `RC Method state reset for ${projectPath}. You can now run rc_start to begin a fresh project.`,
     };
+  }
+
+  /** Check if design files exist on disk (fallback for state-based checks) */
+  private hasDesignFiles(projectPath: string): boolean {
+    const designDir = path.join(projectPath, 'rc-method', 'design');
+    try {
+      if (!fs.existsSync(designDir)) return false;
+      const entries = fs.readdirSync(designDir);
+      return entries.length > 0;
+    } catch {
+      return false;
+    }
   }
 
   /** Enforce that the project is in the expected phase */

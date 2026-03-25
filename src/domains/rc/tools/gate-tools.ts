@@ -44,12 +44,13 @@ export function registerRcGateTools(server: McpServer): void {
         project_path: z.string().describe('Absolute path to the project directory'),
         decision: z.string().describe("Checkpoint decision: 'approve', 'reject [reason]', or 'question [text]'"),
         feedback: z.string().optional().describe('Optional additional feedback or reason for the decision'),
+        force: z.boolean().optional().describe('If true, bypass design intelligence checks for high-UX projects (use with caution)'),
       },
     },
-    async ({ project_path, decision, feedback }) => {
+    async ({ project_path, decision, feedback, force }) => {
       try {
         // Process gate decision via orchestrator (advances phase, saves state)
-        const result = await getOrchestrator().gate(project_path, decision, feedback);
+        const result = await getOrchestrator().gate(project_path, decision, feedback, force);
 
         // Resume the graph coordinator to advance past the gate node.
         // The next phase handler will return state unchanged (no _pendingInput),

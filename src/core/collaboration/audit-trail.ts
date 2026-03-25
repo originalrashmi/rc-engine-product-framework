@@ -30,6 +30,7 @@ export type AuditAction =
   | 'gate.approve'
   | 'gate.reject'
   | 'gate.question'
+  | 'gate.design-bypass'
   | 'scan.start'
   | 'scan.complete'
   | 'override.create'
