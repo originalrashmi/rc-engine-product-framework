@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<title>RC Engine -- Starter Guide</title>
+<title>RC Engine Starter Guide</title>
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400;1,700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400&display=swap');
 
@@ -68,7 +68,7 @@
     .footer { padding: 8px 16px; margin-top: 10px; font-size: 9px; }
   }
 
-  /* ===== HEADER -- Navy gradient with brand identity ===== */
+  /* ===== HEADER - Navy gradient with brand identity ===== */
   .header {
     background: linear-gradient(135deg, #0D1B2A 0%, #1B2A4A 100%);
     margin: 0 -40px;
@@ -402,7 +402,7 @@
 <div class="section">
 <span class="watermark">01</span>
 <h2>What is RC Engine?</h2>
-<p>RC Engine takes a product idea -- even a single sentence -- and walks it through a structured development pipeline: research, architecture, build, validation, and traceability. It uses 53 orchestrated AI tools behind the scenes so you can focus on your product, not the process.</p>
+<p>RC Engine takes a product idea - even a single sentence - and walks it through a structured development pipeline: research, architecture, build, validation, and traceability. It uses 53 orchestrated AI tools behind the scenes so you can focus on your product, not the process.</p>
 <p>Up to 20 specialized AI analysts research your idea before a single line of code is written. They cover market fit, user needs, technical feasibility, security, UX, and more. Then the engine designs the architecture, builds task by task, and scans for security and legal issues before shipping.</p>
 <p>You approve every step. Nothing moves forward without your sign-off.</p>
 </div>
@@ -430,7 +430,7 @@
   <div class="path-card navy">
     <div class="path-label"><span class="alt">Path B</span></div>
     <h3>MCP Server</h3>
-    <p>Install RC Engine locally and connect it to your IDE. Chat naturally -- the AI calls the right tools for you.</p>
+    <p>Install RC Engine locally and connect it to your IDE. Chat naturally - the AI calls the right tools for you.</p>
     <ul>
       <li>Runs inside Claude Code, Cursor, or any MCP IDE</li>
       <li>Conversational interface</li>
@@ -461,19 +461,19 @@
 <h3><span class="step-tag">3</span> Start Your First Project</h3>
 <ol>
   <li>Click <strong>New Project</strong></li>
-  <li>Describe your product idea in plain language -- a single sentence is enough</li>
+  <li>Describe your product idea in plain language - a single sentence is enough</li>
   <li>Choose how much of the pipeline to run:
     <ul>
-      <li><strong>Full Pipeline</strong> -- Research, Design, Architecture, Build, Validate, Ship</li>
-      <li><strong>Research Only</strong> -- Market analysis and a complete requirements document</li>
-      <li><strong>Build Only</strong> -- Skip research, jump to architecture and build</li>
+      <li><strong>Full Pipeline</strong> - Research, Design, Architecture, Build, Validate, Ship</li>
+      <li><strong>Research Only</strong> - Market analysis and a complete requirements document</li>
+      <li><strong>Build Only</strong> - Skip research, jump to architecture and build</li>
     </ul>
   </li>
   <li>Follow the guided steps. At each checkpoint, review what was produced and approve before moving on.</li>
 </ol>
 
 <h3><span class="step-tag">4</span> Download Your Deliverables</h3>
-<p>When the pipeline completes (or at any stage), download your deliverables directly from the dashboard -- requirements document, architecture plan, task breakdown, security report, and more.</p>
+<p>When the pipeline completes (or at any stage), download your deliverables directly from the dashboard - requirements document, architecture plan, task breakdown, security report, and more.</p>
 
 <p>That's it. No terminal, no configuration, no API keys to manage.</p>
 </div>
@@ -486,9 +486,9 @@
 
 <h3><span class="step-tag alt">1</span> Prerequisites</h3>
 <ul>
-  <li><strong>Node.js 18+</strong> -- download from <a href="https://nodejs.org">nodejs.org</a>. Check with <code>node --version</code>.</li>
+  <li><strong>Node.js 18+</strong> - download from <a href="https://nodejs.org">nodejs.org</a>. Check with <code>node --version</code>.</li>
   <li><strong>Claude Code, Cursor, or another MCP-compatible IDE</strong></li>
-  <li><strong>An Anthropic API key</strong> -- sign up at <a href="https://console.anthropic.com">console.anthropic.com</a></li>
+  <li><strong>An Anthropic API key</strong> - sign up at <a href="https://console.anthropic.com">console.anthropic.com</a></li>
 </ul>
 
 <h3><span class="step-tag alt">2</span> Install</h3>
@@ -499,18 +499,18 @@ npm install && npm run build</code></pre>
 <h3><span class="step-tag alt">3</span> Add Your API Keys</h3>
 <p>Create a file called <code>.env</code> in the rc-engine folder:</p>
 
-<pre><code><span class="comment"># Required -- powers core reasoning and architecture</span>
+<pre><code><span class="comment"># Required - powers core reasoning and architecture</span>
 <span class="comment"># Get yours at <a href="https://console.anthropic.com" style="color: #C9A962; opacity: 0.6;">https://console.anthropic.com</a></span>
 <span class="env-key">ANTHROPIC_API_KEY</span>=<span class="env-val">sk-ant-paste_your_key_here</span>
 
-<span class="comment"># Recommended -- enables live market and competitor research</span>
+<span class="comment"># Recommended - enables live market and competitor research</span>
 <span class="comment"># Get yours at <a href="https://perplexity.ai/settings/api" style="color: #C9A962; opacity: 0.6;">https://perplexity.ai/settings/api</a></span>
 <span class="env-key">PERPLEXITY_API_KEY</span>=<span class="env-val">pplx-paste_your_key_here</span>
 
-<span class="comment"># Optional -- fast classification (free tier)</span>
+<span class="comment"># Optional - fast classification (free tier)</span>
 <span class="env-key">GOOGLE_GEMINI_API_KEY</span>=<span class="env-val">paste_your_key_here</span>
 
-<span class="comment"># Optional -- UX and content analysis</span>
+<span class="comment"># Optional - UX and content analysis</span>
 <span class="env-key">OPENAI_API_KEY</span>=<span class="env-val">sk-paste_your_key_here</span></code></pre>
 
 <table>
@@ -522,10 +522,10 @@ npm install && npm run build</code></pre>
 </table>
 
 <div class="callout callout-navy">
-  <strong>No API keys?</strong> RC Engine works in manual mode -- it generates structured prompts you copy into any AI tool (ChatGPT, Claude.ai, Gemini) and paste the results back. Same methodology, more hands-on.
+  <strong>No API keys?</strong> RC Engine works in manual mode - it generates structured prompts you copy into any AI tool (ChatGPT, Claude.ai, Gemini) and paste the results back. Same methodology, more hands-on.
 </div>
 
-<p>This <code>.env</code> file is private -- it is listed in <code>.gitignore</code> and will never be shared or uploaded.</p>
+<p>This <code>.env</code> file is private - it is listed in <code>.gitignore</code> and will never be shared or uploaded.</p>
 
 <h3><span class="step-tag alt">4</span> Connect to Your IDE</h3>
 
@@ -566,15 +566,15 @@ echo %cd%\dist\index.js</code></pre>
   "I want to build a SaaS dashboard for tracking marketing spend across channels."
 </div>
 
-<p>The AI orchestrates the full pipeline -- calling tools, presenting results, and pausing at checkpoints for your approval. You never need to call tools directly.</p>
+<p>The AI orchestrates the full pipeline - calling tools, presenting results, and pausing at checkpoints for your approval. You never need to call tools directly.</p>
 
 <table>
   <tr><th>Domain</th><th>What It Does</th></tr>
-  <tr><td><strong>Pre-RC (Research)</strong></td><td>7 tools -- up to 20 AI specialists analyze your idea from every angle</td></tr>
-  <tr><td><strong>RC Method (Build)</strong></td><td>34 tools -- 8-phase pipeline with design intelligence, copy engine, and UX system</td></tr>
-  <tr><td><strong>Post-RC (Validation)</strong></td><td>7 tools -- 6 parallel scan modules: security, app security, monitoring, edge case, legal, claims</td></tr>
-  <tr><td><strong>Traceability (Audit)</strong></td><td>3 tools -- requirements-to-code coverage with orphan detection</td></tr>
-  <tr><td><strong>Pipeline</strong></td><td>2 tools -- cross-domain status + unified entry point</td></tr>
+  <tr><td><strong>Pre-RC (Research)</strong></td><td>7 tools - up to 20 AI specialists analyze your idea from every angle</td></tr>
+  <tr><td><strong>RC Method (Build)</strong></td><td>34 tools - 8-phase pipeline with design intelligence, copy engine, and UX system</td></tr>
+  <tr><td><strong>Post-RC (Validation)</strong></td><td>7 tools - 6 parallel scan modules: security, app security, monitoring, edge case, legal, claims</td></tr>
+  <tr><td><strong>Traceability (Audit)</strong></td><td>3 tools - requirements-to-code coverage with orphan detection</td></tr>
+  <tr><td><strong>Pipeline</strong></td><td>2 tools - cross-domain status + unified entry point</td></tr>
 </table>
 </div>
 
@@ -590,7 +590,7 @@ echo %cd%\dist\index.js</code></pre>
     <div class="pipeline-dot">1</div>
     <div class="pipeline-text">
       <strong>Research</strong>
-      <span>Up to 20 AI specialists analyze your idea -- market, users, security, UX, and more</span>
+      <span>Up to 20 AI specialists analyze your idea - market, users, security, UX, and more</span>
     </div>
   </div>
   <div class="pipeline-connector"></div>
@@ -731,7 +731,7 @@ echo %cd%\dist\index.js</code></pre>
 
 <p><strong>RC Engine is free and open source.</strong> All 53 tools, all features, no limits.</p>
 
-<p style="font-size: 13px; color: #1B2A4A; opacity: 0.6;"><strong>BYOK model:</strong> RC Engine uses your own API keys (Anthropic, Perplexity, etc.) -- you pay providers directly at their rates. Typical total: $3-20 per project depending on complexity.</p>
+<p style="font-size: 13px; color: #1B2A4A; opacity: 0.6;"><strong>BYOK model:</strong> RC Engine uses your own API keys (Anthropic, Perplexity, etc.) - you pay providers directly at their rates. Typical total: $3-20 per project depending on complexity.</p>
 
 </div>
 
@@ -745,7 +745,7 @@ echo %cd%\dist\index.js</code></pre>
 <p>No. The Web UI is designed for non-technical users. Describe your idea in plain language and the engine handles everything. The MCP path is for developers who prefer working in their IDE.</p>
 
 <h4>What happens to my data?</h4>
-<p>Your project data stays private. Both paths keep everything on your local machine. AI API calls go to the providers you configure (Anthropic, Perplexity, etc.) -- RC Engine does not store or train on your data.</p>
+<p>Your project data stays private. Both paths keep everything on your local machine. AI API calls go to the providers you configure (Anthropic, Perplexity, etc.) - RC Engine does not store or train on your data.</p>
 
 <h4>Can I switch between Web UI and MCP?</h4>
 <p>Both paths store data locally. The Web UI and MCP server share the same project state files.</p>
@@ -754,13 +754,13 @@ echo %cd%\dist\index.js</code></pre>
 <p>Choose "Research Only" when starting a project. You get the full 20-analyst research pipeline and a complete requirements document without entering the build phase.</p>
 
 <h4>How long does a full pipeline run take?</h4>
-<p>A typical full pipeline run takes 30-60 minutes of AI processing time. You can step away and come back -- your progress is saved at every checkpoint.</p>
+<p>A typical full pipeline run takes 30-60 minutes of AI processing time. You can step away and come back - your progress is saved at every checkpoint.</p>
 
 <h4>How is RC Engine different from Cursor, Windsurf, or Claude Code?</h4>
-<p>Those are AI coding assistants -- they help you write code faster. RC Engine is a structured development methodology that runs <em>inside</em> those tools. It adds research (20 specialists), requirements (19-section PRD), design (wireframes + copy), validation (security + legal + edge cases), and traceability (requirements-to-code coverage). RC Engine doesn't replace your IDE -- it adds the methodology layer that AI coding tools skip.</p>
+<p>Those are AI coding assistants - they help you write code faster. RC Engine is a structured development methodology that runs <em>inside</em> those tools. It adds research (20 specialists), requirements (19-section PRD), design (wireframes + copy), validation (security + legal + edge cases), and traceability (requirements-to-code coverage). RC Engine doesn't replace your IDE - it adds the methodology layer that AI coding tools skip.</p>
 
 <h4>How is RC Engine different from v0, Lovable, or Bolt?</h4>
-<p>Those tools generate full applications from a prompt. RC Engine generates <em>research, requirements, architecture, and a build plan</em> first -- then generates code within that structure. It also runs security scans, legal compliance checks, and edge case analysis before shipping. Those tools are fast prototyping. RC Engine is structured product development with 12 human-approval checkpoints and 14 deliverables.</p>
+<p>Those tools generate full applications from a prompt. RC Engine generates <em>research, requirements, architecture, and a build plan</em> first - then generates code within that structure. It also runs security scans, legal compliance checks, and edge case analysis before shipping. Those tools are fast prototyping. RC Engine is structured product development with 12 human-approval checkpoints and 14 deliverables.</p>
 </div>
 
 <!-- THE BREW LOG -->
