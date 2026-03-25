@@ -2,6 +2,7 @@ import { z } from 'zod';
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { generatePlaybook } from '../generators/playbook-generator.js';
 import { generatePrintableHtml } from '../generators/pdf-export.js';
+import { generateDiagrams } from '../generators/diagram-generator.js';
 import fs from 'node:fs';
 import path from 'node:path';
 
@@ -120,6 +121,61 @@ export function registerExportTools(server: McpServer): void {
             {
               type: 'text' as const,
               text: `PDF-ready HTML exported successfully.\n\nSaved to: \`${relativePath}\`\nSize: ${(html.length / 1024).toFixed(1)} KB\nDocuments included: ${filesToExport.length}\n\nFiles exported:\n${filesToExport.map((f) => `  - ${f}`).join('\n')}\n\nTo create PDF:\n1. Open the HTML file in a browser\n2. Press Ctrl+P (Windows/Linux) or Cmd+P (Mac)\n3. Select "Save as PDF" as the printer\n4. Click Save`,
+            },
+          ],
+        };
+      } catch (err) {
+        return {
+          content: [{ type: 'text' as const, text: `Error: ${(err as Error).message}` }],
+          isError: true,
+        };
+      }
+    },
+  );
+  // rc_generate_diagrams - Generate architecture diagrams from task list
+  server.registerTool(
+    'rc_generate_diagrams',
+    {
+      description:
+        'Generate architecture diagrams from the task list. Produces 3 Mermaid-based HTML diagrams: dependency graph (task DAG), Gantt timeline (build schedule), and architecture layers (swimlane view). Requires rc_sequence to have been run first (needs task list in rc-method/tasks/). Saves to rc-method/diagrams/. After success: diagrams are viewable in any browser.',
+      inputSchema: {
+        project_path: z.string().describe('Absolute path to the project directory'),
+        project_name: z.string().optional().describe('Human-readable project name (defaults to directory name)'),
+      },
+      annotations: {
+        title: 'Generate Diagrams',
+        readOnlyHint: false,
+        destructiveHint: false,
+        idempotentHint: true,
+        openWorldHint: false,
+      },
+    },
+    async ({ project_path, project_name }) => {
+      try {
+        const name = project_name ?? path.basename(project_path);
+        const results = await generateDiagrams(project_path, name);
+
+        if (results.length === 0) {
+          return {
+            content: [
+              {
+                type: 'text' as const,
+                text: 'No task list found. Run rc_sequence first to generate the task plan, then call rc_generate_diagrams.',
+              },
+            ],
+            isError: true,
+          };
+        }
+
+        const summary = results
+          .map((r) => `  - ${r.diagramType}: ${path.relative(project_path, r.htmlPath)}`)
+          .join('\n');
+
+        return {
+          content: [
+            {
+              type: 'text' as const,
+              text: `Generated ${results.length} architecture diagrams:\n${summary}\n\nOpen the HTML files in a browser to view interactive Mermaid diagrams.\n\nDiagram types:\n- **Dependency Graph**: Task dependencies as a directed acyclic graph\n- **Gantt Timeline**: Build schedule with effort estimates\n- **Architecture Layers**: Tasks organized by layer (Foundation, Core, Integration, Polish)`,
             },
           ],
         };

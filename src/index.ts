@@ -67,7 +67,7 @@ registerRcGateTools(server); // 5 tools: rc_gate, rc_save, rc_status, rc_reset
 registerRcUxTools(server); // 6 tools: ux_score, ux_audit, ux_generate, ux_design, design_challenge
 registerCopyTools(server); // 4 tools: copy_research_brief, copy_generate, copy_iterate, copy_critique
 registerDesignTools(server); // 6 tools: design_research_brief, design_intake, brand_import, design_iterate, design_select, design_pipeline
-registerExportTools(server); // 2 tools: playbook_generate, pdf_export
+registerExportTools(server); // 3 tools: playbook_generate, pdf_export, rc_generate_diagrams
 registerPostRcTools(server); // 7 tools: postrc_*
 registerTraceabilityTools(server); // 3 tools: trace_*
 
@@ -160,11 +160,11 @@ ${summary}
     UX ............. 6 tools (ux_*, design_challenge)
     Copy ........... 4 tools (copy_*)
     Design ......... 6 tools (design_*, brand_import)
-    Export ......... 2 tools (playbook_generate, pdf_export)
+    Export ......... 3 tools (playbook_generate, pdf_export, rc_generate_diagrams)
     Post-RC ........ 7 tools (postrc_*)
     Traceability ... 3 tools (trace_*)
     Pipeline ....... 1 tool  (rc_pipeline_status)
-    Total: 52 tools
+    Total: 53 tools
 
   PIPELINE FLOW:
     prc_start → prc_classify → prc_run_stage (x6)
@@ -199,7 +199,7 @@ async function main() {
 
   const knowledgeMode = manifest.mode === 'pro' ? 'pro' : 'community';
   const execMode = hasAnyApiKey ? 'autonomous' : 'passthrough';
-  console.error(`[rc-engine] Connected - 52 tools - knowledge: ${knowledgeMode} - execution: ${execMode}`);
+  console.error(`[rc-engine] Connected - 53 tools - knowledge: ${knowledgeMode} - execution: ${execMode}`);
 }
 
 main().catch((err) => {

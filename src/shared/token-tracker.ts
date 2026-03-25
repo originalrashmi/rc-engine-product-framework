@@ -24,7 +24,13 @@ export class TokenTracker {
   }
 
   /** Record token usage from a tool call */
-  record(domain: string, tool: string, tokens: number, provider: LLMProvider): void {
+  record(
+    domain: string,
+    tool: string,
+    tokens: number,
+    provider: LLMProvider,
+    _options?: { inputTokens?: number; outputTokens?: number },
+  ): void {
     this.records.push({
       domain,
       tool,
