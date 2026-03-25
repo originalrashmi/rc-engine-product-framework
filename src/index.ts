@@ -7,6 +7,7 @@ import { logStartupDiagnostics, hasAnyApiKey } from './shared/config.js';
 import { logKnowledgeStatus, getKnowledgeManifest } from './shared/knowledge-loader.js';
 import { tokenTracker } from './shared/token-tracker.js';
 import { guardedTool } from './shared/tool-guard.js';
+import { coffePrefix } from './shared/coffee.js';
 import { registerInitTool } from './tools/rc-init.js';
 import { registerPreRcTools } from './domains/pre-rc/tools.js';
 import { registerRcPhaseTools } from './domains/rc/tools/phase-tools.js';
@@ -37,13 +38,25 @@ const server = new McpServer({
 });
 
 // Patch both server.tool() and server.registerTool() to wrap every handler with
-// path validation + input size checks. This protects all tools regardless of which
-// registration method is used. server.tool() is deprecated; server.registerTool()
-// is the current API - both must be guarded.
+// path validation + input size checks + coffee theme prefix. This protects all
+// tools regardless of which registration method is used.
 function wrapLastArgWithGuard(toolArgs: unknown[]): void {
+  const toolName = typeof toolArgs[0] === 'string' ? toolArgs[0] : '';
   const handler = toolArgs[toolArgs.length - 1];
   if (typeof handler === 'function') {
-    toolArgs[toolArgs.length - 1] = guardedTool(handler as Parameters<typeof guardedTool>[0]);
+    const guarded = guardedTool(handler as Parameters<typeof guardedTool>[0]);
+    // Wrap with coffee prefix on successful (non-error) responses
+    toolArgs[toolArgs.length - 1] = async (args: Record<string, unknown>) => {
+      const result = await guarded(args);
+      if (!result.isError && result.content?.[0]?.type === 'text') {
+        const stageName = typeof args.stage === 'string' ? args.stage : undefined;
+        const prefix = coffePrefix(toolName, stageName);
+        if (prefix) {
+          result.content[0] = { type: 'text', text: prefix + result.content[0].text };
+        }
+      }
+      return result;
+    };
   }
 }
 
@@ -63,8 +76,8 @@ server.registerTool = ((...toolArgs: unknown[]) => {
 registerInitTool(server); // 1 tool: rc_init (unified entry point)
 registerPreRcTools(server); // 7 tools: prc_*
 registerRcPhaseTools(server); // 12 tools: rc_start, rc_illuminate, rc_define, rc_import_prerc, rc_architect, rc_sequence, rc_validate, rc_forge_task, rc_connect, rc_compound, rc_forge_all, rc_autopilot
-registerRcGateTools(server); // 5 tools: rc_gate, rc_save, rc_status, rc_reset
-registerRcUxTools(server); // 6 tools: ux_score, ux_audit, ux_generate, ux_design, design_challenge
+registerRcGateTools(server); // 4 tools: rc_gate, rc_save, rc_status, rc_reset
+registerRcUxTools(server); // 5 tools: ux_score, ux_audit, ux_generate, ux_design, design_challenge
 registerCopyTools(server); // 4 tools: copy_research_brief, copy_generate, copy_iterate, copy_critique
 registerDesignTools(server); // 6 tools: design_research_brief, design_intake, brand_import, design_iterate, design_select, design_pipeline
 registerExportTools(server); // 3 tools: playbook_generate, pdf_export, rc_generate_diagrams
@@ -156,8 +169,8 @@ ${summary}
     Entry .......... 1 tool  (rc_init)
     Pre-RC ......... 7 tools (prc_*)
     RC Phases ...... 12 tools (rc_start..rc_autopilot)
-    RC Gates ....... 5 tools (rc_gate, rc_save, rc_status, rc_reset)
-    UX ............. 6 tools (ux_*, design_challenge)
+    RC Gates ....... 4 tools (rc_gate, rc_save, rc_status, rc_reset)
+    UX ............. 5 tools (ux_*, design_challenge)
     Copy ........... 4 tools (copy_*)
     Design ......... 6 tools (design_*, brand_import)
     Export ......... 3 tools (playbook_generate, pdf_export, rc_generate_diagrams)
