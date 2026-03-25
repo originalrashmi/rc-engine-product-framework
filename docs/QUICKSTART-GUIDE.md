@@ -8,7 +8,7 @@
 
 ## 01 - What is RC Engine?
 
-RC Engine takes a product idea - even a single sentence - and walks it through a structured development pipeline: research, architecture, build, validation, and traceability. It uses 52 orchestrated AI tools behind the scenes so you can focus on your product, not the process.
+RC Engine takes a product idea - even a single sentence - and walks it through a structured development pipeline: research, architecture, build, validation, and traceability. It uses 53 orchestrated AI tools behind the scenes so you can focus on your product, not the process.
 
 Up to 20 specialized AI analysts research your idea before a single line of code is written. They cover market fit, user needs, technical feasibility, security, UX, and more. Then the engine designs the architecture, builds task by task, and scans for security and legal issues before shipping.
 
@@ -261,7 +261,7 @@ SHIP (production-ready, full audit trail)
 | `rc_compound` | 8 | Production hardening assessment |
 | `rc_autopilot` | -- | Run remaining phases automatically with gate checks |
 
-**Gate and Status Tools (5)**
+**Gate and Status Tools (4)**
 
 | Tool | Purpose |
 |------|---------|
@@ -372,7 +372,7 @@ RC Engine MCP Server (53 tools)
     |         |
     |         +--> Design Intelligence (6 tools) --> wireframes, brand, critique
     |         +--> Copy Engine (4 tools) --> content strategy, generation
-    |         +--> UX System (6 tools) --> scoring, audit, design challenge
+    |         +--> UX System (5 tools) --> scoring, audit, design challenge
     |         +--> Export (3 tools) --> playbook, PDF, diagrams
     |         |
     |         v
@@ -466,7 +466,7 @@ your-project/
 
 **Pipeline**
 - Complete 4-domain pipeline: Pre-RC, RC Method, Post-RC, Traceability
-- 52 MCP tools across all domains
+- 53 MCP tools across all domains
 - Graph engine with topological sort, gate interrupts, fan-out/fan-in
 - 12 quality gates with human-in-the-loop approval
 - Cross-domain bridge: Pre-RC research imports into RC build pipeline
@@ -551,6 +551,33 @@ A typical full pipeline run takes 30-60 minutes of AI processing time. You can s
 **Can I use RC Engine to build commercial products?**
 
 Yes. RC Engine is MIT-licensed. You can use it to build any product for personal or commercial use. You may not offer RC Engine itself (or a derivative) as a competing commercial service without written permission from Toerana.
+
+**How is RC Engine different from Cursor, Windsurf, or Claude Code?**
+
+Those are AI coding assistants -- they help you write code faster. RC Engine is a structured development methodology that runs *inside* those tools. The difference is what happens before and after coding:
+
+| What | AI Coding Assistants | RC Engine |
+|------|---------------------|-----------|
+| **Before code** | You decide what to build | 20 specialists research your idea, write a PRD, design architecture |
+| **During code** | AI generates code from prompts | Structured 8-phase build with dependency ordering and quality gates |
+| **After code** | You ship when you feel ready | Security scan, legal review, edge case analysis, ship/no-ship gate |
+| **Traceability** | None | Every requirement tracked from spec to code to verification |
+| **Design** | None | Brand-aware wireframes, copy system, design challenge review |
+| **GTM** | None | Go-to-market strategy, value report, implementation playbook |
+
+RC Engine doesn't replace your IDE -- it adds the methodology layer that AI coding tools skip. You still use Cursor or Claude Code to write code, but RC Engine ensures you're building the *right thing* with research, structure, and validation.
+
+**How is RC Engine different from v0, Lovable, or Bolt?**
+
+Those tools generate full applications from a prompt. RC Engine takes a fundamentally different approach:
+
+- **They generate code directly.** RC Engine generates *research, requirements, architecture, and a build plan* first -- then generates code within that structure.
+- **They skip validation.** RC Engine runs security scans, legal compliance checks, edge case analysis, and monitoring readiness before shipping.
+- **They have no methodology.** RC Engine uses a 4-domain pipeline with 12 human-approval checkpoints. Nothing ships without review.
+- **They don't do research.** RC Engine runs up to 20 AI specialists on your idea -- market analysis, competitive intelligence, user research, technical feasibility -- before a single line of code.
+- **They produce code only.** RC Engine produces 14 deliverables: PRD, GTM strategy, architecture, diagrams, designs, copy, security report, legal review, traceability matrix, playbook, and more.
+
+The short version: those tools are fast prototyping. RC Engine is structured product development.
 
 ---
 
