@@ -193,6 +193,49 @@ Here's what I found and recommend:
 - **Fix first** - Address the issues above
 ```
 
+### When design gate blocks approval (checkpoints 2-5, uxScore >= 4)
+```
+**Design work recommended before proceeding.**
+
+Your project has high UX complexity (score: [N]/5). Before moving to the next step,
+I recommend defining the user experience to avoid costly rework later.
+
+**Recommended next steps:**
+- **ux_design** - Generate visual design options with wireframes
+- **design_intake** - Capture your design preferences and constraints
+
+**Options:**
+- **Run design tools** - I'll start with ux_design (recommended)
+- **Skip design** - Proceed without design work (I'll note this in the audit trail)
+```
+
+### After rc_forge_all
+```
+**Batch build complete.**
+
+[N] of [total] tasks built successfully.
+[If failures:] [N] tasks failed - see details below.
+
+[Per-task summary: ID, name, status]
+
+**Next step:** [If all passed:] Ready for integration check (Step 7).
+[If failures:] Review failed tasks, then retry or proceed.
+```
+
+### After rc_autopilot
+```
+**Autopilot complete - ran Steps [start]-[end] automatically.**
+
+| Step | Status |
+|------|--------|
+[per-step summary]
+
+[N] checkpoints auto-approved.
+Post-RC ship decision still requires your approval.
+
+**Next step:** Ready for security validation scan.
+```
+
 ### After each rc_forge_task
 ```
 **Task [ID] complete: [task name]**

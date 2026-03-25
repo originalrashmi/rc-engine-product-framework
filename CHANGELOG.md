@@ -4,6 +4,31 @@ All notable changes to RC Engine are documented here.
 
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.1.0] - 2026-03-25
+
+### Added
+- `rc_forge_all` tool: batch-build all pending tasks in Phase 6 in one call
+- `rc_autopilot` tool: run remaining phases 3-8 automatically with auto-approved gates
+- Design Intelligence gate blocking: checkpoints 2-5 require design work for high-UX projects (uxScore >= 4)
+- `force` parameter on `rc_gate` to bypass design checks when needed (logged to audit trail)
+- Haiku 4.5 and Opus 4.6 cost rates in CostTracker for accurate cost reporting
+- `gate.design-bypass` audit action for tracking forced gate approvals
+
+### Improved
+- ConnectAgent and CompoundAgent now filter artifacts to relevant files only (15-30% token reduction)
+- PRDs over 5000 characters are truncated in agent context to reduce token waste
+- All LLM clients (Claude, OpenAI, Gemini) now report inputTokens and outputTokens separately
+- UX specialist knowledge modules load conditionally based on uxMode (standard mode skips specialists)
+- Base agent reports actual input/output token values instead of hardcoded zeros
+
+### Fixed
+- Starter tier fully removed from code, UI, billing, tests, and documentation (Free/Pro/Enterprise only)
+- rc_connect and rc_compound were callable on free tier, now correctly gated behind Pro
+- Tool count corrected to 14 free, 52 total across all documentation
+- Gate count corrected to 12 (3 Pre-RC + 8 RC + 1 Post-RC)
+
+---
+
 ## [1.0.0] - 2026-03-02
 
 ### Added

@@ -207,6 +207,7 @@ RC Method Build (33 tools across 8 phases)
  |  Phase 7: Connect (integration verification)
  |  Phase 8: Compound (production hardening assessment)
  |  CHECKPOINTS 4-11: One gate between each phase
+ |  * Checkpoints 2-5 enforce design work for high-UX projects (bypassable)
  v
 Post-RC Validation (7 tools)
  |  Security scan (OWASP patterns)
@@ -431,6 +432,31 @@ your-project/
 ---
 
 ## 10 - Version History
+
+### v1.1.0 (2026-03-25) - Autopilot, Design Gates, Token Optimization
+
+**New Tools**
+- `rc_forge_all`: Batch-build all pending tasks in Phase 6 in one call
+- `rc_autopilot`: Run phases 3-8 automatically with auto-approved gates (Post-RC ship decision still requires human approval)
+
+**Design Intelligence Enforcement**
+- Checkpoints 2-5 now block approval when UX complexity score is 4+ and no design work exists
+- Recommends ux_design and design_intake before proceeding
+- Bypassable with `force=true` on rc_gate (logged to audit trail)
+
+**Token Cost Optimization (15-40% reduction)**
+- ConnectAgent and CompoundAgent filter artifacts to relevant files only (was loading entire project)
+- PRDs over 5000 characters truncated in agent context
+- UX specialist modules load conditionally (standard mode skips specialist knowledge)
+- All LLM clients report input/output tokens separately for cost diagnostics
+- Added Haiku 4.5 and Opus 4.6 cost rates for accurate tracking
+
+**Tier Simplification**
+- Removed Starter tier (now Free/Pro/Enterprise only)
+- Fixed gating: rc_connect and rc_compound correctly gated behind Pro
+- Commercial use disclaimer added to LICENSE and README
+
+---
 
 ### v1.0.0 (2026-03-02) - Initial Release
 

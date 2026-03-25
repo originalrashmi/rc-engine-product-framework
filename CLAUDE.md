@@ -162,7 +162,7 @@ If no existing project state is detected, follow the onboarding flow in `.claude
 | `rc_autopilot` | Run remaining phases automatically with gate checks | "Running the pipeline on autopilot..." |
 | `rc_connect` | Phase 7 - after all forge tasks, verify integration | "Verifying all components integrate correctly..." |
 | `rc_compound` | Phase 8 - production hardening assessment | "Running production readiness checks..." |
-| `rc_gate` | Between phases - approval checkpoint | "Here's what was produced. Approve to continue?" |
+| `rc_gate` | Between phases - approval checkpoint. Supports `force=true` to bypass design checks. | "Here's what was produced. Approve to continue?" |
 | `rc_save` | To save generated artifacts | (Internal - no user message needed) |
 | `rc_status` | When user asks about progress | "Here's where we are in the build..." |
 | `rc_reset` | To reset pipeline state (with confirmation) | "Resetting pipeline state..." |
