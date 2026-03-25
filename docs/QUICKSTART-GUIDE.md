@@ -413,20 +413,20 @@ your-project/
 
 ---
 
-## 09 - Pricing
+## 09 - AI Provider Costs
 
 **RC Engine is free and open source.** All 52 tools, all features, no restrictions.
 
-**BYOK model:** RC Engine uses your own API keys (Anthropic, Perplexity, etc.) - you pay providers directly at their rates.
+The only cost is what your AI providers charge for API usage (BYOK - bring your own keys):
 
-| Pipeline Phase | Typical AI Cost | What Happens |
-|---------------|----------------|--------------|
+| Pipeline Phase | Typical API Cost | What Happens |
+|---------------|-----------------|--------------|
 | Pre-RC Research | $1-5 | 20 specialists across 6 stages |
 | RC Method Build | $2-10 | Architecture, task planning, code generation |
 | Post-RC Validation | $0.50-2 | Security scanning, monitoring, legal review |
 | **Total** | **$3-20** | **Varies by project complexity** |
 
-*Cost estimates are approximate, based on typical token usage and published API rates. Actual costs vary by project complexity, provider pricing changes, and usage patterns.*
+*Estimates based on typical token usage at published API rates. Actual costs vary by project complexity and provider pricing.*
 
 ---
 
