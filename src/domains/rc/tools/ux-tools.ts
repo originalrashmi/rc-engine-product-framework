@@ -135,6 +135,41 @@ export function registerRcUxTools(server: McpServer): void {
       }
     },
   );
+  // design_challenge - Stress-test designs with multi-lens review
+  server.registerTool(
+    'design_challenge',
+    {
+      description:
+        'Stress-test design options against 5 lenses: ICP alignment, copy quality, design justification, conversion flow, and accessibility. Call after ux_design generates options. Returns findings by severity with specific fixes. After success: present findings to user, then proceed to design_select or design_iterate.',
+      inputSchema: {
+        project_path: z.string().describe('Absolute path to the project directory'),
+        screen_descriptions: z
+          .string()
+          .optional()
+          .describe('Optional text descriptions of screens if wireframes are not available'),
+      },
+    },
+    async ({ project_path, screen_descriptions }) => {
+      try {
+        const prdContext = await loadPrdContext(project_path);
+        const { icpData } = await loadResearchContext(project_path);
+
+        const result = await getOrchestrator().designChallenge({
+          projectPath: project_path,
+          prdContext,
+          icpData,
+          screenDescriptions: screen_descriptions,
+        });
+
+        return { content: [{ type: 'text' as const, text: result.text }] };
+      } catch (err) {
+        return {
+          content: [{ type: 'text' as const, text: `Error: ${(err as Error).message}` }],
+          isError: true,
+        };
+      }
+    },
+  );
 }
 
 /** Load PRD content from a project for design context */

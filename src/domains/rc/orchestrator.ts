@@ -696,18 +696,21 @@ ${testScriptKnowledge}`;
       state.uxScore !== null &&
       state.uxScore >= 4
     ) {
-      const hasDesignWork =
-        !!state.selectedDesign ||
-        !!state.designIntake ||
-        this.hasDesignFiles(projectPath);
+      const hasDesignWork = !!state.selectedDesign || !!state.designIntake || this.hasDesignFiles(projectPath);
 
       if (!hasDesignWork) {
         if (force) {
           // User chose to bypass - log to audit trail and continue
-          audit('gate.design-bypass', 'rc', projectPath, {
-            phase: state.currentPhase,
-            uxScore: state.uxScore,
-          }, `gate-${state.currentPhase}`);
+          audit(
+            'gate.design-bypass',
+            'rc',
+            projectPath,
+            {
+              phase: state.currentPhase,
+              uxScore: state.uxScore,
+            },
+            `gate-${state.currentPhase}`,
+          );
         } else {
           return {
             text: `**Checkpoint ${state.currentPhase} - Design work required**

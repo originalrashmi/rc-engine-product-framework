@@ -63,8 +63,8 @@ server.registerTool = ((...toolArgs: unknown[]) => {
 registerInitTool(server); // 1 tool: rc_init (unified entry point)
 registerPreRcTools(server); // 7 tools: prc_*
 registerRcPhaseTools(server); // 12 tools: rc_start, rc_illuminate, rc_define, rc_import_prerc, rc_architect, rc_sequence, rc_validate, rc_forge_task, rc_connect, rc_compound, rc_forge_all, rc_autopilot
-registerRcGateTools(server); // 4 tools: rc_gate, rc_save, rc_status, rc_reset
-registerRcUxTools(server); // 5 tools: ux_score, ux_audit, ux_generate, ux_design, design_challenge
+registerRcGateTools(server); // 5 tools: rc_gate, rc_save, rc_status, rc_reset
+registerRcUxTools(server); // 6 tools: ux_score, ux_audit, ux_generate, ux_design, design_challenge
 registerCopyTools(server); // 4 tools: copy_research_brief, copy_generate, copy_iterate, copy_critique
 registerDesignTools(server); // 6 tools: design_research_brief, design_intake, brand_import, design_iterate, design_select, design_pipeline
 registerExportTools(server); // 2 tools: playbook_generate, pdf_export
@@ -156,8 +156,8 @@ ${summary}
     Entry .......... 1 tool  (rc_init)
     Pre-RC ......... 7 tools (prc_*)
     RC Phases ...... 12 tools (rc_start..rc_autopilot)
-    RC Gates ....... 4 tools (rc_gate, rc_save, rc_status, rc_reset)
-    UX ............. 5 tools (ux_*, design_challenge)
+    RC Gates ....... 5 tools (rc_gate, rc_save, rc_status, rc_reset)
+    UX ............. 6 tools (ux_*, design_challenge)
     Copy ........... 4 tools (copy_*)
     Design ......... 6 tools (design_*, brand_import)
     Export ......... 2 tools (playbook_generate, pdf_export)

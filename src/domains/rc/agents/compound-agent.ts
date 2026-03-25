@@ -39,9 +39,7 @@ export class CompoundAgent extends BaseAgent {
     }
 
     // Load PRD with truncation for large documents
-    const prdArtifacts = state.artifacts.filter(
-      (a) => a.includes('/prds/PRD-') && !a.includes('-ux.md'),
-    );
+    const prdArtifacts = state.artifacts.filter((a) => a.includes('/prds/PRD-') && !a.includes('-ux.md'));
     for (const prd of prdArtifacts) {
       try {
         const content = this.contextLoader.loadProjectFile(state.projectPath, prd);

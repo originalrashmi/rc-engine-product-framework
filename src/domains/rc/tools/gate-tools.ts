@@ -44,7 +44,10 @@ export function registerRcGateTools(server: McpServer): void {
         project_path: z.string().describe('Absolute path to the project directory'),
         decision: z.string().describe("Checkpoint decision: 'approve', 'reject [reason]', or 'question [text]'"),
         feedback: z.string().optional().describe('Optional additional feedback or reason for the decision'),
-        force: z.boolean().optional().describe('If true, bypass design intelligence checks for high-UX projects (use with caution)'),
+        force: z
+          .boolean()
+          .optional()
+          .describe('If true, bypass design intelligence checks for high-UX projects (use with caution)'),
       },
     },
     async ({ project_path, decision, feedback, force }) => {
@@ -109,6 +112,40 @@ export function registerRcGateTools(server: McpServer): void {
     async ({ project_path }) => {
       try {
         const result = getOrchestrator().status(project_path);
+        return { content: [{ type: 'text' as const, text: result.text }] };
+      } catch (err) {
+        return {
+          content: [{ type: 'text' as const, text: `Error: ${(err as Error).message}` }],
+          isError: true,
+        };
+      }
+    },
+  );
+
+  // rc_reset - Reset pipeline state
+  server.registerTool(
+    'rc_reset',
+    {
+      description:
+        'Reset RC Method pipeline state. Clears checkpoint store and markdown state file, allowing a fresh rc_start. DESTRUCTIVE - requires explicit confirmation. Use when the user wants to start over or abandon current progress. After success: pipeline is clean, call rc_start or rc_init to begin again.',
+      inputSchema: {
+        project_path: z.string().describe('Absolute path to the project directory'),
+        confirm: z.boolean().describe('Must be true to confirm reset. This is destructive and cannot be undone.'),
+      },
+    },
+    async ({ project_path, confirm }) => {
+      try {
+        if (!confirm) {
+          return {
+            content: [
+              {
+                type: 'text' as const,
+                text: 'Reset cancelled. Set confirm=true to proceed. Warning: this will delete all RC Method state for this project.',
+              },
+            ],
+          };
+        }
+        const result = getOrchestrator().reset(project_path);
         return { content: [{ type: 'text' as const, text: result.text }] };
       } catch (err) {
         return {

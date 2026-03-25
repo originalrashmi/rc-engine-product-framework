@@ -132,15 +132,20 @@ Every pipeline run produces these deliverables:
 
 | Deliverable | Description |
 |-------------|-------------|
-| **Product Requirements Document (PRD)** | 19-section research-backed document covering problem, users, features, architecture, risks, and GTM |
+| **Product Requirements Document (PRD)** | 19-section research-backed document covering problem, users, features, architecture, risks, and GTM strategy |
+| **Go-to-Market Strategy** | Launch plan with distribution channels, competitive positioning, and growth tactics (PRD section 12) |
 | **Technical Architecture** | Stack selection, data model, API design, infrastructure plan |
 | **Prioritized Task List** | Dependency-ordered tasks across 4 layers (Foundation, Core, Integration, Polish) |
-| **Design Options** | Wireframes, brand identity, visual design directions |
+| **Architecture Diagrams** | Dependency graph, Gantt chart, and layer views (Mermaid) |
+| **Design Options** | Wireframes, brand identity, visual design directions with design challenge review |
 | **Copy System** | Research-backed copy for headlines, CTAs, onboarding flows |
 | **Implementation Guidance** | Per-task build instructions with file structure and code patterns |
-| **Playbook** | Step-by-step implementation guide |
+| **Playbook** | Step-by-step implementation guide (architecture decision record) |
 | **Security Scan Report** | OWASP-mapped findings with CWE references and plain-language remediation |
+| **Legal Compliance Review** | Regulatory gap analysis (GDPR, HIPAA, PCI-DSS, COPPA, and more) |
+| **Edge Case Analysis** | Boundary conditions and failure mode detection |
 | **Traceability Matrix** | Requirements-to-code coverage showing what was specified, built, and verified |
+| **Value Report** | Cost and time savings vs. a human consulting team |
 
 All deliverables are saved as markdown and HTML files in your project directory.
 
