@@ -1,4 +1,4 @@
-import fs from 'node:fs';
+import fsAsync from 'node:fs/promises';
 import path from 'node:path';
 import type { LLMProvider } from './types.js';
 
@@ -137,19 +137,22 @@ export class TokenTracker {
     return lines.join('\n');
   }
 
-  /** Write pipeline summary to project directory */
+  /** Write pipeline summary to project directory (fire-and-forget, never throws). */
   private writePipelineFile(): void {
     if (!this.projectPath) return;
 
     const dir = path.join(this.projectPath, '.rc-engine');
-    fs.mkdirSync(dir, { recursive: true });
-
     const filePath = path.join(dir, 'PIPELINE.md');
     const tmpPath = filePath + '.tmp';
 
-    // Atomic write: write to tmp, then rename
-    fs.writeFileSync(tmpPath, this.getSummary(), 'utf-8');
-    fs.renameSync(tmpPath, filePath);
+    // Async atomic write -- errors are swallowed (non-critical telemetry)
+    fsAsync
+      .mkdir(dir, { recursive: true })
+      .then(() => fsAsync.writeFile(tmpPath, this.getSummary(), 'utf-8'))
+      .then(() => fsAsync.rename(tmpPath, filePath))
+      .catch(() => {
+        // Non-critical -- pipeline summary is a side effect
+      });
   }
 }
 

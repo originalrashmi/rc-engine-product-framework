@@ -1,4 +1,5 @@
 import fs from 'node:fs';
+import fsAsync from 'node:fs/promises';
 import { randomBytes } from 'node:crypto';
 import path from 'node:path';
 import type { Phase, GateRecord, ProjectState, UxMode } from '../types.js';
@@ -51,20 +52,14 @@ export class StateManager {
     }
   }
 
-  /** Save project state to CheckpointStore (primary) + markdown export (side-effect). */
+  /** Save project state to CheckpointStore (primary) + async markdown export (non-blocking). */
   save(projectPath: string, state: ProjectState): void {
     const { store, pipelineId } = getProjectStore(projectPath);
     store.save(pipelineId, NODE_IDS.RC_STATE, state);
-    // Best-effort markdown export (sync for compatibility with existing sync callers)
-    try {
-      const filePath = path.join(projectPath, STATE_DIR, STATE_FILE);
-      fs.mkdirSync(path.dirname(filePath), { recursive: true });
-      const tmpPath = `${filePath}.${randomBytes(4).toString('hex')}.tmp`;
-      fs.writeFileSync(tmpPath, this.serialize(state), 'utf-8');
-      fs.renameSync(tmpPath, filePath);
-    } catch (err) {
-      console.error('[rc] Warning: failed to write markdown export:', (err as Error).message);
-    }
+    // Non-blocking markdown export -- fire and forget
+    this.writeMarkdownExport(projectPath, state).catch(() => {
+      // Already logged inside writeMarkdownExport
+    });
   }
 
   /** Check if a project state exists */
@@ -76,6 +71,20 @@ export class StateManager {
     } catch {
       // Fall back to legacy file check during migration transition
       return fs.existsSync(path.join(projectPath, STATE_DIR, STATE_FILE));
+    }
+  }
+
+  // ── Async markdown export (non-blocking side effect) ───────────────────
+
+  private async writeMarkdownExport(projectPath: string, state: ProjectState): Promise<void> {
+    try {
+      const filePath = path.join(projectPath, STATE_DIR, STATE_FILE);
+      await fsAsync.mkdir(path.dirname(filePath), { recursive: true });
+      const tmpPath = `${filePath}.${randomBytes(4).toString('hex')}.tmp`;
+      await fsAsync.writeFile(tmpPath, this.serialize(state), 'utf-8');
+      await fsAsync.rename(tmpPath, filePath);
+    } catch (err) {
+      console.error('[rc] Warning: failed to write markdown export:', (err as Error).message);
     }
   }
 
