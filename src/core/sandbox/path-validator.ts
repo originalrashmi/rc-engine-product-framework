@@ -156,9 +156,7 @@ export class PathValidator {
    * preventing symlink-based directory traversal attacks.
    */
   resolve(inputPath: string): string {
-    const resolved = path.isAbsolute(inputPath)
-      ? path.resolve(inputPath)
-      : path.resolve(this.projectRoot, inputPath);
+    const resolved = path.isAbsolute(inputPath) ? path.resolve(inputPath) : path.resolve(this.projectRoot, inputPath);
     try {
       return fs.realpathSync(resolved);
     } catch {

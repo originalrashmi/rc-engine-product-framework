@@ -99,7 +99,7 @@ This takes a bit more hands-on work but produces the same quality output.
 
 ```
 START → Pre-RC Research → Stress Test → RC Build → Post-RC Validation → Ship
-         (6 stages,        (Pro tier,     (8 phases,    (scan, fix,        (traced,
+         (6 stages,        (optional,     (8 phases,    (scan, fix,        (traced,
           3 gates)          GO/NO-GO)      8 gates)      ship gate)         audited)
 ```
 
@@ -111,7 +111,7 @@ START → Pre-RC Research → Stress Test → RC Build → Post-RC Validation �
 4. Run research stages sequentially via `prc_run_stage`
 5. Present Gates 2 and 3 at appropriate points
 6. Synthesize research into PRD via `prc_synthesize`
-7. For Pro-tier users: run `prc_stress_test` to challenge the idea before building
+7. Optionally run `prc_stress_test` to challenge the idea before building
 8. Bridge into RC Method via `rc_import_prerc` (or `rc_start` if no Pre-RC)
 9. Walk through RC phases: illuminate, define, architect, sequence, validate, forge, connect, compound
 10. Present gates between phases via `rc_gate`
@@ -140,7 +140,12 @@ If no existing project state is detected, follow the onboarding flow in `.claude
 | `prc_run_stage` | After gate approval, for each research stage | "Running [N] research specialists on [topic]..." |
 | `prc_status` | When user asks about progress | "Here's where we are..." |
 | `prc_synthesize` | After all 6 stages complete and Gate 3 approved | "Combining all research into your product requirements document..." |
-| `prc_stress_test` | After prc_synthesize, before build (Pro tier only) | "Running an Idea Stress Test on your product idea..." |
+| `prc_stress_test` | After prc_synthesize, before build (optional) | "Running an Idea Stress Test on your product idea..." |
+
+### Entry Point
+| Tool | When to Call | What to Tell User |
+|------|-------------|-------------------|
+| `rc_init` | First interaction - detects state and routes to correct tool | "Let me check where we are..." |
 
 ### RC Method Domain (Build)
 | Tool | When to Call | What to Tell User |
@@ -153,11 +158,14 @@ If no existing project state is detected, follow the onboarding flow in `.claude
 | `rc_sequence` | Phase 4 - task ordering | "Creating the build plan with task dependencies..." |
 | `rc_validate` | Phase 5 - quality checks before building | "Running quality checks before we build..." |
 | `rc_forge_task` | Phase 6 - building individual tasks | "Building [task name]..." |
+| `rc_forge_all` | Phase 6 - build all pending tasks in sequence | "Building all remaining tasks..." |
+| `rc_autopilot` | Run remaining phases automatically with gate checks | "Running the pipeline on autopilot..." |
 | `rc_connect` | Phase 7 - after all forge tasks, verify integration | "Verifying all components integrate correctly..." |
 | `rc_compound` | Phase 8 - production hardening assessment | "Running production readiness checks..." |
 | `rc_gate` | Between phases - approval checkpoint | "Here's what was produced. Approve to continue?" |
 | `rc_save` | To save generated artifacts | (Internal - no user message needed) |
 | `rc_status` | When user asks about progress | "Here's where we are in the build..." |
+| `rc_reset` | To reset pipeline state (with confirmation) | "Resetting pipeline state..." |
 
 ### UX Tools
 | Tool | When to Call | What to Tell User |
@@ -166,6 +174,31 @@ If no existing project state is detected, follow the onboarding flow in `.claude
 | `ux_audit` | During Validate phase or when reviewing UI code | "Auditing your interface against UX best practices..." |
 | `ux_generate` | After PRD is defined, to create UX spec | "Generating detailed UX specifications..." |
 | `ux_design` | After Define phase, to generate visual design options | "Generating design options with wireframes..." |
+| `design_challenge` | After design options generated, to stress-test designs | "Challenging your design against edge cases..." |
+
+### Copy Tools
+| Tool | When to Call | What to Tell User |
+|------|-------------|-------------------|
+| `copy_research_brief` | After PRD, before copy generation | "Researching your brand voice and copy direction..." |
+| `copy_generate` | After research brief, to create copy | "Generating copy for your product..." |
+| `copy_iterate` | To refine generated copy with feedback | "Refining copy based on your feedback..." |
+| `copy_critique` | To review copy quality | "Reviewing copy for clarity and effectiveness..." |
+
+### Design Tools
+| Tool | When to Call | What to Tell User |
+|------|-------------|-------------------|
+| `design_research_brief` | After PRD, to research design direction | "Researching design patterns for your product..." |
+| `design_intake` | To capture design preferences and constraints | "Understanding your design preferences..." |
+| `brand_import` | To import existing brand assets | "Importing your brand assets..." |
+| `design_iterate` | To refine designs with feedback | "Iterating on designs based on your feedback..." |
+| `design_select` | To select from design options | "Recording your design selection..." |
+| `design_pipeline` | To run the full design flow end-to-end | "Running the complete design pipeline..." |
+
+### Export Tools
+| Tool | When to Call | What to Tell User |
+|------|-------------|-------------------|
+| `playbook_generate` | After build complete, to create implementation guide | "Generating your implementation playbook..." |
+| `pdf_export` | To export deliverables as formatted HTML/PDF | "Exporting your deliverables..." |
 
 ### Post-RC Domain (Validation)
 | Tool | When to Call | What to Tell User |
@@ -173,7 +206,7 @@ If no existing project state is detected, follow the onboarding flow in `.claude
 | `postrc_scan` | After build is complete | "Scanning your code for security issues, monitoring readiness, and legal compliance..." |
 | `postrc_override` | When user accepts a finding with justification | "Recording your override with audit trail..." |
 | `postrc_report` | After scan, to generate report | "Generating your validation report..." |
-| `postrc_configure` | To adjust scan policy (including legal review settings for Pro tier) | "Updating your validation policy..." |
+| `postrc_configure` | To adjust scan policy (including legal review settings) | "Updating your validation policy..." |
 | `postrc_gate` | After scan results reviewed | "Ready for the ship decision?" |
 | `postrc_status` | When user asks about scan results | "Here are your current validation results..." |
 | `postrc_generate_observability_spec` | Before RC build, from PRD | "Creating monitoring requirements from your PRD..." |
@@ -226,7 +259,7 @@ Example:
 When presenting legal review findings, always include this disclaimer:
 "This is automated compliance checking, not legal counsel. Consult a qualified attorney for legal advice specific to your product and jurisdiction."
 
-Legal review is available on Pro tier. Enable via `postrc_configure` with `legal_enabled: true`.
+Legal review is available. Enable via `postrc_configure` with `legal_enabled: true`.
 The claims audit (self-audit) reviews the RC Engine framework itself. The product legal review
 reviews the user's product for regulatory and compliance gaps.
 

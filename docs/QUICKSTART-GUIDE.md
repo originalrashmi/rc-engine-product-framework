@@ -1,38 +1,86 @@
-# RC Engine - Quickstart Guide
+# RC Engine Starter Guide
 
-Get from product idea to production-ready deliverables in one session.
-
----
-
-## What You Need Before Starting
-
-| Requirement | Why | Where to Get It |
-|-------------|-----|-----------------|
-| **Node.js 18+** | Runs the RC Engine server | [nodejs.org](https://nodejs.org) |
-| **An MCP-compatible IDE** | Your interface to the pipeline | See IDE options below |
-| **Anthropic API key** (required) | Powers the core AI reasoning | [console.anthropic.com](https://console.anthropic.com) |
-| **Perplexity API key** (recommended) | Provides live market research with web data | [perplexity.ai/settings/api](https://www.perplexity.ai/settings/api) |
-| **Google Gemini API key** (optional) | Handles fast classification at low cost | [aistudio.google.com/apikey](https://aistudio.google.com/apikey) |
-| **OpenAI API key** (optional) | Enhances UX and content analysis | [platform.openai.com/api-keys](https://platform.openai.com/api-keys) |
-
-**Supported IDEs** (pick one):
-
-| IDE | Type | Best For |
-|-----|------|----------|
-| [Claude Code](https://docs.anthropic.com/en/docs/claude-code) | Terminal-based (CLI) | Developers comfortable with the command line |
-| [Cursor](https://cursor.com) | Desktop app (VS Code fork) | Visual Studio Code users who want AI built in |
-| [Windsurf](https://windsurf.ai) | Desktop app (VS Code fork) | Similar to Cursor, alternative option |
-| VS Code + [Copilot Chat](https://marketplace.visualstudio.com/items?itemName=GitHub.copilot-chat) | Desktop app + extension | Existing VS Code users |
-
-**Cost estimate:** A full pipeline run (research through validation) typically costs $3-20 in API usage depending on project complexity.
+**Results through Clarity** - an AI-native product development pipeline
 
 ---
 
-## Setup (5 minutes)
+## 01 - What is RC Engine?
 
-### Step 1: Clone and build
+RC Engine takes a product idea - even a single sentence - and walks it through a structured development pipeline: research, architecture, build, validation, and traceability. It uses 35 orchestrated AI tools behind the scenes so you can focus on your product, not the process.
 
-> **Where:** Open a **terminal** (Terminal app on Mac, Command Prompt or PowerShell on Windows, or the built-in terminal in VS Code/Cursor/Windsurf).
+Up to 20 specialized AI analysts research your idea before a single line of code is written. They cover market fit, user needs, technical feasibility, security, UX, and more. Then the engine designs the architecture, builds task by task, and scans for security and legal issues before shipping.
+
+You approve every step. Nothing moves forward without your sign-off.
+
+---
+
+## 02 - Choose Your Path
+
+Pick the way that fits how you work. Both paths use the same pipeline and produce the same deliverables.
+
+### Path A: Web UI
+
+**Setup time:** 2 minutes
+
+Run `npm run web:dev` locally. Open the dashboard in your browser. Describe your idea. Follow the guided steps.
+
+- Visual pipeline with progress tracking
+- Download deliverables from the dashboard
+- Runs locally on your machine
+- Works on any device with a browser
+
+### Path B: MCP Server
+
+**Setup time:** 10 minutes
+
+Install RC Engine locally and connect it to your IDE. Chat naturally - the AI calls the right tools for you.
+
+- Runs inside Claude Code, Cursor, or any MCP IDE
+- Conversational interface
+- Full control over every tool call
+- Everything stays on your machine
+
+---
+
+## 03 - Path A: Web UI
+
+### 1. Start the Web UI
+
+Run `npm run web:dev` from your RC Engine directory, then open **http://localhost:3100** in your browser.
+
+### 2. Sign In
+
+1. Enter your email address
+2. Click Continue
+3. You land on the dashboard
+
+### 3. Start Your First Project
+
+1. Click **New Project**
+2. Describe your product idea in plain language - a single sentence is enough
+3. Choose how much of the pipeline to run:
+   - **Full Pipeline** - Research, Design, Architecture, Build, Validate, Ship
+   - **Research Only** - Market analysis and a complete requirements document
+   - **Build Only** - Skip research, jump to architecture and build
+4. Follow the guided steps. At each checkpoint, review what was produced and approve before moving on.
+
+### 4. Download Your Deliverables
+
+When the pipeline completes (or at any stage), download your deliverables directly from the dashboard - requirements document, architecture plan, task breakdown, security report, and more.
+
+That's it. No terminal, no configuration, no API keys to manage.
+
+---
+
+## 04 - Path B: MCP Server (IDE Integration)
+
+### 1. Prerequisites
+
+- **Node.js 18+** - download from [nodejs.org](https://nodejs.org). Check with `node --version`.
+- **Claude Code, Cursor, or another MCP-compatible IDE**
+- **An Anthropic API key** - sign up at [console.anthropic.com](https://console.anthropic.com)
+
+### 2. Install
 
 ```bash
 git clone https://github.com/originalrashmi/rc-engine-product-framework.git rc-engine
@@ -40,167 +88,171 @@ cd rc-engine
 npm install && npm run build
 ```
 
-If `npm` is not found, install Node.js first from [nodejs.org](https://nodejs.org) (LTS version recommended).
+### 3. Add Your API Keys
 
-### Step 2: Configure API keys
+Create a file called `.env` in the rc-engine folder:
 
-> **Where:** Still in your **terminal**, in the `rc-engine` folder.
+```
+# Required - powers core reasoning and architecture
+# Get yours at https://console.anthropic.com
+ANTHROPIC_API_KEY=sk-ant-paste_your_key_here
+
+# Recommended - enables live market and competitor research
+# Get yours at https://perplexity.ai/settings/api
+PERPLEXITY_API_KEY=pplx-paste_your_key_here
+
+# Optional - fast classification (free tier)
+GOOGLE_GEMINI_API_KEY=paste_your_key_here
+
+# Optional - UX and content analysis
+OPENAI_API_KEY=sk-paste_your_key_here
+```
+
+| Service | What It Powers | Required? | Typical Cost |
+|---------|---------------|-----------|-------------|
+| **Anthropic (Claude)** | Core reasoning, architecture, code generation | Yes | $1-5 per project |
+| **Perplexity** | Live market research and competitor data | Recommended | $0.50-2 per project |
+| **Google Gemini** | Fast classification tasks | Optional | Free tier |
+| **OpenAI** | UX and content analysis | Optional | Minimal |
+
+**No API keys?** RC Engine works in manual mode - it generates structured prompts you copy into any AI tool (ChatGPT, Claude.ai, Gemini) and paste the results back. Same methodology, more hands-on.
+
+This `.env` file is private - it is listed in `.gitignore` and will never be shared or uploaded.
+
+### 4. Connect to Your IDE
+
+**Claude Code**
+
+Add to `~/.claude/settings.json`:
+
+```json
+{
+  "mcpServers": {
+    "rc-engine": {
+      "command": "node",
+      "args": ["/absolute/path/to/rc-engine/dist/index.js"]
+    }
+  }
+}
+```
+
+**Cursor**
+
+Add to `.cursor/mcp.json` in your project:
+
+```json
+{
+  "mcpServers": {
+    "rc-engine": {
+      "command": "node",
+      "args": ["/absolute/path/to/rc-engine/dist/index.js"]
+    }
+  }
+}
+```
+
+Replace the path with the actual location where you cloned the repo. To find it, open your terminal in the rc-engine folder and run:
 
 ```bash
-cp .env.example .env
+# Mac/Linux
+echo "$(pwd)/dist/index.js"
+
+# Windows
+echo %cd%\dist\index.js
 ```
 
-Now open the `.env` file in any text editor (VS Code, Notepad, nano, etc.) and paste your keys:
+Copy the output and paste it into the `args` array.
 
-```
-ANTHROPIC_API_KEY=your-key-here
-PERPLEXITY_API_KEY=your-key-here        # recommended
-GOOGLE_GEMINI_API_KEY=your-key-here     # optional
-OPENAI_API_KEY=your-key-here            # optional
-```
+### 5. Start Building
 
-This file is private - it is already in `.gitignore` so it will never be committed or shared.
+Open your IDE and describe what you want to build:
 
-### Step 3: Connect RC Engine to your IDE
+> *"I want to build a SaaS dashboard for tracking marketing spend across channels."*
 
-RC Engine runs as a background server that your IDE talks to. You need to tell your IDE where to find it.
+The AI orchestrates the full pipeline - calling tools, presenting results, and pausing at checkpoints for your approval. You never need to call tools directly.
 
-**Option A: Claude Code (terminal-based)**
-
-Claude Code is a CLI tool - you run it from your terminal. To connect RC Engine:
-
-1. Open the project folder where you want to build your product (not the rc-engine folder):
-   ```bash
-   mkdir ~/my-product && cd ~/my-product
-   ```
-
-2. Create a `.mcp.json` file in that project folder:
-   ```bash
-   cat > .mcp.json << 'EOF'
-   {
-     "mcpServers": {
-       "rc-engine": {
-         "command": "node",
-         "args": ["/full/path/to/rc-engine/dist/index.js"]
-       }
-     }
-   }
-   EOF
-   ```
-   Replace `/full/path/to/rc-engine` with the actual absolute path where you cloned the repo (e.g., `/Users/you/rc-engine`).
-
-3. Start Claude Code in that folder:
-   ```bash
-   claude
-   ```
-
-**Option B: Cursor / Windsurf / VS Code (desktop apps)**
-
-1. Open your product project folder in the IDE (File > Open Folder)
-2. Create a `.mcp.json` file in the project root with the same content as above
-3. Restart the IDE or reload the window (Cmd+Shift+P > "Reload Window")
-
-For detailed IDE-specific setup, see [Getting Started](GETTING-STARTED.md).
-
-### Step 4: Verify it works
-
-> **Where:** Inside your IDE (Claude Code terminal, or the AI chat panel in Cursor/Windsurf/VS Code).
-
-Type a message like: "What tools are available?" You should see RC Engine tools listed (14 on Free tier, up to 35 on Pro).
-
-If tools don't appear, check that:
-- The path in `.mcp.json` points to `dist/index.js` (not `src/`)
-- You ran `npm run build` in the rc-engine folder
-- You restarted your IDE after creating `.mcp.json`
+| Domain | What It Does |
+|--------|-------------|
+| Pre-RC (Research) | Up to 20 AI specialists analyze your idea from every angle |
+| RC Method (Build) | 8-phase structured development: discovery through production hardening |
+| Post-RC (Validation) | Security scanning, monitoring readiness, and ship/no-ship gate |
+| Traceability (Audit) | Tracks which requirements were built and verified |
 
 ---
 
-## Your First Run
+## 05 - The Pipeline
 
-> **Where:** Everything from here happens inside your IDE's AI chat. Just type naturally - you never need to call tools by name.
+Whichever path you choose, RC Engine runs your idea through this structured process:
 
-### 1. Describe your idea
+1. **Research** - Up to 20 AI specialists analyze your idea - market, users, security, UX, and more
+   - CHECKPOINT: APPROVE RESEARCH SCOPE
 
-Tell the AI what you want to build. Examples:
+2. **Requirements Document** - 19-section PRD synthesized from all research findings
+   - CHECKPOINT: APPROVE REQUIREMENTS
 
-- "I want to build a SaaS tool for freelancer invoicing"
-- "Build me a mobile app for pet owners to find nearby vets"
-- "I need an internal tool for managing client onboarding"
+3. **Architecture** - Tech stack, data model, API design, infrastructure plan
+   - CHECKPOINT: APPROVE ARCHITECTURE
 
-### 2. Research phase (15-30 minutes)
+4. **Task Plan** - Prioritized tasks with effort estimates and dependencies
+   - CHECKPOINT: APPROVE BUILD PLAN
 
-The AI activates up to 20 research specialists that analyze your idea:
+5. **Build** - Task by task with quality checks at each layer
 
-- **Market Landscape Analyst** - competitive landscape, market gaps
-- **Primary User Archetype** - user personas, pain points, behaviors
-- **Systems Architect** - technical feasibility, stack recommendations
-- **Security Compliance Analyst** - threat modeling, regulatory requirements
-- **UX Systems Designer** - interaction patterns, cognitive load analysis
-- ...and up to 15 more specialists
+6. **Security + Legal Scan** - Vulnerability detection with plain-language explanations
+   - CHECKPOINT: SHIP / FIX / ACCEPT RISK
 
-You approve at **3 checkpoints** during research:
-1. After complexity assessment (which specialists to activate)
-2. After market/user research (findings review)
-3. After technical/validation research (final review)
+7. **Ship** - Production-ready with full audit trail
 
-### 3. Build phase
-
-After research, the AI creates:
-- A **requirements document** (19-section PRD)
-- A **technical architecture** (stack, data model, APIs)
-- A **task list** (prioritized, dependency-ordered)
-- **Implementation guidance** for each task
-
-You approve at **8 checkpoints** during build (one per phase).
-
-### 4. Validation phase
-
-The AI scans everything for:
-- Security vulnerabilities (OWASP-mapped)
-- Monitoring readiness
-- Requirements coverage
-
-You make the final **ship/no-ship decision**.
+**You are in control at every checkpoint.** Nothing moves forward without your approval.
 
 ---
 
-## What You Get at the End
+## 06 - What You Get
 
-| Deliverable | File Location |
-|-------------|---------------|
-| Product Requirements Document (PRD) | `pre-rc-research/prd-*.md` and `.html` |
-| Research artifacts (per specialist) | `pre-rc-research/stage-{1-6}/` |
-| Task list with estimates | `pre-rc-research/tasks-*.md` and `.html` |
-| Technical architecture | `rc-method/prds/` |
-| Build outputs per task | `rc-method/forge/` |
-| Security scan report | `post-rc/reports/` |
-| Traceability matrix | `rc-traceability/` |
+| Deliverable | Description |
+|-------------|-------------|
+| **Requirements Document** | 19-section PRD covering market, users, technical, security, UX |
+| **Technical Architecture** | Stack, data model, API design, infrastructure plan |
+| **Task Breakdown** | Prioritized tasks with effort estimates and dependencies |
+| **Architecture Diagrams** | Dependency, Gantt, and layer views |
+| **Security Report** | Vulnerability scan with plain-language findings |
+| **Value Report** | Cost and time savings vs. a human consulting team |
 
 All deliverables are markdown and HTML - readable in any browser or text editor.
 
 ---
 
-## No API Keys? No Problem
+## 07 - Pricing
 
-RC Engine works in **manual mode** without API keys. The AI generates structured prompts that you copy into any AI tool (ChatGPT, Claude.ai, Gemini) and paste the results back. Same quality output, more hands-on work.
+**RC Engine is free and open source.** All 35 tools, all features, no limits.
 
----
+**BYOK model:** RC Engine uses your own API keys (Anthropic, Perplexity, etc.) - you pay providers directly at their rates. Typical total: $3-20 per project depending on complexity.
 
-## Tips for Best Results
-
-1. **Be specific about your users** - "freelancers who bill hourly" is better than "users"
-2. **Mention scale** - "100 users" vs "100,000 users" changes the architecture
-3. **State constraints** - "must work offline" or "budget under $500/month" helps focus research
-4. **Read the checkpoints** - the research findings are the most valuable part; don't skip them
+*Cost estimates are approximate, based on typical token usage and published API rates. Actual costs vary by project complexity, provider pricing changes, and usage patterns.*
 
 ---
 
-## What's Next
+## 08 - Common Questions
 
-- **Give feedback** - [Open an issue](https://github.com/originalrashmi/rc-engine-product-framework/issues) with your experience
-- **Star the repo** - helps others find RC Engine
-- **Join the community** - contribute improvements via [pull requests](https://github.com/originalrashmi/rc-engine-product-framework/blob/main/CONTRIBUTING.md)
-- **Get Pro knowledge files** - enhanced research personas and build skills for autonomous execution
+**Do I need to be technical to use RC Engine?**
+
+No. The Web UI is designed for non-technical users. Describe your idea in plain language and the engine handles everything. The MCP path is for developers who prefer working in their IDE.
+
+**What happens to my data?**
+
+Your project data stays private. Both paths keep everything on your local machine. AI API calls go to the providers you configure (Anthropic, Perplexity, etc.) - RC Engine does not store or train on your data.
+
+**Can I switch between Web UI and MCP?**
+
+Both paths store data locally. The Web UI and MCP server share the same project state files.
+
+**What if I only need the research phase?**
+
+Choose "Research Only" when starting a project. You get the full 20-analyst research pipeline and a complete requirements document without entering the build phase. This is available on all plans including Free.
+
+**How long does a full pipeline run take?**
+
+A typical full pipeline run takes 30-60 minutes of AI processing time. You can step away and come back - your progress is saved at every checkpoint.
 
 ---
 
@@ -216,27 +268,4 @@ RC Engine works in **manual mode** without API keys. The AI generates structured
 
 ---
 
-## Architecture Overview
-
-```
-Your IDE (Claude Code / Cursor / Windsurf / VS Code)
-    |
-    v
-RC Engine MCP Server (35 tools, Free + Pro tiers)
-    |
-    +--> Pre-RC Research (7 tools, 6 free) --> 20 AI specialists
-    |         |
-    |         v
-    +--> RC Method Build (17 tools, 5 free) --> 8-phase gated pipeline
-    |         |
-    |         v
-    +--> Post-RC Validation (7 tools, 2 free) --> Security + monitoring scan
-    |         |
-    |         v
-    +--> Traceability (3 tools, Pro only) --> Requirements-to-code audit
-    |
-    v
-Deliverables (PRD, architecture, tasks, code, scan report)
-```
-
-For the full technical deep dive, see [Architecture](ARCHITECTURE.md).
+RC Engine by Toerana - MIT License - [GitHub](https://github.com/originalrashmi/rc-engine-product-framework)

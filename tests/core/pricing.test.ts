@@ -2,64 +2,46 @@ import { describe, it, expect, beforeEach } from 'vitest';
 import { TIERS, getTier, hasFeature, formatTierPrice, getTierOrder } from '../../src/core/pricing/tiers.js';
 import { UsageMeter } from '../../src/core/pricing/meter.js';
 
-// ── Tier Definitions ────────────────────────────────────────────────────────
+// ── Community Edition Tiers ─────────────────────────────────────────────────
 
 describe('Pricing Tiers', () => {
-  it('should define 3 tiers', () => {
-    expect(Object.keys(TIERS)).toHaveLength(3);
-    expect(getTierOrder()).toEqual(['free', 'pro', 'enterprise']);
+  it('should define 1 tier (community)', () => {
+    expect(Object.keys(TIERS)).toHaveLength(1);
+    expect(getTierOrder()).toEqual(['community']);
   });
 
-  it('free tier has correct limits', () => {
-    const free = getTier('free');
-    expect(free.monthlyPriceUsd).toBe(0);
-    expect(free.projectsPerMonth).toBe(1);
-    expect(free.features.fullPipeline).toBe(true);
-    expect(free.features.designOptions).toBe(0);
-    expect(free.features.securityScan).toBe(true);
+  it('community tier has all features enabled', () => {
+    const community = getTier('community');
+    expect(community.projectsPerMonth).toBe(0); // unlimited
+    expect(community.features.fullPipeline).toBe(true);
+    expect(community.features.designOptions).toBe(3);
+    expect(community.features.securityScan).toBe(true);
+    expect(community.features.traceability).toBe(true);
+    expect(community.features.stressTest).toBe(true);
+    expect(community.features.playbook).toBe(true);
+    expect(community.features.pdfExport).toBe(true);
+    expect(community.features.diagrams).toBe(true);
+    expect(community.features.webhooks).toBe(true);
+    expect(community.features.apiAccess).toBe(true);
   });
 
-  it('pro tier has unlimited projects and all features', () => {
-    const pro = getTier('pro');
-    expect(pro.monthlyPriceUsd).toBe(79);
-    expect(pro.projectsPerMonth).toBe(0); // unlimited
-    expect(pro.features.fullPipeline).toBe(true);
-    expect(pro.features.designOptions).toBe(3);
-    expect(pro.features.playbook).toBe(true);
-    expect(pro.features.traceability).toBe(true);
-    expect(pro.features.priorityRouting).toBe(true);
+  it('getTier returns community for any input', () => {
+    expect(getTier('community').name).toBe('Community');
+    expect(getTier('free').name).toBe('Community');
+    expect(getTier('pro').name).toBe('Community');
+    expect(getTier('enterprise').name).toBe('Community');
   });
 
-  it('enterprise has team seats and webhooks', () => {
-    const enterprise = getTier('enterprise');
-    expect(enterprise.features.teamSeats).toBe(0); // unlimited
-    expect(enterprise.features.webhooks).toBe(true);
-    expect(enterprise.features.apiAccess).toBe(true);
-  });
-
-  it('annual price is lower than monthly for pro', () => {
-    const pro = getTier('pro');
-    expect(pro.annualPriceUsd).toBeLessThan(pro.monthlyPriceUsd);
-  });
-
-  it('getTier throws on unknown tier', () => {
-    expect(() => getTier('platinum' as never)).toThrow('Unknown tier');
-  });
-
-  it('hasFeature checks boolean and numeric features', () => {
+  it('hasFeature always returns true', () => {
+    expect(hasFeature('community', 'fullPipeline')).toBe(true);
+    expect(hasFeature('community', 'designOptions')).toBe(true);
+    expect(hasFeature('community', 'stressTest')).toBe(true);
     expect(hasFeature('free', 'fullPipeline')).toBe(true);
-    expect(hasFeature('pro', 'fullPipeline')).toBe(true);
-    expect(hasFeature('free', 'designOptions')).toBe(false); // 0 = false
-    expect(hasFeature('pro', 'designOptions')).toBe(true); // 3 = true
-    expect(hasFeature('free', 'stressTest')).toBe(false); // Pro-only feature
-    expect(hasFeature('pro', 'stressTest')).toBe(true);
+    expect(hasFeature('pro', 'designOptions')).toBe(true);
   });
 
-  it('formatTierPrice returns correct strings', () => {
-    expect(formatTierPrice(getTier('free'))).toBe('Free');
-    expect(formatTierPrice(getTier('pro'))).toBe('$79/mo');
-    expect(formatTierPrice(getTier('pro'), true)).toBe('$66/mo');
-    expect(formatTierPrice(getTier('enterprise'))).toBe('Custom');
+  it('formatTierPrice returns free', () => {
+    expect(formatTierPrice()).toBe('Free (Open Source)');
   });
 });
 
@@ -72,33 +54,19 @@ describe('UsageMeter', () => {
     meter = new UsageMeter();
   });
 
-  it('defaults to free tier', () => {
-    expect(meter.getUserTier('user-1')).toBe('free');
+  it('defaults to community tier', () => {
+    expect(meter.getUserTier('user-1')).toBe('community');
   });
 
-  it('allows setting user tier', () => {
-    meter.setUserTier('user-1', 'pro');
-    expect(meter.getUserTier('user-1')).toBe('pro');
-  });
-
-  it('free tier allows 1 project', () => {
+  it('always allows projects (no limits)', () => {
     const check = meter.checkLimit('user-1');
     expect(check.allowed).toBe(true);
-    expect(check.projectsRemaining).toBe(1);
+    expect(check.projectsRemaining).toBe(Infinity);
+    expect(check.overageCostUsd).toBe(0);
   });
 
-  it('free tier blocks after 1 project', () => {
-    meter.recordProject('user-1', 'proj-1', 'Test Project');
-    const check = meter.checkLimit('user-1');
-    expect(check.allowed).toBe(false);
-    expect(check.projectsRemaining).toBe(0);
-    expect(check.reason).toContain('Free tier limit');
-  });
-
-  it('pro tier has unlimited projects', () => {
-    meter.setUserTier('user-1', 'pro');
-
-    for (let i = 0; i < 20; i++) {
+  it('allows unlimited projects', () => {
+    for (let i = 0; i < 100; i++) {
       meter.recordProject('user-1', `proj-${i}`, `Project ${i}`);
     }
 
@@ -126,9 +94,7 @@ describe('UsageMeter', () => {
     expect(summary.projects[0].completed).toBe(true);
   });
 
-  it('getSummary shows correct values for pro', () => {
-    meter.setUserTier('user-1', 'pro');
-
+  it('getSummary shows correct values', () => {
     for (let i = 0; i < 7; i++) {
       meter.recordProject('user-1', `proj-${i}`, `Project ${i}`);
     }
@@ -138,14 +104,14 @@ describe('UsageMeter', () => {
     expect(summary.projectsAllowed).toBe(Infinity);
     expect(summary.overageProjects).toBe(0);
     expect(summary.overageCostUsd).toBe(0);
+    expect(summary.tierId).toBe('community');
   });
 
   it('reset clears all data', () => {
-    meter.setUserTier('user-1', 'pro');
     meter.recordProject('user-1', 'proj-1', 'Test');
     meter.reset();
 
-    expect(meter.getUserTier('user-1')).toBe('free');
+    expect(meter.getUserTier('user-1')).toBe('community');
     const summary = meter.getSummary('user-1');
     expect(summary.projectsUsed).toBe(0);
   });

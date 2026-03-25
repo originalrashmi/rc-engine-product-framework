@@ -1,16 +1,10 @@
 /**
- * Usage Meter - Tracks per-user project consumption for billing.
+ * Usage Meter - Tracks per-user project consumption for analytics.
  *
- * Records:
- *   - Projects created per billing period
- *   - Tool calls per project (for analytics)
- *   - AI cost passthrough per project
- *
- * Storage: SQLite via the checkpoint store pattern.
+ * Community Edition: no limits, no overage. All features available.
  */
 
 import type { TierId } from './tiers.js';
-import { getTier } from './tiers.js';
 
 // ── Types ───────────────────────────────────────────────────────────────────
 
@@ -49,61 +43,23 @@ export interface UsageLimitCheck {
 
 export class UsageMeter {
   private records: Map<string, UsageRecord[]> = new Map();
-  private userTiers: Map<string, TierId> = new Map();
 
-  /** Set the tier for a user. */
-  setUserTier(userId: string, tierId: TierId): void {
-    this.userTiers.set(userId, tierId);
+  /** Set the tier for a user (no-op in community edition). */
+  setUserTier(_userId: string, _tierId: TierId): void {
+    // Community edition - single tier, nothing to set
   }
 
-  /** Get the tier for a user (defaults to 'free'). */
-  getUserTier(userId: string): TierId {
-    return this.userTiers.get(userId) ?? 'free';
+  /** Get the tier for a user (always community). */
+  getUserTier(_userId: string): TierId {
+    return 'community';
   }
 
-  /**
-   * Check if a user can create a new project.
-   */
-  checkLimit(userId: string): UsageLimitCheck {
-    const tierId = this.getUserTier(userId);
-    const tier = getTier(tierId);
-    const records = this.getCurrentPeriodRecords(userId);
-
-    // Unlimited projects
-    if (tier.projectsPerMonth === 0) {
-      return { allowed: true, projectsRemaining: Infinity, overageCostUsd: 0 };
-    }
-
-    const used = records.length;
-    const remaining = Math.max(0, tier.projectsPerMonth - used);
-
-    // Free tier: hard limit, no overage
-    if (tierId === 'free' && remaining === 0) {
-      return {
-        allowed: false,
-        reason: 'Free tier limit reached (1 project/month). Upgrade to Pro for more.',
-        projectsRemaining: 0,
-        overageCostUsd: 0,
-      };
-    }
-
-    // Paid tiers: allow overage
-    if (remaining === 0 && tier.overagePerProjectUsd > 0) {
-      const overageCount = used - tier.projectsPerMonth + 1;
-      return {
-        allowed: true,
-        reason: `This project exceeds your ${tier.name} plan limit. Overage: $${tier.overagePerProjectUsd}/project.`,
-        projectsRemaining: 0,
-        overageCostUsd: overageCount * tier.overagePerProjectUsd,
-      };
-    }
-
-    return { allowed: true, projectsRemaining: remaining, overageCostUsd: 0 };
+  /** Always allowed - no limits in community edition. */
+  checkLimit(_userId: string): UsageLimitCheck {
+    return { allowed: true, projectsRemaining: Infinity, overageCostUsd: 0 };
   }
 
-  /**
-   * Record a new project creation.
-   */
+  /** Record a new project creation. */
   recordProject(userId: string, projectId: string, projectName: string): void {
     if (!this.records.has(userId)) {
       this.records.set(userId, []);
@@ -120,9 +76,7 @@ export class UsageMeter {
     });
   }
 
-  /**
-   * Increment tool call count for a project.
-   */
+  /** Increment tool call count for a project. */
   recordToolCall(userId: string, projectId: string, costUsd: number = 0): void {
     const records = this.records.get(userId);
     if (!records) return;
@@ -134,9 +88,7 @@ export class UsageMeter {
     }
   }
 
-  /**
-   * Mark a project as completed.
-   */
+  /** Mark a project as completed. */
   markComplete(userId: string, projectId: string): void {
     const records = this.records.get(userId);
     if (!records) return;
@@ -147,17 +99,9 @@ export class UsageMeter {
     }
   }
 
-  /**
-   * Get usage summary for a user's current billing period.
-   */
+  /** Get usage summary for a user's current billing period. */
   getSummary(userId: string): UsageSummary {
-    const tierId = this.getUserTier(userId);
-    const tier = getTier(tierId);
     const records = this.getCurrentPeriodRecords(userId);
-
-    const projectsAllowed = tier.projectsPerMonth === 0 ? Infinity : tier.projectsPerMonth;
-    const overageProjects = Math.max(0, records.length - (tier.projectsPerMonth || Infinity));
-    const overageCostUsd = overageProjects * tier.overagePerProjectUsd;
 
     const now = new Date();
     const periodStart = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
@@ -165,25 +109,22 @@ export class UsageMeter {
 
     return {
       userId,
-      tierId,
+      tierId: 'community',
       periodStart,
       periodEnd,
       projectsUsed: records.length,
-      projectsAllowed,
-      overageProjects,
-      overageCostUsd,
+      projectsAllowed: Infinity,
+      overageProjects: 0,
+      overageCostUsd: 0,
       totalAiCostUsd: records.reduce((sum, r) => sum + r.aiCostUsd, 0),
       totalToolCalls: records.reduce((sum, r) => sum + r.toolCalls, 0),
       projects: records,
     };
   }
 
-  /**
-   * Reset all records (for testing).
-   */
+  /** Reset all records (for testing). */
   reset(): void {
     this.records.clear();
-    this.userTiers.clear();
   }
 
   // ── Private ─────────────────────────────────────────────────────────────

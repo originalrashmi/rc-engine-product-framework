@@ -1,0 +1,714 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>RC Engine -- Starter Guide</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400;1,700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400&display=swap');
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    color: #1B2A4A;
+    background: #fff;
+    line-height: 1.75;
+    font-size: 14px;
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 0 40px 48px;
+  }
+
+  @media print {
+    body { padding: 0 20px 20px; font-size: 11.5px; line-height: 1.6; }
+    .header {
+      border-radius: 0; margin-left: -20px; margin-right: -20px; padding: 20px 32px 18px;
+      -webkit-print-color-adjust: exact;
+      print-color-adjust: exact;
+      background: #1B2A4A !important;
+    }
+    .header h1 { color: #F5F0E8 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    .header h1 .rc {
+      -webkit-text-fill-color: #C9A962 !important;
+      color: #C9A962 !important;
+      background: none !important;
+    }
+    .header .subtitle { color: #F5F0E8 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    .header .tagline { color: #C9A962 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    .page-break { page-break-before: always; }
+    h2 { page-break-after: avoid; }
+    pre, table, .path-card, .pipeline, .deliverables { page-break-inside: avoid; }
+  }
+
+  /* ===== HEADER — Navy gradient with brand identity ===== */
+  .header {
+    background: linear-gradient(135deg, #0D1B2A 0%, #1B2A4A 100%);
+    margin: 0 -40px;
+    padding: 36px 40px 32px;
+    text-align: center;
+    margin-bottom: 36px;
+    border-bottom: 3px solid #C9A962;
+  }
+  .header h1 {
+    font-family: 'Playfair Display', Georgia, serif;
+    font-size: 34px;
+    font-weight: 700;
+    color: #F5F0E8;
+    letter-spacing: 1px;
+  }
+  .header h1 .rc {
+    background: linear-gradient(135deg, #E8D5A3, #C9A962, #A8893F);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+  .header .subtitle {
+    font-family: 'Inter', sans-serif;
+    font-size: 15px;
+    color: #F5F0E8;
+    opacity: 0.7;
+    letter-spacing: 4px;
+    text-transform: uppercase;
+    margin-bottom: 6px;
+  }
+  .header .tagline {
+    font-family: 'Playfair Display', Georgia, serif;
+    font-style: italic;
+    font-size: 14px;
+    color: #C9A962;
+    opacity: 0.8;
+  }
+
+  /* ===== SECTION WRAPPER with watermark number ===== */
+  .section {
+    position: relative;
+    overflow: hidden;
+  }
+  .section .watermark {
+    position: absolute;
+    top: -18px;
+    right: -8px;
+    font-family: 'Playfair Display', Georgia, serif;
+    font-size: 120px;
+    font-weight: 700;
+    line-height: 1;
+    color: #C9A962;
+    opacity: 0.06;
+    pointer-events: none;
+    user-select: none;
+    z-index: 0;
+  }
+  .section > *:not(.watermark) {
+    position: relative;
+    z-index: 1;
+  }
+
+  /* ===== HEADINGS ===== */
+  h2 {
+    font-family: 'Playfair Display', Georgia, serif;
+    font-size: 22px;
+    font-weight: 700;
+    color: #0D1B2A;
+    margin-top: 36px;
+    margin-bottom: 14px;
+    padding-bottom: 6px;
+    border-bottom: 2px solid #C9A962;
+  }
+  h3 {
+    font-size: 15px;
+    font-weight: 600;
+    color: #1B2A4A;
+    margin-top: 20px;
+    margin-bottom: 8px;
+  }
+  h4 {
+    font-size: 14px;
+    font-weight: 600;
+    color: #1B2A4A;
+    margin-top: 16px;
+    margin-bottom: 6px;
+  }
+
+  p { margin-bottom: 12px; }
+  a { color: #C9A962; }
+  a:hover { color: #A8893F; }
+
+  /* ===== CODE ===== */
+  pre {
+    background: #0D1B2A;
+    color: #F5F0E8;
+    padding: 16px 20px;
+    border-radius: 8px;
+    border: 1px solid #1B2A4A;
+    overflow-x: auto;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12.5px;
+    line-height: 1.6;
+    margin-bottom: 16px;
+  }
+  code {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    background: #F5F0E8;
+    color: #1B2A4A;
+    padding: 2px 6px;
+    border-radius: 4px;
+  }
+  pre code { background: none; padding: 0; font-size: 12.5px; color: #F5F0E8; }
+  .comment { color: #C9A962; opacity: 0.6; }
+  .env-key { color: #C9A962; }
+  .env-val { color: #F5F0E8; opacity: 0.6; }
+
+  /* ===== TABLES ===== */
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 16px;
+    font-size: 13px;
+  }
+  th {
+    background: #0D1B2A;
+    color: #F5F0E8;
+    font-weight: 600;
+    text-align: left;
+    padding: 10px 12px;
+    border-bottom: 2px solid #C9A962;
+  }
+  td {
+    padding: 8px 12px;
+    border-bottom: 1px solid #F5F0E8;
+    vertical-align: top;
+  }
+  tr:nth-child(even) td { background: #FDFBF7; }
+
+  ul, ol { margin-left: 20px; margin-bottom: 12px; }
+  li { margin-bottom: 6px; }
+
+  /* ===== CALLOUTS ===== */
+  .callout {
+    background: #FDFBF7;
+    border-left: 4px solid #C9A962;
+    padding: 12px 16px;
+    border-radius: 0 8px 8px 0;
+    margin-bottom: 16px;
+    font-size: 13px;
+  }
+  .callout-navy {
+    background: rgba(13, 27, 42, 0.04);
+    border-left-color: #1B2A4A;
+  }
+  .callout-green {
+    background: rgba(201, 169, 98, 0.08);
+    border-left-color: #C9A962;
+    font-style: italic;
+    color: #0D1B2A;
+  }
+
+  /* ===== PATH CHOOSER ===== */
+  .paths-container {
+    display: flex;
+    gap: 20px;
+    margin: 20px 0 28px;
+  }
+  .path-card {
+    flex: 1;
+    border: 2px solid #E8D5A3;
+    border-radius: 12px;
+    padding: 24px;
+    background: #FDFBF7;
+  }
+  .path-card.gold { border-color: #C9A962; background: rgba(201, 169, 98, 0.06); }
+  .path-card.navy { border-color: #1B2A4A; background: rgba(13, 27, 42, 0.03); }
+  .path-card h3 {
+    font-family: 'Playfair Display', Georgia, serif;
+    font-size: 18px;
+    margin: 0 0 4px;
+    color: #0D1B2A;
+    text-align: center;
+  }
+  .path-label {
+    display: block;
+    text-align: center;
+    margin-bottom: 12px;
+  }
+  .path-label span {
+    display: inline-block;
+    background: linear-gradient(135deg, #E8D5A3, #C9A962, #A8893F);
+    color: #0D1B2A;
+    font-size: 11px;
+    font-weight: 600;
+    padding: 2px 10px;
+    border-radius: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+  .path-label span.alt {
+    background: linear-gradient(135deg, #0D1B2A, #1B2A4A);
+    color: #F5F0E8;
+  }
+  .path-card p { font-size: 13px; color: #1B2A4A; opacity: 0.7; margin-bottom: 6px; }
+  .path-card .setup-time {
+    text-align: center;
+    font-size: 12px;
+    color: #C9A962;
+    margin-top: 12px;
+    font-style: italic;
+  }
+  .path-card ul { font-size: 13px; color: #1B2A4A; margin-top: 10px; }
+  .path-card li { margin-bottom: 4px; opacity: 0.7; }
+
+  /* ===== STEP NUMBERS ===== */
+  .step-tag {
+    display: inline-block;
+    background: linear-gradient(135deg, #E8D5A3, #C9A962, #A8893F);
+    color: #0D1B2A;
+    width: 26px;
+    height: 26px;
+    line-height: 26px;
+    text-align: center;
+    border-radius: 50%;
+    font-size: 13px;
+    font-weight: 700;
+    margin-right: 8px;
+    vertical-align: middle;
+  }
+  .step-tag.alt {
+    background: linear-gradient(135deg, #0D1B2A, #1B2A4A);
+    color: #F5F0E8;
+  }
+
+  /* ===== PIPELINE ===== */
+  .pipeline {
+    background: rgba(13, 27, 42, 0.03);
+    border: 1px solid rgba(27, 42, 74, 0.12);
+    border-radius: 12px;
+    padding: 24px 28px;
+    margin: 16px 0 20px;
+  }
+  .pipeline-step {
+    display: flex;
+    align-items: flex-start;
+    margin-bottom: 4px;
+  }
+  .pipeline-dot {
+    width: 28px;
+    height: 28px;
+    min-width: 28px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #E8D5A3, #C9A962, #A8893F);
+    color: #0D1B2A;
+    font-size: 12px;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-right: 14px;
+    margin-top: 2px;
+  }
+  .pipeline-connector {
+    width: 2px;
+    height: 8px;
+    background: #C9A962;
+    opacity: 0.3;
+    margin-left: 13px;
+    margin-bottom: 4px;
+  }
+  .pipeline-text strong { display: block; font-size: 14px; color: #0D1B2A; }
+  .pipeline-text span { font-size: 12px; color: #1B2A4A; opacity: 0.6; }
+  .pipeline-checkpoint {
+    font-size: 11px;
+    color: #C9A962;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+  }
+
+  /* ===== DELIVERABLES ===== */
+  .deliverables {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin: 16px 0;
+  }
+  .deliverable {
+    background: #FDFBF7;
+    border: 1px solid rgba(201, 169, 98, 0.25);
+    border-radius: 8px;
+    padding: 14px 16px;
+  }
+  .deliverable strong { font-size: 13px; display: block; margin-bottom: 2px; color: #0D1B2A; }
+  .deliverable span { font-size: 12px; color: #1B2A4A; opacity: 0.6; }
+
+  /* ===== HR ===== */
+  hr {
+    border: none;
+    border-top: 1px solid rgba(201, 169, 98, 0.25);
+    margin: 32px 0;
+  }
+
+  /* ===== FOOTER ===== */
+  .footer {
+    background: linear-gradient(135deg, #0D1B2A 0%, #1B2A4A 100%);
+    margin: 40px -40px 0;
+    padding: 20px 40px;
+    text-align: center;
+    color: #F5F0E8;
+    font-size: 12px;
+    opacity: 0.7;
+    border-top: 2px solid #C9A962;
+  }
+  .footer a { color: #C9A962; }
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<div class="header">
+  <h1><span class="rc">RC</span> Engine</h1>
+  <div class="subtitle">Starter Guide</div>
+  <div class="tagline">Results through Clarity &mdash; an AI-native product development pipeline</div>
+</div>
+
+<!-- WHAT IS IT -->
+<div class="section">
+<span class="watermark">01</span>
+<h2>What is RC Engine?</h2>
+<p>RC Engine takes a product idea -- even a single sentence -- and walks it through a structured development pipeline: research, architecture, build, validation, and traceability. It uses 35 orchestrated AI tools behind the scenes so you can focus on your product, not the process.</p>
+<p>Up to 20 specialized AI analysts research your idea before a single line of code is written. They cover market fit, user needs, technical feasibility, security, UX, and more. Then the engine designs the architecture, builds task by task, and scans for security and legal issues before shipping.</p>
+<p>You approve every step. Nothing moves forward without your sign-off.</p>
+</div>
+
+<hr>
+
+<!-- CHOOSE YOUR PATH -->
+<div class="section">
+<span class="watermark">02</span>
+<h2>Choose Your Path</h2>
+<p>Pick the way that fits how you work. Both paths use the same pipeline and produce the same deliverables.</p>
+
+<div class="paths-container">
+  <div class="path-card gold">
+    <div class="path-label"><span>Path A</span></div>
+    <h3>Web UI</h3>
+    <p>Run <code>npm run web</code> locally. Open the dashboard in your browser. Describe your idea. Follow the guided steps.</p>
+    <ul>
+      <li>Visual pipeline with progress tracking</li>
+      <li>Download deliverables from the dashboard</li>
+      <li>Runs locally on your machine</li>
+      <li>Works on any device with a browser</li>
+    </ul>
+    <div class="setup-time">Setup time: 2 minutes</div>
+  </div>
+  <div class="path-card navy">
+    <div class="path-label"><span class="alt">Path B</span></div>
+    <h3>MCP Server</h3>
+    <p>Install RC Engine locally and connect it to your IDE. Chat naturally -- the AI calls the right tools for you.</p>
+    <ul>
+      <li>Runs inside Claude Code, Cursor, or any MCP IDE</li>
+      <li>Conversational interface</li>
+      <li>Full control over every tool call</li>
+      <li>Everything stays on your machine</li>
+    </ul>
+    <div class="setup-time">Setup time: 10 minutes</div>
+  </div>
+</div>
+</div>
+
+<hr>
+
+<!-- PATH A: WEB UI -->
+<div class="section">
+<span class="watermark">03</span>
+<h2>Path A: Web UI</h2>
+
+<h3><span class="step-tag">1</span> Start the Web UI</h3>
+<p>Run <code>npm run web</code> from your RC Engine directory, then open <strong>http://localhost:3100</strong> in your browser.</p>
+
+<h3><span class="step-tag">2</span> Sign In</h3>
+<ol>
+  <li>Enter your email address</li>
+  <li>Click <strong>Continue</strong></li>
+  <li>You land on the dashboard</li>
+</ol>
+
+<h3><span class="step-tag">3</span> Start Your First Project</h3>
+<ol>
+  <li>Click <strong>New Project</strong></li>
+  <li>Describe your product idea in plain language -- a single sentence is enough</li>
+  <li>Choose how much of the pipeline to run:
+    <ul>
+      <li><strong>Full Pipeline</strong> -- Research, Design, Architecture, Build, Validate, Ship</li>
+      <li><strong>Research Only</strong> -- Market analysis and a complete requirements document</li>
+      <li><strong>Build Only</strong> -- Skip research, jump to architecture and build</li>
+    </ul>
+  </li>
+  <li>Follow the guided steps. At each checkpoint, review what was produced and approve before moving on.</li>
+</ol>
+
+<h3><span class="step-tag">4</span> Download Your Deliverables</h3>
+<p>When the pipeline completes (or at any stage), download your deliverables directly from the dashboard -- requirements document, architecture plan, task breakdown, security report, and more.</p>
+
+<p>That's it. No terminal, no configuration, no API keys to manage.</p>
+</div>
+
+<hr class="page-break">
+
+<!-- PATH B: MCP -->
+<div class="section">
+<span class="watermark">04</span>
+<h2>Path B: MCP Server (IDE Integration)</h2>
+
+<h3><span class="step-tag alt">1</span> Prerequisites</h3>
+<ul>
+  <li><strong>Node.js 18+</strong> -- download from <a href="https://nodejs.org">nodejs.org</a>. Check with <code>node --version</code>.</li>
+  <li><strong>Claude Code, Cursor, or another MCP-compatible IDE</strong></li>
+  <li><strong>An Anthropic API key</strong> -- sign up at <a href="https://console.anthropic.com">console.anthropic.com</a></li>
+</ul>
+
+<h3><span class="step-tag alt">2</span> Install</h3>
+<pre><code>git clone https://github.com/originalrashmi/rc-engine-product-framework.git rc-engine
+cd rc-engine
+npm install && npm run build</code></pre>
+
+<h3><span class="step-tag alt">3</span> Add Your API Keys</h3>
+<p>Create a file called <code>.env</code> in the rc-engine folder:</p>
+
+<pre><code><span class="comment"># Required -- powers core reasoning and architecture</span>
+<span class="comment"># Get yours at https://console.anthropic.com</span>
+<span class="env-key">ANTHROPIC_API_KEY</span>=<span class="env-val">sk-ant-paste_your_key_here</span>
+
+<span class="comment"># Recommended -- enables live market and competitor research</span>
+<span class="comment"># Get yours at https://perplexity.ai/settings/api</span>
+<span class="env-key">PERPLEXITY_API_KEY</span>=<span class="env-val">pplx-paste_your_key_here</span>
+
+<span class="comment"># Optional -- fast classification (free tier)</span>
+<span class="env-key">GOOGLE_GEMINI_API_KEY</span>=<span class="env-val">paste_your_key_here</span>
+
+<span class="comment"># Optional -- UX and content analysis</span>
+<span class="env-key">OPENAI_API_KEY</span>=<span class="env-val">sk-paste_your_key_here</span></code></pre>
+
+<table>
+  <tr><th>Service</th><th>What It Powers</th><th>Required?</th><th>Typical Cost</th></tr>
+  <tr><td><strong>Anthropic (Claude)</strong></td><td>Core reasoning, architecture, code generation</td><td>Yes</td><td>$1-5 per project</td></tr>
+  <tr><td><strong>Perplexity</strong></td><td>Live market research and competitor data</td><td>Recommended</td><td>$0.50-2 per project</td></tr>
+  <tr><td><strong>Google Gemini</strong></td><td>Fast classification tasks</td><td>Optional</td><td>Free tier</td></tr>
+  <tr><td><strong>OpenAI</strong></td><td>UX and content analysis</td><td>Optional</td><td>Minimal</td></tr>
+</table>
+
+<div class="callout callout-navy">
+  <strong>No API keys?</strong> RC Engine works in manual mode -- it generates structured prompts you copy into any AI tool (ChatGPT, Claude.ai, Gemini) and paste the results back. Same methodology, more hands-on.
+</div>
+
+<p>This <code>.env</code> file is private -- it is listed in <code>.gitignore</code> and will never be shared or uploaded.</p>
+
+<h3><span class="step-tag alt">4</span> Connect to Your IDE</h3>
+
+<h4>Claude Code</h4>
+<p>Add to <code>~/.claude/settings.json</code>:</p>
+<pre><code>{
+  "mcpServers": {
+    "rc-engine": {
+      "command": "node",
+      "args": ["<span class="env-val">/absolute/path/to/rc-engine/dist/index.js</span>"]
+    }
+  }
+}</code></pre>
+
+<h4>Cursor</h4>
+<p>Add to <code>.cursor/mcp.json</code> in your project:</p>
+<pre><code>{
+  "mcpServers": {
+    "rc-engine": {
+      "command": "node",
+      "args": ["<span class="env-val">/absolute/path/to/rc-engine/dist/index.js</span>"]
+    }
+  }
+}</code></pre>
+
+<p>Replace the path with the actual location where you cloned the repo. To find it, open your terminal in the rc-engine folder and run:</p>
+<pre><code><span class="comment"># Mac/Linux</span>
+echo "$(pwd)/dist/index.js"
+
+<span class="comment"># Windows</span>
+echo %cd%\dist\index.js</code></pre>
+<p>Copy the output and paste it into the <code>args</code> array.</p>
+
+<h3><span class="step-tag alt">5</span> Start Building</h3>
+<p>Open your IDE and describe what you want to build:</p>
+
+<div class="callout callout-green">
+  "I want to build a SaaS dashboard for tracking marketing spend across channels."
+</div>
+
+<p>The AI orchestrates the full pipeline -- calling tools, presenting results, and pausing at checkpoints for your approval. You never need to call tools directly.</p>
+
+<table>
+  <tr><th>Domain</th><th>What It Does</th></tr>
+  <tr><td>Pre-RC (Research)</td><td>Up to 20 AI specialists analyze your idea from every angle</td></tr>
+  <tr><td>RC Method (Build)</td><td>8-phase structured development: discovery through production hardening</td></tr>
+  <tr><td>Post-RC (Validation)</td><td>Security scanning, monitoring readiness, and ship/no-ship gate</td></tr>
+  <tr><td>Traceability (Audit)</td><td>Tracks which requirements were built and verified</td></tr>
+</table>
+</div>
+
+<hr class="page-break">
+
+<!-- THE PIPELINE -->
+<div class="section">
+<span class="watermark">05</span>
+<h2>The Pipeline</h2>
+<p>Whichever path you choose, RC Engine runs your idea through this structured process:</p>
+
+<div class="pipeline">
+  <div class="pipeline-step">
+    <div class="pipeline-dot">1</div>
+    <div class="pipeline-text">
+      <strong>Research</strong>
+      <span>Up to 20 AI specialists analyze your idea -- market, users, security, UX, and more</span>
+    </div>
+  </div>
+  <div class="pipeline-connector"></div>
+  <div class="pipeline-step" style="margin-left: 42px; margin-bottom: 8px;">
+    <span class="pipeline-checkpoint">Checkpoint: approve research scope</span>
+  </div>
+  <div class="pipeline-step">
+    <div class="pipeline-dot">2</div>
+    <div class="pipeline-text">
+      <strong>Requirements Document</strong>
+      <span>19-section PRD synthesized from all research findings</span>
+    </div>
+  </div>
+  <div class="pipeline-connector"></div>
+  <div class="pipeline-step" style="margin-left: 42px; margin-bottom: 8px;">
+    <span class="pipeline-checkpoint">Checkpoint: approve requirements</span>
+  </div>
+  <div class="pipeline-step">
+    <div class="pipeline-dot">3</div>
+    <div class="pipeline-text">
+      <strong>Architecture</strong>
+      <span>Tech stack, data model, API design, infrastructure plan</span>
+    </div>
+  </div>
+  <div class="pipeline-connector"></div>
+  <div class="pipeline-step" style="margin-left: 42px; margin-bottom: 8px;">
+    <span class="pipeline-checkpoint">Checkpoint: approve architecture</span>
+  </div>
+  <div class="pipeline-step">
+    <div class="pipeline-dot">4</div>
+    <div class="pipeline-text">
+      <strong>Task Plan</strong>
+      <span>Prioritized tasks with effort estimates and dependencies</span>
+    </div>
+  </div>
+  <div class="pipeline-connector"></div>
+  <div class="pipeline-step" style="margin-left: 42px; margin-bottom: 8px;">
+    <span class="pipeline-checkpoint">Checkpoint: approve build plan</span>
+  </div>
+  <div class="pipeline-step">
+    <div class="pipeline-dot">5</div>
+    <div class="pipeline-text">
+      <strong>Build</strong>
+      <span>Task by task with quality checks at each layer</span>
+    </div>
+  </div>
+  <div class="pipeline-connector"></div>
+  <div class="pipeline-step">
+    <div class="pipeline-dot">6</div>
+    <div class="pipeline-text">
+      <strong>Security + Legal Scan</strong>
+      <span>Vulnerability detection with plain-language explanations</span>
+    </div>
+  </div>
+  <div class="pipeline-connector"></div>
+  <div class="pipeline-step" style="margin-left: 42px; margin-bottom: 8px;">
+    <span class="pipeline-checkpoint">Checkpoint: ship / fix / accept risk</span>
+  </div>
+  <div class="pipeline-step">
+    <div class="pipeline-dot" style="background: linear-gradient(135deg, #E8D5A3, #C9A962, #A8893F);">&#10003;</div>
+    <div class="pipeline-text">
+      <strong>Ship</strong>
+      <span>Production-ready with full audit trail</span>
+    </div>
+  </div>
+</div>
+
+<p><strong>You are in control at every checkpoint.</strong> Nothing moves forward without your approval.</p>
+</div>
+
+<hr>
+
+<!-- WHAT YOU GET -->
+<div class="section">
+<span class="watermark">06</span>
+<h2>What You Get</h2>
+
+<div class="deliverables">
+  <div class="deliverable">
+    <strong>Requirements Document</strong>
+    <span>19-section PRD covering market, users, technical, security, UX</span>
+  </div>
+  <div class="deliverable">
+    <strong>Technical Architecture</strong>
+    <span>Stack, data model, API design, infrastructure plan</span>
+  </div>
+  <div class="deliverable">
+    <strong>Task Breakdown</strong>
+    <span>Prioritized tasks with effort estimates and dependencies</span>
+  </div>
+  <div class="deliverable">
+    <strong>Architecture Diagrams</strong>
+    <span>Dependency, Gantt, and layer views</span>
+  </div>
+  <div class="deliverable">
+    <strong>Security Report</strong>
+    <span>Vulnerability scan with plain-language findings</span>
+  </div>
+  <div class="deliverable">
+    <strong>Value Report</strong>
+    <span>Cost and time savings vs. a human consulting team</span>
+  </div>
+</div>
+</div>
+
+<hr>
+
+<!-- PRICING -->
+<div class="section">
+<span class="watermark">07</span>
+<h2>Pricing</h2>
+
+<p><strong>RC Engine is free and open source.</strong> All 35 tools, all features, no limits.</p>
+
+<p style="font-size: 13px; color: #1B2A4A; opacity: 0.6;"><strong>BYOK model:</strong> RC Engine uses your own API keys (Anthropic, Perplexity, etc.) -- you pay providers directly at their rates. Typical total: $3-20 per project depending on complexity.</p>
+
+</div>
+
+<hr>
+
+<!-- FAQ -->
+<div class="section">
+<span class="watermark">08</span>
+<h2>Common Questions</h2>
+
+<h4>Do I need to be technical to use RC Engine?</h4>
+<p>No. The Web UI is designed for non-technical users. Describe your idea in plain language and the engine handles everything. The MCP path is for developers who prefer working in their IDE.</p>
+
+<h4>What happens to my data?</h4>
+<p>Your project data stays private. Both paths keep everything on your local machine. AI API calls go to the providers you configure (Anthropic, Perplexity, etc.) -- RC Engine does not store or train on your data.</p>
+
+<h4>Can I switch between Web UI and MCP?</h4>
+<p>Both paths store data locally. The Web UI and MCP server share the same project state files.</p>
+
+<h4>What if I only need the research phase?</h4>
+<p>Choose "Research Only" when starting a project. You get the full 20-analyst research pipeline and a complete requirements document without entering the build phase. This is available on all plans including Free.</p>
+
+<h4>How long does a full pipeline run take?</h4>
+<p>A typical full pipeline run takes 30-60 minutes of AI processing time. You can step away and come back -- your progress is saved at every checkpoint.</p>
+</div>
+
+<div class="footer">
+  RC Engine by <a href="https://toerana.com">Toerana</a> &middot; MIT License &middot; <a href="https://github.com/originalrashmi/rc-engine-product-framework">GitHub</a>
+</div>
+
+</body>
+</html>

@@ -7,10 +7,14 @@ import { logStartupDiagnostics, hasAnyApiKey } from './shared/config.js';
 import { logKnowledgeStatus, getKnowledgeManifest } from './shared/knowledge-loader.js';
 import { tokenTracker } from './shared/token-tracker.js';
 import { guardedTool } from './shared/tool-guard.js';
+import { registerInitTool } from './tools/rc-init.js';
 import { registerPreRcTools } from './domains/pre-rc/tools.js';
 import { registerRcPhaseTools } from './domains/rc/tools/phase-tools.js';
 import { registerRcGateTools } from './domains/rc/tools/gate-tools.js';
 import { registerRcUxTools } from './domains/rc/tools/ux-tools.js';
+import { registerCopyTools } from './domains/rc/tools/copy-tools.js';
+import { registerDesignTools } from './domains/rc/tools/design-tools.js';
+import { registerExportTools } from './domains/rc/tools/export-tools.js';
 import { registerPostRcTools } from './domains/post-rc/tools.js';
 import { registerTraceabilityTools } from './domains/traceability/tools.js';
 import { formatCostSummary } from './shared/cost-tracker.js';
@@ -56,10 +60,14 @@ server.registerTool = ((...toolArgs: unknown[]) => {
 }) as typeof server.registerTool;
 
 // Register all tools across domains (lazy-load orchestrators on first call)
+registerInitTool(server); // 1 tool: rc_init (unified entry point)
 registerPreRcTools(server); // 7 tools: prc_*
-registerRcPhaseTools(server); // 10 tools: rc_start, rc_illuminate, rc_define, rc_import_prerc, rc_architect, rc_sequence, rc_validate, rc_forge_task, rc_connect, rc_compound
-registerRcGateTools(server); // 3 tools: rc_gate, rc_save, rc_status
-registerRcUxTools(server); // 4 tools: ux_score, ux_audit, ux_generate, ux_design
+registerRcPhaseTools(server); // 12 tools: rc_start, rc_illuminate, rc_define, rc_import_prerc, rc_architect, rc_sequence, rc_validate, rc_forge_task, rc_connect, rc_compound, rc_forge_all, rc_autopilot
+registerRcGateTools(server); // 4 tools: rc_gate, rc_save, rc_status, rc_reset
+registerRcUxTools(server); // 5 tools: ux_score, ux_audit, ux_generate, ux_design, design_challenge
+registerCopyTools(server); // 4 tools: copy_research_brief, copy_generate, copy_iterate, copy_critique
+registerDesignTools(server); // 6 tools: design_research_brief, design_intake, brand_import, design_iterate, design_select, design_pipeline
+registerExportTools(server); // 2 tools: playbook_generate, pdf_export
 registerPostRcTools(server); // 7 tools: postrc_*
 registerTraceabilityTools(server); // 3 tools: trace_*
 
@@ -145,16 +153,22 @@ server.tool(
 ${summary}
 
   REGISTERED DOMAINS:
+    Entry .......... 1 tool  (rc_init)
     Pre-RC ......... 7 tools (prc_*)
-    RC ............. 17 tools (rc_*, ux_*)
+    RC Phases ...... 12 tools (rc_start..rc_autopilot)
+    RC Gates ....... 4 tools (rc_gate, rc_save, rc_status, rc_reset)
+    UX ............. 5 tools (ux_*, design_challenge)
+    Copy ........... 4 tools (copy_*)
+    Design ......... 6 tools (design_*, brand_import)
+    Export ......... 2 tools (playbook_generate, pdf_export)
     Post-RC ........ 7 tools (postrc_*)
     Traceability ... 3 tools (trace_*)
     Pipeline ....... 1 tool  (rc_pipeline_status)
-    Total: 35 tools
+    Total: 52 tools
 
   PIPELINE FLOW:
     prc_start → prc_classify → prc_run_stage (x6)
-    → prc_synthesize → prc_stress_test (Pro)
+    → prc_synthesize → prc_stress_test
     → rc_import_prerc
     → rc_architect → rc_sequence → rc_validate
     → rc_forge_task → postrc_scan
@@ -185,7 +199,7 @@ async function main() {
 
   const knowledgeMode = manifest.mode === 'pro' ? 'pro' : 'community';
   const execMode = hasAnyApiKey ? 'autonomous' : 'passthrough';
-  console.error(`[rc-engine] Connected - 35 tools - knowledge: ${knowledgeMode} - execution: ${execMode}`);
+  console.error(`[rc-engine] Connected - 52 tools - knowledge: ${knowledgeMode} - execution: ${execMode}`);
 }
 
 main().catch((err) => {

@@ -31,20 +31,7 @@ At every step, you review and approve before we move forward. You're always in c
 
 IMPORTANT: Run this BEFORE the user tries to start a project. Do not let them hit a confusing error.
 
-**First, help the user choose the right Claude Code plan:**
-```
-Which Claude Code plan do you need?
-
-- **Pro ($20/month):** Works for 1-2 simple projects per month. May hit rate limits during research phases.
-- **Max 5x ($100/month):** Recommended. Handles 3-5 full pipeline runs per month with Opus access for complex reasoning.
-- **Max 20x ($200/month):** For power users running multiple projects per week.
-
-Your subscription covers the interactive conversation. API keys (set up next) cover the pipeline's automated research - typically $3-20 per project depending on complexity.
-
-For detailed cost breakdowns, see docs/USAGE-AND-COST-GUIDE.md.
-```
-
-**Then, walk through API key setup:**
+**Walk through API key setup:**
 ```
 Before we start, I need to connect to a few AI services that power the research and analysis.
 Let me walk you through the setup - it takes about 5 minutes.

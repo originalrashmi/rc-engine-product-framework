@@ -2,7 +2,7 @@
  * RC Engine Web UI - Express server.
  *
  * Architecture:
- *   - Creates an in-process MCP server with all 35 tools registered
+ *   - Creates an in-process MCP server with all 52 tools registered
  *   - Connects an MCP client via InMemoryTransport
  *   - Exposes tools as REST endpoints: POST /api/tools/:name
  *   - Structured pipeline state via GET /api/project/state
@@ -47,8 +47,6 @@ import {
   getOrgMembers,
   inviteToOrg,
 } from './auth.js';
-import { getTier, hasFeature, type TierId } from '../../dist/core/pricing/tiers.js';
-import { registerBillingRoutes } from './billing.js';
 import { sendMagicLinkEmail, getEmailProvider } from './email.js';
 
 // Simple cookie parser for WebSocket auth
@@ -62,49 +60,7 @@ function parseCookies(cookieHeader?: string): Record<string, string> {
   return cookies;
 }
 
-// ── Tier Enforcement ─────────────────────────────────────────────────────────
-// Maps tool names to required tier features. Tools not listed are available on all tiers.
-const TOOL_FEATURE_REQUIREMENTS: Record<string, keyof ReturnType<typeof getTier>['features']> = {
-  // Build tools require fullPipeline (not available on free tier)
-  rc_start: 'fullPipeline',
-  rc_import_prerc: 'fullPipeline',
-  rc_illuminate: 'fullPipeline',
-  rc_define: 'fullPipeline',
-  rc_architect: 'fullPipeline',
-  rc_sequence: 'fullPipeline',
-  rc_validate: 'fullPipeline',
-  rc_forge_task: 'fullPipeline',
-  rc_connect: 'fullPipeline',
-  rc_compound: 'fullPipeline',
-  rc_gate: 'fullPipeline',
-  // Design tools
-  ux_design: 'designOptions',
-  // Security scanning
-  postrc_scan: 'securityScan',
-  postrc_report: 'securityScan',
-  postrc_override: 'securityScan',
-  postrc_gate: 'securityScan',
-  postrc_configure: 'securityScan',
-  // Stress test (Pro/Enterprise only)
-  prc_stress_test: 'playbook',
-  // Traceability
-  trace_enhance_prd: 'traceability',
-  trace_map_findings: 'traceability',
-  trace_status: 'traceability',
-};
-
-function checkTierAccess(toolName: string, userTier: string): string | null {
-  const requiredFeature = TOOL_FEATURE_REQUIREMENTS[toolName];
-  if (!requiredFeature) return null; // Tool available on all tiers
-  const tierId = userTier as TierId;
-  try {
-    if (hasFeature(tierId, requiredFeature)) return null;
-    const tierDef = getTier(tierId);
-    return `Your ${tierDef.name} plan does not include this feature. Upgrade to access ${requiredFeature.replace(/([A-Z])/g, ' $1').toLowerCase()}.`;
-  } catch {
-    return null; // Unknown tier - allow (fail-open for dev)
-  }
-}
+// Community Edition - all tools available, no tier gating
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const PORT = parseInt(process.env.RC_WEB_PORT || '3100', 10);
@@ -324,21 +280,10 @@ async function main() {
     }
   });
 
-  // --- Pricing Info ---
+  // --- Edition Info ---
   app.get('/api/pricing', (_req, res) => {
-    // Import pricing tiers dynamically
-    import('../../src/core/pricing/tiers.js')
-      .then(({ TIERS, getTierOrder }) => {
-        const order = getTierOrder();
-        res.json({ tiers: order.map((id) => TIERS[id]) });
-      })
-      .catch(() => {
-        res.status(500).json({ error: 'Pricing unavailable' });
-      });
+    res.json({ edition: 'community', features: 'all', pricing: 'free (open source)' });
   });
-
-  // --- Billing Routes (Stripe) ---
-  registerBillingRoutes(app);
 
   // --- MCP Bridge (in-process tool execution) ---
   const bridge = await createMcpBridge();
@@ -422,15 +367,7 @@ async function main() {
     const name = req.params.name as string;
     const args = req.body || {};
 
-    // Tier enforcement (skip in dev bypass mode)
-    if (!isAuthBypassed()) {
-      const userTier = req.user?.tier || 'free';
-      const tierError = checkTierAccess(name, userTier);
-      if (tierError) {
-        res.status(403).json({ error: tierError });
-        return;
-      }
-    }
+    // Community Edition - all tools available, no tier check needed
 
     broadcast({ type: 'tool:start', tool: name, args, timestamp: Date.now() });
 

@@ -78,12 +78,18 @@ export async function createMcpBridge(): Promise<McpBridge> {
 ${summary}
 
   REGISTERED DOMAINS:
+    Entry .......... 1 tool  (rc_init)
     Pre-RC ......... 7 tools (prc_*)
-    RC ............. 17 tools (rc_*, ux_*)
+    RC Phases ...... 12 tools (rc_start..rc_autopilot)
+    RC Gates ....... 4 tools (rc_gate, rc_save, rc_status, rc_reset)
+    UX ............. 5 tools (ux_*, design_challenge)
+    Copy ........... 4 tools (copy_*)
+    Design ......... 6 tools (design_*, brand_import)
+    Export ......... 2 tools (playbook_generate, pdf_export)
     Post-RC ........ 7 tools (postrc_*)
     Traceability ... 3 tools (trace_*)
     Pipeline ....... 1 tool  (rc_pipeline_status)
-    Total: 35 tools
+    Total: 52 tools
 ===============================================`;
         return { content: [{ type: 'text' as const, text: output }] };
       } catch (err) {

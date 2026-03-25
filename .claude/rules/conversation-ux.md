@@ -23,9 +23,9 @@ Use plain language - never internal jargon:
 | MCP | (omit - invisible to user) |
 | State file | (omit - invisible to user) |
 | CWE | (say the plain-language vulnerability name) |
-| Legal module | Legal risk review (Pro only) |
-| Claims auditor | Self-audit / claims review (Pro only) |
-| LGL finding | Legal finding (Pro only) |
+| Legal module | Legal risk review |
+| Claims auditor | Self-audit / claims review |
+| LGL finding | Legal finding |
 
 ---
 
@@ -306,7 +306,7 @@ No HTTPS → "Data between your users and your app isn't encrypted"
 CSRF vulnerability → "An attacker could trick users into performing actions they didn't intend"
 ```
 
-### Explaining legal findings (Pro only - requires rc-engine-pro knowledge files)
+### Explaining legal findings
 ```
 Missing privacy policy → "Your product collects user data but doesn't tell users how it's handled. Without a privacy policy, you may face regulatory fines (GDPR: up to 4% of annual revenue; CCPA: $2,500-$7,500 per violation)."
 Missing terms of service → "Users have no agreement governing how they use your product. Without ToS, you have limited legal recourse if users misuse the service."

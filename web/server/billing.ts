@@ -1,4 +1,4 @@
-/* eslint-disable @typescript-eslint/consistent-type-imports - Stripe is dynamically imported (optional dep) */
+/* eslint-disable @typescript-eslint/consistent-type-imports */
 /**
  * Billing - Stripe integration for RC Engine tier subscriptions.
  *

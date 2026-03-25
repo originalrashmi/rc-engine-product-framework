@@ -626,17 +626,9 @@ Web Server  -->  MCP Client  <--InMemoryTransport-->  MCP Server  -->  Domain To
 
 This means the web UI calls exactly the same tools with the same guards as the CLI. No code duplication. No API drift.
 
-### Tier Enforcement
+### Edition
 
-Tool access is gated by subscription tier:
-
-| Tier       | Price  | Access                                    |
-| ---------- | ------ | ----------------------------------------- |
-| Free       | $0     | Pre-RC research only                      |
-| Pro        | $79/mo | Full pipeline + security scan + UX design |
-| Enterprise | Custom | All features + team seats + SLA           |
-
-The server maps each tool to a required feature flag and checks the user's tier before execution.
+RC Engine Community Edition -- all 35 tools and features are available with no tier gating. Users provide their own API keys (BYOK model).
 
 ### React Frontend Pages
 

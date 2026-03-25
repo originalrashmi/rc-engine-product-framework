@@ -8,7 +8,16 @@ import { ConnectAgent } from './agents/connect-agent.js';
 import { CompoundAgent } from './agents/compound-agent.js';
 import { UxAgent } from './agents/ux-agent.js';
 import { DesignAgent } from './agents/design-agent.js';
+import { DesignResearchAgent } from './agents/design-research-agent.js';
+import { CopyResearchAgent } from './agents/copy-research-agent.js';
+import { CopyAgent } from './agents/copy-agent.js';
+import { ChallengerAgent } from './agents/challenger-agent.js';
+import { DesignIntakeAgent } from './agents/design-intake.js';
+import { BrandAssetLoader } from './agents/brand-loader.js';
 import { PreRcBridgeAgent } from './agents/prerc-bridge-agent.js';
+import { DesignHandler } from './handlers/design-handler.js';
+import { CopyHandler } from './handlers/copy-handler.js';
+import { safeWriteFile, deduplicateArtifacts } from './handlers/shared-helpers.js';
 import { llmFactory } from '../../shared/llm/factory.js';
 import type { LLMFactory } from '../../shared/llm/factory.js';
 import { LLMProvider } from '../../shared/types.js';
@@ -16,14 +25,21 @@ import { tokenTracker } from '../../shared/token-tracker.js';
 import { hasApiKey } from '../../shared/config.js';
 import { audit, formatRecentActivity } from '../../shared/audit.js';
 import { routeRequest } from '../../shared/model-router.js';
-import { recordCost } from '../../shared/cost-tracker.js';
+import { recordCost, getCostSummary } from '../../shared/cost-tracker.js';
 import { recordGateOutcome, recordModelPerformance, getLearningSummary } from '../../shared/learning.js';
 import { recordProjectUsage } from '../../shared/usage-meter.js';
 import { formatCostSummary } from '../../shared/cost-tracker.js';
 import { recordPipelineTimings } from '../../shared/benchmark.js';
-import type { AgentResult, ProjectState, Phase } from './types.js';
-import type { DesignInput } from './design-types.js';
+import type { AgentResult, ProjectState, Phase, TechStack } from './types.js';
+import type { DesignInput, DesignIterateInput } from './design-types.js';
+import type { CopyResearchInput, CopyGenerateInput, CopyIterateInput } from './copy-types.js';
+import type { ChallengeInput } from './challenger-types.js';
+import type { BrandImportInput, BrandProfile } from './brand-types.js';
+import type { DesignIntakeInput } from './design-intake-types.js';
+import type { DesignResearchInput } from './agents/design-research-agent.js';
 import { GateStatus, PHASE_NAMES, GATED_PHASES } from './types.js';
+import { getProjectStore } from '../../shared/state/store-factory.js';
+import { NODE_IDS } from '../../shared/state/pipeline-id.js';
 import fs from 'node:fs';
 import path from 'node:path';
 
@@ -39,7 +55,15 @@ export class Orchestrator {
   private compoundAgent: CompoundAgent;
   private uxAgent: UxAgent;
   private designAgent: DesignAgent;
+  private designResearchAgent: DesignResearchAgent;
+  private copyResearchAgent: CopyResearchAgent;
+  private copyAgent: CopyAgent;
+  private challengerAgent: ChallengerAgent;
+  private designIntakeAgent: DesignIntakeAgent;
+  private brandLoader: BrandAssetLoader;
   private preRcBridgeAgent: PreRcBridgeAgent;
+  private designHandler: DesignHandler;
+  private copyHandler: CopyHandler;
 
   constructor() {
     this.stateManager = new StateManager();
@@ -53,7 +77,22 @@ export class Orchestrator {
     this.compoundAgent = new CompoundAgent(this.contextLoader, this.llmFactory);
     this.uxAgent = new UxAgent(this.contextLoader, this.llmFactory);
     this.designAgent = new DesignAgent(this.contextLoader, this.llmFactory);
+    this.designResearchAgent = new DesignResearchAgent(this.contextLoader, this.llmFactory);
+    this.copyResearchAgent = new CopyResearchAgent(this.contextLoader, this.llmFactory);
+    this.copyAgent = new CopyAgent(this.contextLoader, this.llmFactory);
+    this.challengerAgent = new ChallengerAgent(this.contextLoader, this.llmFactory);
+    this.designIntakeAgent = new DesignIntakeAgent(this.contextLoader, this.llmFactory);
+    this.brandLoader = new BrandAssetLoader();
     this.preRcBridgeAgent = new PreRcBridgeAgent(this.contextLoader, this.llmFactory);
+    this.designHandler = new DesignHandler(
+      this.stateManager,
+      this.designAgent,
+      this.designResearchAgent,
+      this.challengerAgent,
+      this.designIntakeAgent,
+      this.brandLoader,
+    );
+    this.copyHandler = new CopyHandler(this.stateManager, this.copyResearchAgent, this.copyAgent);
   }
 
   /**
@@ -87,8 +126,8 @@ export class Orchestrator {
         tool: 'Orchestrator',
         provider: response.provider,
         model: client.getModel(),
-        inputTokens: 0,
-        outputTokens: response.tokensUsed,
+        inputTokens: response.inputTokens ?? 0,
+        outputTokens: response.outputTokens ?? response.tokensUsed,
       });
       recordModelPerformance({
         provider: response.provider,
@@ -124,11 +163,18 @@ export class Orchestrator {
     phaseOutput: string,
     artifacts?: string[],
   ): Promise<AgentResult> {
-    // Record phase timing for benchmarks
+    // Record phase timing for benchmarks (with token count and cost data)
     const durationMs = this.phaseStartMs > 0 ? Date.now() - this.phaseStartMs : 0;
     if (durationMs > 0) {
+      const costSnapshot = getCostSummary('rc-session');
       recordPipelineTimings(`rc-${state.projectName}`, [
-        { domain: 'rc', phase: PHASE_NAMES[state.currentPhase], durationMs },
+        {
+          domain: 'rc',
+          phase: PHASE_NAMES[state.currentPhase],
+          durationMs,
+          tokenCount: costSnapshot ? costSnapshot.totalInputTokens + costSnapshot.totalOutputTokens : undefined,
+          estimatedCostUsd: costSnapshot?.totalCostUsd,
+        },
       ]);
     }
 
@@ -155,15 +201,29 @@ export class Orchestrator {
   }
 
   /** Start a new RC Method project (Phase 1: Illuminate) */
-  async start(projectPath: string, projectName: string, description: string): Promise<AgentResult> {
+  async start(
+    projectPath: string,
+    projectName: string,
+    description: string,
+    techStack?: TechStack,
+  ): Promise<AgentResult> {
     if (this.stateManager.exists(projectPath)) {
       const state = this.stateManager.load(projectPath);
       return {
-        text: `Project "${state.projectName}" already exists at this path. Current phase: ${state.currentPhase} - ${PHASE_NAMES[state.currentPhase]}.\n\nUse rc_status to see full status, or use the appropriate phase tool to continue.`,
+        text: `Project "${state.projectName}" already exists at this path. Current phase: ${state.currentPhase} - ${PHASE_NAMES[state.currentPhase]}.\n\nOptions:\n- Use **rc_status** to see full progress\n- Use the appropriate phase tool to continue (e.g. rc_illuminate, rc_define, rc_architect)\n- Use **rc_reset** to clear state and start fresh with rc_start`,
       };
     }
 
     const state = this.stateManager.create(projectPath, projectName);
+
+    // Store tech stack selection (defaults applied if not specified)
+    state.techStack = techStack ?? {
+      language: 'typescript',
+      framework: 'nextjs',
+      uiFramework: 'react',
+      database: 'postgresql',
+      orm: 'prisma',
+    };
 
     const masterKnowledge = this.contextLoader.loadFile('skills/rc-master.md');
 
@@ -308,7 +368,60 @@ ${result.text.substring(0, 500)}...`;
 
     const result = await this.prdAgent.run(state, operatorInputs);
 
-    return this.finalizePhase(projectPath, state, result.text, result.artifacts);
+    // Auto-run UX scoring on the PRD output to populate state.uxScore/uxMode
+    try {
+      const uxResult = await this.uxAgent.score(result.text);
+      const scoreMatch = uxResult.text.match(/Score:\s*(\d+)/i);
+      if (scoreMatch) {
+        const score = parseInt(scoreMatch[1], 10);
+        state.uxScore = score;
+        state.uxMode = score < 4 ? 'standard' : score <= 6 ? 'selective' : 'deep_dive';
+        audit('artifact.create', 'rc', projectPath, { type: 'ux-score', score, mode: state.uxMode }, '2');
+      }
+    } catch {
+      // UX scoring is non-fatal - pipeline continues without it
+      console.error('[rc-engine] Warning: Auto UX scoring failed during Define phase');
+    }
+
+    // Auto-trigger brand import (detection only, no user input needed) for Pro tier
+    // This runs early so brand assets are available for design intake and gate presentation
+    if (state.uxScore !== null && state.uxScore >= 4 && !state.brand) {
+      try {
+        await this.brandImport({ projectPath, mode: 'infer' });
+        audit('artifact.create', 'rc', projectPath, { type: 'brand-import', auto: true }, '2');
+        // Reload state since brandImport may have updated it
+        const refreshed = this.stateManager.load(projectPath);
+        state.brand = refreshed.brand;
+      } catch {
+        // Brand import is non-fatal - pipeline continues without it
+        console.error('[rc-engine] Warning: Auto brand import failed during Define phase');
+      }
+    }
+
+    // If UX score indicates deep_dive or selective, append design intelligence requirements
+    let phaseOutput = result.text;
+    if (state.uxScore !== null && state.uxScore >= 4) {
+      const modeLabel = state.uxMode === 'deep_dive' ? 'Deep Dive' : 'Selective';
+      phaseOutput += `\n\n---\n\n**UX Trigger Score: ${state.uxScore} (${modeLabel} Mode)**\n\n`;
+
+      // Show detected brand assets if available
+      if (state.brand) {
+        phaseOutput += `Brand profile detected and saved to \`${state.brand.profilePath}\`.\n\n`;
+      }
+
+      // Design intelligence is REQUIRED before gate approval for scores >= 4
+      phaseOutput += `**Design Intelligence Required Before Checkpoint Approval:**\n`;
+      phaseOutput += `1. Run \`design_intake\` to capture your design preferences\n`;
+      if (state.uxScore >= 7) {
+        phaseOutput += `2. Run \`ux_generate\` for a UX child PRD (screen inventory, state contracts, accessibility checklist)\n`;
+        phaseOutput += `3. Run \`ux_design\` for wireframes and visual design options (3 options for your selection)\n`;
+        phaseOutput += `4. Select your preferred design option via \`design_select\`\n`;
+      } else {
+        phaseOutput += `2. Consider running \`ux_generate\` for a UX child PRD, or proceed if UX scope is manageable\n`;
+      }
+    }
+
+    return this.finalizePhase(projectPath, state, phaseOutput, result.artifacts);
   }
 
   /** Run Architect phase (Phase 3) */
@@ -342,12 +455,18 @@ ${result.text.substring(0, 500)}...`;
       }
     }
 
-    const instructions = `You are the RC Method orchestrator in Phase 3: Architect. Define how the project gets built - tech stack, data model, architecture.\n\nRules:\n- Recommend tech stack with business justification\n- Define data model and key integrations\n${hasUi ? '- Include UX architecture: design token strategy, component library approach, theme system' : ''}${designContext ? '\n- Use the selected design spec for colors, typography, spacing, and layout decisions' : ''}\n- Write in plain business language\n- The project is "${state.projectName}"`;
+    // Build tech stack context for the architect
+    const stack = state.techStack;
+    const stackContext = stack
+      ? `\n\nSelected Tech Stack:\n- Language: ${stack.language}\n- Framework: ${stack.framework}${stack.uiFramework ? `\n- UI Framework: ${stack.uiFramework}` : ''}\n- Database: ${stack.database}${stack.orm ? `\n- ORM: ${stack.orm}` : ''}`
+      : '';
+
+    const instructions = `You are the RC Method orchestrator in Phase 3: Architect. Define how the project gets built - tech stack, data model, architecture.\n\nRules:\n${stack ? `- Use the selected tech stack (${stack.language}/${stack.framework}) - do NOT override with a different stack` : '- Recommend tech stack with business justification'}\n- Define data model and key integrations\n${hasUi ? '- Include UX architecture: design token strategy, component library approach, theme system' : ''}${designContext ? '\n- Use the selected design spec for colors, typography, spacing, and layout decisions' : ''}\n- Write in plain business language\n- The project is "${state.projectName}"`;
 
     const text = await this.execute(
       masterKnowledge,
       instructions,
-      `Architecture inputs from the operator:\n\n${architectureNotes}\n\nExisting PRDs:\n${prdContext}${designContext}\n\nDefine the architecture.`,
+      `Architecture inputs from the operator:\n\n${architectureNotes}${stackContext}\n\nExisting PRDs:\n${prdContext}${designContext}\n\nDefine the architecture.`,
     );
 
     return this.finalizePhase(projectPath, state, text);
@@ -417,9 +536,21 @@ ${result.text.substring(0, 500)}...`;
     };
     this.stateManager.save(projectPath, state);
 
-    // Load active PRD and task list for context
+    // Load only relevant context: PRDs + task lists + type/interface files from forge
+    // This avoids O(N²) growth where task N loads all N-1 previous forge outputs
     let context = '';
     for (const artifact of state.artifacts) {
+      const isForgeArtifact = artifact.includes('/forge/');
+      if (isForgeArtifact) {
+        // Only load type definitions, interfaces, and schema files from other forge tasks
+        const isContractFile =
+          artifact.endsWith('.d.ts') ||
+          artifact.includes('/types') ||
+          artifact.includes('/schema') ||
+          artifact.includes('/interfaces') ||
+          artifact.includes('/contracts');
+        if (!isContractFile) continue;
+      }
       try {
         const content = this.contextLoader.loadProjectFile(projectPath, artifact);
         context += `\n\n--- ${artifact} ---\n\n${content}`;
@@ -442,6 +573,21 @@ ${result.text.substring(0, 500)}...`;
     const masterKnowledge = this.contextLoader.loadFile('skills/rc-master.md');
     const testScriptKnowledge = this.contextLoader.loadFile('skills/rc-test-scripts.md');
 
+    // Load stack-specific knowledge if available
+    const stack = state.techStack;
+    let stackKnowledge = '';
+    if (stack) {
+      try {
+        stackKnowledge = this.contextLoader.loadFile(`skills/stacks/stack-${stack.language}-${stack.framework}.md`);
+      } catch {
+        // Stack knowledge file not yet created - forge will rely on architecture doc
+      }
+    }
+
+    const stackInstructions = stack
+      ? `\n- Generate code in ${stack.language} using the ${stack.framework} framework${stack.uiFramework ? ` with ${stack.uiFramework} for UI` : ''}${stack.orm ? `\n- Use ${stack.orm} for database access (${stack.database})` : `\n- Use ${stack.database} for the database`}`
+      : '';
+
     const instructions = `You are the RC Method orchestrator in Step 6: Build. You generate ACTUAL implementation code for the requested task.
 
 OUTPUT FORMAT: For each file you generate, use this exact format:
@@ -459,13 +605,13 @@ Rules:
 - Follow the approved task list exactly
 - Reference the active PRD for context and requirements
 - Generate complete, runnable code - not pseudocode or guidance
-- Use the tech stack and patterns from the architecture document
+- Use the tech stack and patterns from the architecture document${stackInstructions}
 - If the task is a [UI] task, apply rc-ux-core.md core rules${designTokens ? '\n- For UI tasks, use the design tokens (colors, typography, spacing) from the selected design spec below' : ''}
 - If the task is a [UI], [API], or [INTEGRATION] task, generate a test file with the implementation
 - If scope questions arise, STOP and flag them - do NOT guess
 - Every generated file must be self-contained and importable
 - The project is "${state.projectName}"
-
+${stackKnowledge ? `\nStack-Specific Patterns:\n${stackKnowledge}` : ''}
 Test Script Knowledge:
 ${testScriptKnowledge}`;
 
@@ -528,11 +674,8 @@ ${testScriptKnowledge}`;
       const sanitized = filePath.replace(/\.\.\//g, '').replace(/^\//g, '');
       if (!sanitized) continue;
 
-      const fullDir = path.join(projectPath, 'rc-method', 'forge', taskId, path.dirname(sanitized));
-      fs.mkdirSync(fullDir, { recursive: true });
-
       const fullPath = path.join(projectPath, 'rc-method', 'forge', taskId, sanitized);
-      fs.writeFileSync(fullPath, content, 'utf-8');
+      safeWriteFile(fullPath, content);
       writtenFiles.push(sanitized);
     }
 
@@ -595,30 +738,47 @@ ${testScriptKnowledge}`;
       forgeSection += `\nForge Files: ${totalFiles} generated`;
     }
 
-    const text = `===================================================
-RC METHOD STATUS
-===================================================
-Project: ${state.projectName}
-Current Phase: ${state.currentPhase} - ${PHASE_NAMES[state.currentPhase]}
-Gate Status: ${state.gates[state.currentPhase]?.status ?? 'pending'}
+    const text = `
+════════════════════════════════════════════════════════════════════════════════
+  RC METHOD STATUS
+════════════════════════════════════════════════════════════════════════════════
 
-Phase Progress:
+  Project:        ${state.projectName}
+  Current Phase:  ${state.currentPhase} - ${PHASE_NAMES[state.currentPhase]}
+  Gate Status:    ${state.gates[state.currentPhase]?.status ?? 'pending'}
+
+  PHASE PROGRESS:
 ${phaseLines.join('\n')}
 
-PRDs: ${state.artifacts.filter((a) => a.includes('/prds/')).length}
-Tasks: ${state.artifacts.filter((a) => a.includes('/tasks/')).length} list(s)
-Gates Passed: ${approvedCount} of ${GATED_PHASES.length}
-UX Score: ${state.uxScore ?? 'not scored'}
-UX Mode: ${state.uxMode ?? 'not set'}${forgeSection}
+  PRDs:           ${state.artifacts.filter((a) => a.includes('/prds/')).length}
+  Tasks:          ${state.artifacts.filter((a) => a.includes('/tasks/')).length} list(s)
+  Gates Passed:   ${approvedCount} of ${GATED_PHASES.length}
+  UX Score:       ${state.uxScore ?? 'not scored'}
+  UX Mode:        ${state.uxMode ?? 'not set'}
+  Tech Stack:     ${state.techStack ? `${state.techStack.language}/${state.techStack.framework}` : 'not set'}${forgeSection}
 ${tokenTracker.getDomainSummary('rc')}${formatCostSummary()}${getLearningSummary()}${formatRecentActivity(projectPath)}
-===================================================`;
+
+════════════════════════════════════════════════════════════════════════════════`;
 
     return { text };
   }
 
-  /** UX scoring */
-  async uxScore(featureList: string): Promise<AgentResult> {
-    return this.uxAgent.score(featureList);
+  /** UX scoring - optionally persists score to project state */
+  async uxScore(featureList: string, projectPath?: string): Promise<AgentResult> {
+    const result = await this.uxAgent.score(featureList);
+
+    // Persist score to state if project path is provided
+    if (projectPath) {
+      const state = this.stateManager.load(projectPath);
+      const scoreMatch = result.text.match(/Score:\s*(\d+)/i);
+      if (scoreMatch) {
+        state.uxScore = parseInt(scoreMatch[1], 10);
+        state.uxMode = state.uxScore < 4 ? 'standard' : state.uxScore <= 6 ? 'selective' : 'deep_dive';
+        this.stateManager.save(projectPath, state);
+      }
+    }
+
+    return result;
   }
 
   /** UX audit */
@@ -630,28 +790,78 @@ ${tokenTracker.getDomainSummary('rc')}${formatCostSummary()}${getLearningSummary
   async uxGenerate(projectPath: string, screensDescription: string): Promise<AgentResult> {
     const state = this.stateManager.load(projectPath);
     const result = await this.uxAgent.generate(state, screensDescription);
+    this.deduplicateArtifacts(state);
     this.stateManager.save(projectPath, state);
     return result;
   }
 
+  /** De-duplicate state.artifacts in-place */
+  private deduplicateArtifacts(state: ProjectState): void {
+    deduplicateArtifacts(state);
+  }
+
+  // ── Design methods (delegated to DesignHandler) ────────────────────────────
+
   /** Generate design options with wireframes */
   async designGenerate(input: DesignInput): Promise<AgentResult> {
-    const state = this.stateManager.load(input.projectPath);
-    const result = await this.designAgent.generate(state, input);
-    this.stateManager.save(input.projectPath, state);
-    return result;
+    return this.designHandler.designGenerate(input);
+  }
+
+  /** Iterate on wireframes with user feedback */
+  async designIterate(input: DesignIterateInput): Promise<AgentResult> {
+    return this.designHandler.designIterate(input);
+  }
+
+  /** Import brand assets from project files, URL, or manual input */
+  async brandImport(input: BrandImportInput): Promise<AgentResult> {
+    return this.designHandler.brandImport(input);
+  }
+
+  /** Run design intake assessment (competitor + preference analysis) */
+  async designIntake(
+    input: DesignIntakeInput,
+    prdContext: string,
+    icpData?: string,
+    externalBrandProfile?: BrandProfile,
+  ): Promise<AgentResult> {
+    return this.designHandler.designIntake(input, prdContext, icpData, externalBrandProfile);
+  }
+
+  /** Generate design research brief */
+  async designResearch(input: DesignResearchInput): Promise<AgentResult> {
+    return this.designHandler.designResearch(input);
+  }
+
+  /** Run the Design Challenger - brutal multi-lens review */
+  async designChallenge(input: ChallengeInput): Promise<AgentResult> {
+    return this.designHandler.designChallenge(input);
   }
 
   /** Save the user's selected design option */
   designSelect(projectPath: string, optionId: string, specPath: string): AgentResult {
-    const state = this.stateManager.load(projectPath);
-    state.selectedDesign = {
-      optionId,
-      specPath,
-      selectedAt: new Date().toISOString(),
-    };
-    this.stateManager.save(projectPath, state);
-    return { text: `Design option ${optionId} selected and saved.` };
+    return this.designHandler.designSelect(projectPath, optionId, specPath);
+  }
+
+  // ── Copy methods (delegated to CopyHandler) ───────────────────────────────
+
+  /** Generate copy research brief */
+  async copyResearch(input: CopyResearchInput): Promise<AgentResult> {
+    return this.copyHandler.copyResearch(input);
+  }
+
+  /** Generate full copy system */
+  async copyGenerate(input: CopyGenerateInput): Promise<AgentResult> {
+    return this.copyHandler.copyGenerate(input);
+  }
+
+  /** Self-critique copy system */
+  async copyCritique(projectPath: string): Promise<AgentResult> {
+    return this.copyHandler.copyCritique(projectPath);
+  }
+
+  /** Iterate on copy system with feedback */
+  async copyIterate(input: CopyIterateInput): Promise<AgentResult> {
+    return this.copyHandler.copyIterate(input);
   }
 
   /** Save an artifact generated by the host IDE (used in passthrough mode) */
@@ -681,7 +891,7 @@ ${tokenTracker.getDomainSummary('rc')}${formatCostSummary()}${getLearningSummary
     }
 
     const filePath = path.join(projectPath, 'rc-method', dir, filename);
-    fs.writeFileSync(filePath, content, 'utf-8');
+    safeWriteFile(filePath, content);
 
     const artifactRef = `rc-method/${dir}/${filename}`;
     if (!state.artifacts.includes(artifactRef)) {
@@ -694,6 +904,30 @@ ${tokenTracker.getDomainSummary('rc')}${formatCostSummary()}${getLearningSummary
     return {
       text: `Artifact saved: ${artifactRef}`,
       artifacts: [artifactRef],
+    };
+  }
+
+  /** Reset project state - deletes checkpoint and markdown, allowing a fresh rc_start */
+  reset(projectPath: string): AgentResult {
+    // Delete RC checkpoint from SQLite
+    try {
+      const { store, pipelineId } = getProjectStore(projectPath);
+      store.deleteNode(pipelineId, NODE_IDS.RC_STATE);
+      store.deleteNode(pipelineId, NODE_IDS.RC_INTERRUPT);
+    } catch {
+      // Checkpoint may not exist yet - that's fine
+    }
+
+    // Delete markdown state file
+    const stateFile = path.join(projectPath, 'rc-method', 'state', 'RC-STATE.md');
+    if (fs.existsSync(stateFile)) {
+      fs.unlinkSync(stateFile);
+    }
+
+    audit('project.reset', 'rc', projectPath, {});
+
+    return {
+      text: `RC Method state reset for ${projectPath}. You can now run rc_start to begin a fresh project.`,
     };
   }
 

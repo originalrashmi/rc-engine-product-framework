@@ -20,7 +20,7 @@ This guide covers two ways to use RC Engine:
 ### 1. Install
 
 ```bash
-git clone -b v2 https://github.com/originalrashmi/rc-engine.git
+git clone https://github.com/originalrashmi/rc-engine-product-framework.git rc-engine
 cd rc-engine
 npm install
 ```
@@ -96,9 +96,8 @@ All files are saved to your projects directory (defaults to `$HOME`, override wi
 Each tester clones and runs locally:
 
 ```bash
-git clone https://github.com/originalrashmi/rc-engine.git
+git clone https://github.com/originalrashmi/rc-engine-product-framework.git rc-engine
 cd rc-engine
-git checkout v2
 npm install
 # Add .env with API keys
 npm run web:preview
@@ -189,15 +188,16 @@ Add to your MCP configuration:
 
 ### 4. Available Tools
 
-35 tools across 4 domains (access depends on your tier - 14 free, 35 Pro):
+35 tools across 4 domains -- all available, no restrictions:
 
-| Domain | Tools | Free Tier | Purpose |
-|--------|-------|-----------|---------|
-| Pre-RC | prc_start, prc_classify, prc_run_stage, prc_gate, prc_status, prc_synthesize, prc_stress_test | 6 of 7 (stress_test is Pro) | 20-persona research pipeline |
-| RC Method | rc_start, rc_import_prerc, rc_illuminate, rc_define, rc_architect, rc_sequence, rc_validate, rc_forge_task, rc_connect, rc_compound, rc_gate, rc_save, rc_status, ux_score, ux_audit, ux_generate, ux_design | 5 of 17 (build tools require Pro) | 8-phase structured build |
-| Post-RC | postrc_scan, postrc_override, postrc_report, postrc_configure, postrc_gate, postrc_status, postrc_generate_observability_spec | 2 of 7 (scanning requires Pro) | Security + quality validation |
-| Traceability | trace_enhance_prd, trace_map_findings, trace_status | 0 of 3 (Pro only) | Requirements coverage |
-| Pipeline | rc_pipeline_status | 1 of 1 | Cross-domain status |
+| Domain | Tools | Count | Purpose |
+|--------|-------|-------|---------|
+| Pre-RC | prc_start, prc_classify, prc_run_stage, prc_gate, prc_status, prc_synthesize, prc_stress_test | 7 | 20-persona research pipeline |
+| RC Method | rc_start, rc_import_prerc, rc_illuminate, rc_define, rc_architect, rc_sequence, rc_validate, rc_forge_task, rc_connect, rc_compound, rc_gate, rc_save, rc_status | 13 | 8-phase structured build |
+| UX | ux_score, ux_audit, ux_generate, ux_design | 4 | UX scoring and design generation |
+| Post-RC | postrc_scan, postrc_override, postrc_report, postrc_configure, postrc_gate, postrc_status, postrc_generate_observability_spec | 7 | Security + quality validation |
+| Traceability | trace_enhance_prd, trace_map_findings, trace_status | 3 | Requirements coverage |
+| Pipeline | rc_pipeline_status | 1 | Cross-domain status |
 
 ---
 

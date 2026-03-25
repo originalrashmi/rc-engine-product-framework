@@ -11,6 +11,15 @@ export const DesignStyleSchema = z.object({
     surface: z.string().describe('Card/surface color hex'),
     text: z.string().describe('Primary text color hex'),
     muted: z.string().describe('Muted/secondary text color hex'),
+    semantic: z
+      .object({
+        success: z.string().describe('Success/positive state color hex'),
+        warning: z.string().describe('Warning/caution state color hex'),
+        error: z.string().describe('Error/danger state color hex'),
+        info: z.string().describe('Info/neutral state color hex'),
+      })
+      .optional()
+      .describe('Semantic state colors — auto-generated if not provided by intake'),
   }),
   typography: z.object({
     headingFont: z.string().describe('Heading font family'),
@@ -23,6 +32,31 @@ export const DesignStyleSchema = z.object({
     borderRadius: z.enum(['none', 'subtle', 'rounded', 'pill']).describe('Corner style'),
   }),
   personality: z.string().describe('1-sentence description of the visual personality'),
+  colorDistribution: z
+    .object({
+      primary: z.number().describe('Background/base percentage (target: 60)'),
+      secondary: z.number().describe('Supporting surfaces percentage (target: 30)'),
+      accent: z.number().describe('CTAs/highlights percentage (target: 10)'),
+    })
+    .optional()
+    .describe('60-30-10 color distribution — ensures visual hierarchy'),
+  aestheticDirection: z
+    .enum([
+      'brutally-minimal',
+      'maximalist',
+      'retro-futuristic',
+      'editorial',
+      'art-deco',
+      'organic',
+      'industrial',
+      'luxury',
+      'playful',
+      'brutalist',
+      'warm-neutral',
+      'high-contrast',
+    ])
+    .optional()
+    .describe('Bold aesthetic direction — prevents generic output'),
 });
 
 export const DesignOptionSchema = z.object({
@@ -41,6 +75,7 @@ export const DesignOptionSchema = z.object({
     strengths: z.array(z.string()).describe('What this option does well'),
     weaknesses: z.array(z.string()).describe('Where this option compromises'),
   }),
+  differentiator: z.string().optional().describe('The one visual element someone will remember 24 hours later'),
 });
 
 export const DesignSpecSchema = z.object({
@@ -70,6 +105,19 @@ export interface DesignInput {
   prdContext: string; // PRD content for product understanding
   icpData?: string; // ICP/persona data from Pre-RC research
   competitorData?: string; // Competitor analysis from Pre-RC research
+  brandProfilePath?: string; // Path to BrandProfile JSON (constrains colors/typography/shape)
+  copySystemPath?: string; // Path to CopySystem JSON (real copy instead of placeholders)
+  designIntakePath?: string; // Path to DesignIntakeAssessment (user preferences + constraints)
+  fontEmbedHtml?: string; // Pre-generated <link> tags for Google Fonts (from FontService)
+}
+
+// ── Design Iteration Input ───────────────────────────────────────────────
+
+export interface DesignIterateInput {
+  projectPath: string;
+  feedback: string; // User feedback on the current design
+  targetScreens?: string[]; // Specific screens to revise (all if omitted)
+  targetOptionId?: string; // Specific option to revise (selected option if omitted)
 }
 
 // ── Design Generation Result ──────────────────────────────────────────────

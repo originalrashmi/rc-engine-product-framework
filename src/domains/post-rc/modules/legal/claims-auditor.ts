@@ -74,8 +74,8 @@ const CLAIM_PATTERNS: ClaimPattern[] = [
     category: 'claims-quantity',
     title: 'Incorrect tool count',
     severity: Severity.Low,
-    description: 'Claims "31" or "32" tools but actual tool registration count is 35.',
-    remediation: 'Update to correct count (35 tools) or use "35+ tools" for future-proofing.',
+    description: 'Claims incorrect tool count. Actual tool registration count is 52.',
+    remediation: 'Update to correct count (52 tools) or use "50+ tools" for future-proofing.',
   },
 
   // Quantity: gate count without qualifier
