@@ -224,7 +224,7 @@ All deliverables are markdown and HTML - readable in any browser or text editor.
 
 ## 07 - Pricing
 
-**RC Engine is free and open source.** All 35 tools, all features, no limits.
+**RC Engine is free and open source.** All 52 tools, all features, no limits.
 
 **BYOK model:** RC Engine uses your own API keys (Anthropic, Perplexity, etc.) - you pay providers directly at their rates. Typical total: $3-20 per project depending on complexity.
 

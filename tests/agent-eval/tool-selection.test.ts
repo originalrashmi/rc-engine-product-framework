@@ -85,6 +85,40 @@ const TOOL_DESCRIPTIONS: Record<string, string> = {
   trace_status:
     'Check traceability coverage. Read-only, safe to call anytime after trace_enhance_prd. Returns: total requirements, implemented count, verified count, coverage percentages, orphan lists. Use when user asks "what percentage is done?" or "what did we miss?" Also useful mid-build to track progress against requirements.',
 
+  rc_init:
+    'Call FIRST when starting a new session. Detects existing state across all 4 domains and routes to the correct next tool. Defaults to Pre-RC research (prc_start) when no state exists. After success: follow the recommended next tool from the response.',
+  rc_forge_all:
+    'Run all pending forge tasks in sequence. Call after Phase 5 gate approval to build all tasks automatically instead of calling rc_forge_task one by one. After success: proceed to Phase 7 (Connect) via rc_gate.',
+  rc_autopilot:
+    'Run remaining phases automatically with gate checks. Advances through phases, pausing at gates for approval. Use when the user wants to run the pipeline with minimal interaction. After success: pipeline is complete or paused at the next gate requiring approval.',
+  rc_reset:
+    'Call to reset pipeline state. Clears state for one or all domains. Requires explicit confirmation. Use when the user wants to start over. After success: pipeline is clean and ready for a fresh run via rc_init or prc_start.',
+  design_challenge:
+    'Stress-test design options against edge cases, accessibility, and real-world scenarios. Call after design options are generated. After success: present weaknesses to user, then proceed to design_select.',
+  copy_research_brief:
+    'Research brand voice and copy direction from PRD and market context. Call after PRD exists, before generating copy. After success: proceed to copy_generate with the research brief.',
+  copy_generate:
+    'Generate copy for product surfaces (headlines, CTAs, onboarding, error messages). Call after copy_research_brief. After success: present copy to user for review, then use copy_iterate or copy_critique.',
+  copy_iterate:
+    'Refine generated copy based on user feedback. Call after copy_generate when the user wants adjustments. After success: present updated copy to user.',
+  copy_critique:
+    'Review copy quality for clarity, consistency, and effectiveness. Call to get an objective assessment. After success: present critique to user and decide whether to iterate.',
+  design_research_brief:
+    'Research design patterns and visual direction for the product. Call after PRD to analyze competitors and design trends. After success: proceed to design_intake.',
+  design_intake:
+    'Capture design preferences, constraints, and brand assets. Call before generating design options. After success: proceed to ux_design to generate options.',
+  brand_import:
+    'Import existing brand assets (colors, fonts, logos, guidelines). Call when the user has existing brand identity. After success: assets are available for design generation.',
+  design_iterate:
+    'Refine designs based on user feedback. Call after design options are generated. After success: present updated designs to user.',
+  design_select:
+    "Record the user's design selection from generated options. Call when the user chooses a direction. After success: selection is saved and available for architect/forge phases.",
+  design_pipeline:
+    'Run the full design flow end-to-end: research, intake, generate, challenge, select. After success: design is complete and ready for the build phase.',
+  playbook_generate:
+    'Generate a step-by-step implementation playbook from build artifacts. Call after RC Method is complete. After success: playbook is saved to rc-method/ for developer handoff.',
+  pdf_export:
+    'Export deliverables as formatted HTML suitable for PDF conversion. Call to create shareable documents. After success: files are saved to the project directory.',
   rc_pipeline_status:
     'High-level overview of the entire pipeline. Read-only, safe to call anytime. Shows token usage totals and registered domain summary. Call this FIRST when starting a new session to orient yourself, or when the user asks for a big-picture status. For detailed per-domain progress, follow up with the domain-specific status tools: prc_status, rc_status, postrc_status, trace_status.',
 };
@@ -114,8 +148,8 @@ function findBestMatch(intent: string, descriptions: Record<string, string>): st
 // ─── Test Suite ────────────────────────────────────────────────────────────
 
 describe('Tool Description Completeness', () => {
-  it('all 35 tools have descriptions', () => {
-    expect(Object.keys(TOOL_DESCRIPTIONS)).toHaveLength(35);
+  it('all 52 tools have descriptions', () => {
+    expect(Object.keys(TOOL_DESCRIPTIONS)).toHaveLength(52);
   });
 
   it('every description starts with WHEN to call (action word or context)', () => {
@@ -137,6 +171,14 @@ describe('Tool Description Completeness', () => {
       'Assign',
       'PRE-FLIGHT',
       'High-level',
+      'Stress-test',
+      'Research',
+      'Refine',
+      'Review',
+      'Capture',
+      'Import',
+      'Record',
+      'Export',
     ];
 
     for (const [tool, desc] of Object.entries(TOOL_DESCRIPTIONS)) {

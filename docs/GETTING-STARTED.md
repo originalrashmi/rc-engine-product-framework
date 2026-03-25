@@ -188,7 +188,7 @@ Add to your MCP configuration:
 
 ### 4. Available Tools
 
-35 tools across 4 domains -- all available, no restrictions:
+52 tools across 4 domains -- all available, no restrictions:
 
 | Domain | Tools | Count | Purpose |
 |--------|-------|-------|---------|

@@ -1,7 +1,7 @@
 /**
  * MCP Bridge - Creates an in-process MCP server + client pair.
  *
- * This lets the web server call any of the 31 RC Engine tools
+ * This lets the web server call any of the 52 RC Engine tools
  * without reimplementing the tool handlers. It works by:
  *   1. Creating an McpServer instance and registering all tools
  *   2. Applying the same guardedTool wrapper as the main index.ts

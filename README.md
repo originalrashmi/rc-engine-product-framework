@@ -7,7 +7,7 @@
 
 **Results through Clarity** - an AI-native product development pipeline.
 
-Take a one-line product idea through structured research, architecture, build, validation, and traceability - with 35 tools across 4 domains and a tiered access model.
+Take a one-line product idea through structured research, architecture, build, validation, and traceability - with 52 tools across 4 domains. Free and open source.
 
 Built for developers, technical founders, and product teams who want structured methodology instead of ad-hoc AI coding.
 
@@ -31,24 +31,7 @@ Idea --> Research (up to 20 specialists) --> PRD --> Architecture --> Build --> 
 
 You never call tools directly. Open your IDE, describe what you want to build, and the AI handles the rest.
 
-### Editions and Tiers
-
-RC Engine ships with 35 tools across 4 domains. Access depends on your plan:
-
-| Tier | Price | What You Get |
-|------|-------|-------------|
-| **Free** | $0 | Pre-RC research (6 tools), UX scoring/auditing (3 tools), status/utility (5 tools) - 14 tools total |
-| **Pro** | $79/mo | All 35 tools: full RC Method build pipeline, Post-RC security scanning, design intelligence, idea stress test, traceability |
-| **Enterprise** | Custom | Everything in Pro + team seats, SSO, webhooks, dedicated support |
-
-| Component | What It Is | License |
-|-----------|-----------|---------|
-| **RC Engine (this repo)** | MCP server, pipeline structure, state management, quality gates | MIT (free) |
-| **[RC Engine Pro](https://github.com/originalrashmi/rc-engine-pro)** | 46 methodology knowledge files - research personas, build skills, UX specialists, security databases | Proprietary |
-
-**Community mode** (without Pro knowledge files): Tools assemble structured prompts for your IDE's AI to process. Full pipeline discipline at zero cost.
-
-**Pro mode** (with Pro knowledge files): Autonomous execution - the engine calls LLMs directly with methodology-enriched prompts.
+**BYOK model:** RC Engine uses your own API keys (Anthropic, Perplexity, etc.) - you pay providers directly at their rates. Typical total: $3-20 per project depending on complexity.
 
 ---
 
@@ -61,21 +44,23 @@ RC Engine ships with 35 tools across 4 domains. Access depends on your plan:
 | **Quality Gates** | Up to 12 human-approval gates. Nothing ships without passing security, UX, and coverage audits |
 | **Traceability** | Every requirement gets a deterministic ID. Tasks map to requirements. Findings map back to source |
 | **Multi-LLM Orchestration** | 4 providers available - search models for research, fast models for extraction, powerful models for architecture |
-| **Security + Legal Review** | Post-build OWASP pattern scanning, monitoring readiness, and legal compliance review (Pro). Design-time analysis - not a replacement for professional auditing |
+| **Design + Copy** | Brand-aware visual design options and research-backed copy generation |
+| **Security + Legal Review** | Post-build OWASP pattern scanning, monitoring readiness, and legal compliance review. Design-time analysis - not a replacement for professional auditing |
 
 ---
 
 ## The Pipeline
 
-| Domain | Total Tools | Free Tier | What It Does |
-|--------|------------|-----------|-------------|
-| **Pre-RC Research** | 7 | 6 of 7 | Up to 20 AI specialists analyze your idea across market, users, security, UX, and business |
-| **RC Method Build** | 17 | 5 of 17 | 8-phase gated pipeline: discover, define, architect, sequence, validate, build, integrate, harden |
-| **Post-RC Validation** | 7 | 2 of 7 | Security scanning, monitoring readiness, override tracking, ship/no-ship gate |
-| **Traceability** | 3 | 0 of 3 | Requirements-to-code audit trail with coverage reporting (Pro) |
-| **Pipeline Status** | 1 | 1 of 1 | Cross-domain overview with token usage totals |
+| Domain | Tools | What It Does |
+|--------|-------|-------------|
+| **Pre-RC Research** | 7 | Up to 20 AI specialists analyze your idea across market, users, security, UX, and business |
+| **RC Method Build** | 33 | 8-phase gated pipeline with design, copy, UX, and export tools |
+| **Post-RC Validation** | 7 | Security scanning, monitoring readiness, override tracking, ship/no-ship gate |
+| **Traceability** | 3 | Requirements-to-code audit trail with coverage reporting |
+| **Pipeline** | 2 | Cross-domain overview + unified entry point |
+| **Total** | **52** | |
 
-Free tier includes Pre-RC research (6 tools), UX scoring/auditing (3 tools), and status/utility tools (5 tools) - 14 tools total. The full build pipeline, security scanning, design intelligence, and traceability require Pro. See the tier table above for details.
+All 52 tools are available with no restrictions.
 
 ---
 
@@ -83,27 +68,34 @@ Free tier includes Pre-RC research (6 tools), UX scoring/auditing (3 tools), and
 
 **Prerequisites:** Node.js >= 18, an MCP-compatible IDE (Claude Code, Cursor, Windsurf, VS Code)
 
-### 1. Get your own copy
+### Path A: Web UI
 
 ```bash
-# Clone the repo
 git clone https://github.com/originalrashmi/rc-engine-product-framework.git rc-engine
 cd rc-engine
+npm install && npm run build
+npm run web
+```
 
-# Install and build
+Open **http://localhost:3100** in your browser.
+
+### Path B: MCP Server (IDE)
+
+```bash
+git clone https://github.com/originalrashmi/rc-engine-product-framework.git rc-engine
+cd rc-engine
 npm install && npm run build
 ```
 
-### 2. Configure API keys
-
+Configure API keys in `.env`:
 ```bash
 cp .env.example .env
 # Edit .env with your API keys (at minimum, ANTHROPIC_API_KEY)
 ```
 
-### 3. Connect to your IDE
+Add to your IDE config:
 
-**Claude Code** - add to `.mcp.json` in your project:
+**Claude Code** (`.mcp.json`):
 ```json
 {
   "mcpServers": {
@@ -117,7 +109,7 @@ cp .env.example .env
 
 > For Cursor, Windsurf, and VS Code setup, see [Getting Started](docs/GETTING-STARTED.md).
 
-### 4. Start building
+### Start building
 
 Open your IDE and describe your product idea. The AI handles the rest.
 
@@ -130,7 +122,7 @@ Open your IDE and describe your product idea. The AI handles the rest.
 3. **Approve checkpoints** - review findings at each gate, then the AI builds your project
 4. **Get deliverables** - PRD, architecture, task list, code, security scan, traceability report
 
-> For the full walkthrough, see [Getting Started](docs/GETTING-STARTED.md).
+> For the full walkthrough, see [Starter Guide](docs/STARTER-GUIDE.md) or [Getting Started](docs/GETTING-STARTED.md).
 
 ---
 
@@ -143,7 +135,10 @@ Every pipeline run produces these deliverables:
 | **Product Requirements Document (PRD)** | 19-section research-backed document covering problem, users, features, architecture, risks, and GTM |
 | **Technical Architecture** | Stack selection, data model, API design, infrastructure plan |
 | **Prioritized Task List** | Dependency-ordered tasks across 4 layers (Foundation, Core, Integration, Polish) |
+| **Design Options** | Wireframes, brand identity, visual design directions |
+| **Copy System** | Research-backed copy for headlines, CTAs, onboarding flows |
 | **Implementation Guidance** | Per-task build instructions with file structure and code patterns |
+| **Playbook** | Step-by-step implementation guide |
 | **Security Scan Report** | OWASP-mapped findings with CWE references and plain-language remediation |
 | **Traceability Matrix** | Requirements-to-code coverage showing what was specified, built, and verified |
 
@@ -155,24 +150,11 @@ All deliverables are saved as markdown and HTML files in your project directory.
 
 | Document | Description |
 |----------|-------------|
+| [Starter Guide](docs/STARTER-GUIDE.md) | Visual guide - what RC Engine is, both paths, pipeline overview |
 | [Quickstart Guide](docs/QUICKSTART-GUIDE.md) | 5-minute setup, first run walkthrough, what you get, troubleshooting |
 | [Architecture](docs/ARCHITECTURE.md) | Technical deep dive - domains, phases, personas, LLM routing, state management |
 | [Getting Started](docs/GETTING-STARTED.md) | Setup, API keys, IDE configuration, first project walkthrough |
-| [Usage & Cost Guide](docs/USAGE-AND-COST-GUIDE.md) | Plan recommendations, token estimates, cost optimization |
-
----
-
-## Roadmap
-
-| Phase | Status | What |
-|-------|--------|------|
-| **CLI/MCP Pipeline** | Available now | 35-tool pipeline (14 free, 35 Pro) via Claude Code, Cursor, Windsurf, VS Code |
-| **Parallel Synthesis** | Available now | PRD generation runs 8 section groups concurrently for faster output |
-| **Web Dashboard** | Planned | Browser-based project management with real-time pipeline visualization |
-| **Pro Knowledge Marketplace** | Planned | Enhanced research personas, build skills, and security databases |
-| **Team Collaboration** | Planned | Multi-user projects with shared gates and approval workflows |
-
-See the [product backlog](docs/BACKLOG-versioning-deployment.md) for the full list.
+| [Usage & Cost Guide](docs/USAGE-AND-COST-GUIDE.md) | Token estimates, cost optimization |
 
 ---
 
@@ -195,8 +177,7 @@ For the full license terms, see [LICENSE](LICENSE).
 
 ## License
 
-- **RC Engine** (this repository): [MIT](LICENSE) - free to use, modify, and distribute
-- **RC Engine Pro** (knowledge files): [Proprietary](https://github.com/originalrashmi/rc-engine-pro/blob/main/LICENSE) - requires subscription
+**RC Engine** (this repository): [MIT](LICENSE) - free to use, modify, and distribute
 
 ### Commercial Use Notice
 
@@ -205,7 +186,6 @@ The source code is MIT-licensed, which permits use, modification, and distributi
 - **"RC Engine", "RC Method", and "Toerana"** are trademarks of Toerana. You may not use these names, logos, or branding to market, sell, or distribute a competing product or service without written permission from Toerana.
 - **You may not** clone or fork this repository and offer it (or a derivative) as a hosted commercial service, SaaS product, or paid offering under any name without written permission from Toerana.
 - **You may** use RC Engine to build your own products, integrate it into your internal workflows, and modify it for your own use.
-- **RC Engine Pro** knowledge files are proprietary and are not included in this repository. Redistributing, reselling, or sharing Pro knowledge files is prohibited.
 
 For commercial licensing inquiries: licensing@toerana.com
 

@@ -1,6 +1,6 @@
 # RC Engine - Architecture Reference Document (ARD)
 
-> **Last updated:** 2026-03-02 | **Version:** v2 branch | **Tools:** 32 | **Tests:** 485
+> **Last updated:** 2026-03-25 | **Version:** main | **Tools:** 52 | **Tests:** 587
 
 ---
 
@@ -29,7 +29,7 @@
 
 ## System Overview
 
-RC Engine is a **Model Context Protocol (MCP) server** that implements a structured product development pipeline. It exposes 35 tools across 4 domains, backed by a core infrastructure layer and a shared services layer.
+RC Engine is a **Model Context Protocol (MCP) server** that implements a structured product development pipeline. It exposes 52 tools across 4 domains, backed by a core infrastructure layer and a shared services layer.
 
 ```mermaid
 graph TB
@@ -40,7 +40,7 @@ graph TB
     subgraph "RC Engine (MCP Server)"
         Entry["index.ts<br/>Tool Guard Middleware"]
 
-        subgraph "Domains (35 tools)"
+        subgraph "Domains (52 tools)"
             PRC["Pre-RC Research<br/>6 tools"]
             RC["RC Method Build<br/>15 tools"]
             POSTRC["Post-RC Validation<br/>7 tools"]
@@ -151,7 +151,7 @@ graph TD
     style REG_RC_U fill:#ff6b6b,color:#fff
 ```
 
-> **RESOLVED.** Both `server.tool()` and `server.registerTool()` are now wrapped with `guardedTool`. All 35 tools receive path validation and input size checks.
+> **RESOLVED.** Both `server.tool()` and `server.registerTool()` are now wrapped with `guardedTool`. All 52 tools receive path validation and input size checks.
 
 ---
 
@@ -561,7 +561,7 @@ graph TD
 
 ## Web UI and Commercial Layer
 
-The web UI is a **full-stack Express + React application** that serves as the commercial product surface. It is separate from the MCP stdio server but calls the same 35 tools via an in-process bridge.
+The web UI is a **full-stack Express + React application** that serves as the commercial product surface. It is separate from the MCP stdio server but calls the same 52 tools via an in-process bridge.
 
 ### Architecture
 
@@ -609,7 +609,7 @@ graph TD
 
     SPA <-->|REST + WS| SERVER
     SERVER --> MCP_BRIDGE
-    MCP_BRIDGE -->|"Same 35 tools<br/>Same guardedTool wrapper"| DOMAINS["All 4 Pipeline Domains"]
+    MCP_BRIDGE -->|"Same 52 tools<br/>Same guardedTool wrapper"| DOMAINS["All 4 Pipeline Domains"]
     AUTH_SYS --> AUTH_DB
     BILLING --> STRIPE_API
     AUTH_SYS --> EMAIL
@@ -628,7 +628,7 @@ This means the web UI calls exactly the same tools with the same guards as the C
 
 ### Edition
 
-RC Engine Community Edition -- all 35 tools and features are available with no tier gating. Users provide their own API keys (BYOK model).
+RC Engine Community Edition -- all 52 tools and features are available with no tier gating. Users provide their own API keys (BYOK model).
 
 ### React Frontend Pages
 
@@ -1032,7 +1032,7 @@ Single GitHub Actions workflow (`.github/workflows/ci.yml`):
 
 | #   | Gap                                 | Impact       | Details                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       |
 | --- | ----------------------------------- | ------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 1   | ~~**RC tools bypass guardedTool**~~ | **RESOLVED** | The monkey-patch in `index.ts` now wraps both `server.tool()` and `server.registerTool()`. All 35 tools (Pre-RC, RC, Post-RC, Traceability, pipeline status) receive path validation and input size checks. 5 new `guardedTool` unit tests added to `sandbox.test.ts`.                                                                                                                                                                                                                                                                                                        |
+| 1   | ~~**RC tools bypass guardedTool**~~ | **RESOLVED** | The monkey-patch in `index.ts` now wraps both `server.tool()` and `server.registerTool()`. All 52 tools (Pre-RC, RC, Post-RC, Traceability, pipeline status) receive path validation and input size checks. 5 new `guardedTool` unit tests added to `sandbox.test.ts`.                                                                                                                                                                                                                                                                                                        |
 | 2   | ~~**Graph Engine not wired**~~      | **RESOLVED** | `GraphCoordinator<S>` base class bridges `GraphRunner` + `CheckpointStore` with persistent gate interrupts. 3 domain graph definitions built: Pre-RC (11 nodes, 3 gates, fan-out research), RC Method (12 nodes, 6 gates, sequential phases), Post-RC (5 nodes, fan-out/fan-in parallel scans, ship gate). Domain coordinators (`PreRcCoordinator`, `RcCoordinator`, `PostRcCoordinator`) wire graph topologies to injectable handlers. 31 new tests (12 coordinator + 19 graph topology).                                                                                    |
 | 3   | ~~**CheckpointStore not used**~~    | **RESOLVED** | All 4 domain state managers now use CheckpointStore (SQLite + WAL + Zod validation) as primary storage. Shared `store-factory.ts` provides singleton per-project instances at `{projectPath}/.rc-engine/state.db`. `pipeline-id.ts` derives deterministic 22-char pipeline IDs from project paths. 4 domain Zod schemas validate state on read. Legacy markdown/JSON files kept as write-only exports for human readability. Transparent migration on first load. Cross-domain reads (traceability -> post-rc) now typed CheckpointStore calls instead of regex file parsing. |
 

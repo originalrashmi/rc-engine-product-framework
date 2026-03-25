@@ -8,18 +8,19 @@ It contains stable patterns, conventions, and lessons learned across sessions.
 - **Name:** RC Engine
 - **Author:** Toerana
 - **Purpose:** AI-native structured software development pipeline
-- **Architecture:** MCP server with 35 tools across 4 domains
+- **Architecture:** MCP server with 52 tools across 4 domains
 - **Language:** TypeScript (strict mode)
 - **Build:** `tsc` -> `dist/`
+- **Edition:** Community (all features, no tier gating, open source)
 
 ## Repository Structure
 
 ```
 src/
-  core/         -> v2 infrastructure (graph, checkpoint, sandbox, llm, budget, observability, value, plugins, learning, deployment, docs, benchmark, pricing)
+  core/         -> Infrastructure (graph, checkpoint, sandbox, llm, budget, observability, value, plugins, learning, deployment, docs, benchmark, pricing)
   domains/
-    pre-rc/     -> 6 tools (prc_*) - 20-persona research pipeline
-    rc/         -> 14 tools (rc_*, ux_*) - 8-phase build method
+    pre-rc/     -> 7 tools (prc_*) - 20-persona research pipeline
+    rc/         -> 33 tools (rc_*, ux_*, copy_*, design_*, playbook_*, pdf_*) - 8-phase build + design + copy + export
     post-rc/    -> 7 tools (postrc_*) - security scan + ship gate
     traceability/ -> 3 tools (trace_*) - requirement coverage
   shared/
@@ -27,15 +28,18 @@ src/
     config.ts   -> API keys from env
     token-tracker.ts -> Usage tracking
     tool-guard.ts -> Path validation + input size limits for all tools
+    tier-capabilities.ts -> Always returns full capabilities (community edition)
+  tools/
+    rc-init.ts  -> Unified entry point (1 tool)
 tests/
   agent-eval/   -> 33 tool-selection tests
-  core/         -> graph (31), checkpoint (31), sandbox (51), budget (43), observability (33), pricing (19), + more
+  core/         -> graph (31), checkpoint (31), sandbox (51), budget (43), observability (33), pricing (12), + more
   domains/      -> design-types (16), design-agent-parsing (8), diagrams (15), pdf-export (19), playbook (12)
-knowledge/      -> Pro methodology files (installed separately via rc-engine-pro)
+knowledge/      -> Methodology files (personas, phase skills, security databases)
 web/
   server/       -> Express API + WebSocket (MCP bridge via InMemoryTransport) + auth.ts
   src/          -> React + TailwindCSS v4 frontend (Vite build)
-docs/           -> Workshop deck, architecture diagrams, roadmap
+docs/           -> Starter guide, architecture, quickstart, getting started
 .claude/        -> Agent definitions, hooks, rules, memory
 .github/        -> CI workflows
 .rc-engine/     -> Runtime: audit logs, cache, logs (gitignored)
@@ -49,7 +53,7 @@ docs/           -> Workshop deck, architecture diagrams, roadmap
 - Gates require explicit user approval - never auto-approve
 - Each domain writes ONLY to its designated directory
 - LLM calls use shared `llmFactory` singleton with provider routing
-- All 35 tools guarded: path validation + input size limits (tool-guard.ts)
+- All 52 tools guarded: path validation + input size limits (tool-guard.ts)
 - **No em-dashes or emojis in UI/UX/docs/agent messages** (user preference)
 - Use double-dashes (--) instead of em-dashes everywhere user-facing
 
@@ -60,18 +64,8 @@ docs/           -> Workshop deck, architecture diagrams, roadmap
 
 ## Git Strategy
 
-- `main` - stable releases (DO NOT push directly, user may move to new repo)
-- `v2` - active development branch
-- All new work goes to `v2` only
-
-## Pricing Model (Hybrid)
-
-3 tiers defined in `src/core/pricing/tiers.ts`:
-- Free: $0, 1 project/mo, research only, hard limit
-- Pro: $79/mo ($66 annual), unlimited, 3 design options, playbook, API
-- Enterprise: custom, team seats, SSO, webhooks
-Users bring their own API keys (no markup on LLM costs).
-`UsageMeter` in `src/core/pricing/meter.ts` tracks per-user consumption.
+- `main` - active development (single branch)
+- All work on `main`
 
 ## Auth Layer
 
@@ -81,13 +75,6 @@ Users bring their own API keys (no markup on LLM costs).
 - Middleware: `authMiddleware` (attaches user), `requireAuth` (blocks 401)
 - Organization/team seats: `organizations` + `org_invites` tables
 - User roles: owner, admin, member
-
-## Billing
-
-- `web/server/billing.ts` - Stripe integration
-- Checkout sessions for tier upgrades (Pro)
-- Webhook handler for subscription lifecycle events
-- Env vars: `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`, `STRIPE_PRICE_*`
 
 ## Email
 
@@ -101,8 +88,7 @@ Users bring their own API keys (no markup on LLM costs).
 - 13 components: Layout, DesignOptionCard, DesignPreview, DiagramTabs, ValueDisplay, etc.
 - 9-step wizard: Idea -> Team -> Research -> Results -> Design -> Architecture -> Building -> Security -> Complete
 - Session persistence via sessionStorage (4-hour expiry, auto-save on step change)
-- Back navigation between wizard steps
-- First-time users see Landing page; returning users go to Dashboard
+- `npm run web` starts dev server on port 3100
 
 ## Design System (ux_design tool)
 
@@ -111,26 +97,11 @@ Users bring their own API keys (no markup on LLM costs).
 - Files saved to `rc-method/design/option-{a,b,c}/`
 - Design-to-build bridge: selected spec loaded into architect/forge prompts
 
-## Tier Enforcement
-
-- `web/server/index.ts` - tool-level tier check before MCP call
-- TOOL_FEATURE_REQUIREMENTS maps tool names to required TierFeatures
-- Free tier: research only (prc_* tools), no build/design/security
-- Skipped in dev bypass mode
-
 ## Docker
 
 - `Dockerfile` - multi-stage (build + production), non-root user, healthcheck
 - `docker-compose.yml` - single service, `./data` volume for persistence
 - `.dockerignore` - excludes node_modules, .git, secrets
-
-## Wizard Bug Fixes Applied
-
-- Stage names: `stage-2-user-intelligence`, `stage-3-business-market` (match ResearchStage enum)
-- Build Only mode: calls `rc_start` with `description`, auto-approves phases 1-2
-- Persona IDs match backend PersonaId enum
-- Persona toggles wire through to `configurePersonas` API endpoint
-- Error retry buttons on all wizard failure states
 
 ## Security Hardening (applied)
 
@@ -140,30 +111,28 @@ Users bring their own API keys (no markup on LLM costs).
 - `requireAuth` middleware on all sensitive API routes
 - WebSocket connections require valid session cookie
 - `validateProjectPath()` on all project-scoped endpoints
-- Stripe redirect URLs validated as same-origin
 - Directory traversal blocked on /api/projects
 
 ## Repository
 
 - **GitHub:** `originalrashmi/rc-engine-product-framework` (origin remote)
-- `main` - stable releases
-- `v2` - active development
+- `main` - active development
 
 ## Current State
 
-- 578 tests passing, 31 test files, 35 MCP tools
-- All 13 shared wrappers fully connected (zero dead code)
+- 587 tests passing, 32 test files, 52 MCP tools
+- All shared wrappers fully connected (zero dead code)
 - dist/ built and ready for MCP
 
-## Deployment Requirements (for sharing)
+## Deployment Requirements
 
 Server needs:
 - Node.js 18+
 - At least ANTHROPIC_API_KEY in .env for autonomous mode
-- `npm run web:preview` starts Express on port 3100
+- `npm run web` starts Express on port 3100
 - SQLite for auth + state (in-process, auto-created in .rc-engine/)
 - Docker: `docker compose up -d` (self-contained)
-- Optional: Stripe keys for billing, Resend/SMTP for email
+- Optional: Resend/SMTP for email
 
 ## Topic Files
 
