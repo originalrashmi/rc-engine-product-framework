@@ -20,27 +20,54 @@
   }
 
   @media print {
-    body { padding: 0 20px 20px; font-size: 11.5px; line-height: 1.6; }
+    body { padding: 0 16px 8px; font-size: 10.5px; line-height: 1.4; }
+    .section { margin-bottom: 0; }
+    .section .watermark { font-size: 80px; top: -10px; }
+    h2 { margin-top: 10px; margin-bottom: 5px; font-size: 16px; page-break-after: avoid; }
+    h3 { margin-top: 6px; margin-bottom: 3px; font-size: 12px; }
+    h4 { margin-top: 6px; margin-bottom: 2px; }
+    p { margin-bottom: 4px; }
+    hr { margin: 8px 0; }
+    pre { padding: 8px 12px; font-size: 10px; margin-bottom: 6px; line-height: 1.4; }
+    table { font-size: 10.5px; }
+    th { padding: 5px 8px; }
+    td { padding: 4px 8px; }
+    ul, ol { margin-left: 16px; margin-bottom: 4px; }
+    li { margin-bottom: 2px; }
     .header {
-      border-radius: 0; margin-left: -20px; margin-right: -20px; padding: 20px 32px 18px;
-      -webkit-print-color-adjust: exact;
-      print-color-adjust: exact;
+      border-radius: 0; margin-left: -16px; margin-right: -16px; padding: 14px 24px 12px;
+      -webkit-print-color-adjust: exact; print-color-adjust: exact;
       background: #1B2A4A !important;
+      margin-bottom: 14px;
     }
-    .header h1 { color: #F5F0E8 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    .header h1 { font-size: 26px; color: #F5F0E8 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
     .header h1 .rc {
-      -webkit-text-fill-color: #C9A962 !important;
-      color: #C9A962 !important;
-      background: none !important;
+      -webkit-text-fill-color: #C9A962 !important; color: #C9A962 !important; background: none !important;
     }
-    .header .subtitle { color: #F5F0E8 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-    .header .tagline { color: #C9A962 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-    .page-break { page-break-before: always; }
-    h2 { page-break-after: avoid; }
-    pre, table, .path-card, .pipeline, .deliverables { page-break-inside: avoid; }
+    .header .subtitle { font-size: 12px; letter-spacing: 3px; margin-bottom: 2px; color: #F5F0E8 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    .header .tagline { font-size: 11px; color: #C9A962 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    .paths-container { margin: 6px 0 10px; gap: 10px; }
+    .path-card { padding: 12px; }
+    .path-card h3 { font-size: 14px; }
+    .path-card p, .path-card li { font-size: 10px; }
+    .path-card .setup-time { margin-top: 4px; font-size: 9px; }
+    .pipeline { padding: 10px 14px; margin: 4px 0 8px; }
+    .pipeline-dot { width: 20px; height: 20px; min-width: 20px; font-size: 9px; margin-right: 8px; }
+    .pipeline-connector { height: 3px; margin-left: 9px; margin-bottom: 1px; }
+    .pipeline-text strong { font-size: 11px; }
+    .pipeline-text span { font-size: 9.5px; }
+    .pipeline-checkpoint { font-size: 8.5px; }
+    .pipeline-step { margin-bottom: 1px; }
+    .deliverables { gap: 5px; margin: 4px 0; }
+    .deliverable { padding: 6px 8px; }
+    .deliverable strong { font-size: 10px; }
+    .deliverable span { font-size: 9px; }
+    .step-tag { width: 18px; height: 18px; line-height: 18px; font-size: 9px; margin-right: 6px; }
+    .callout { padding: 6px 10px; font-size: 10px; margin-bottom: 6px; }
+    .footer { padding: 8px 16px; margin-top: 10px; font-size: 9px; }
   }
 
-  /* ===== HEADER — Navy gradient with brand identity ===== */
+  /* ===== HEADER -- Navy gradient with brand identity ===== */
   .header {
     background: linear-gradient(135deg, #0D1B2A 0%, #1B2A4A 100%);
     margin: 0 -40px;
@@ -366,7 +393,7 @@
 <div class="header">
   <h1><span class="rc">RC</span> Engine</h1>
   <div class="subtitle">Starter Guide</div>
-  <div class="tagline">Results through Clarity &mdash; an AI-native product development pipeline</div>
+  <div class="tagline">Results through Clarity -- an AI-native product development pipeline</div>
 </div>
 
 <!-- WHAT IS IT -->
@@ -451,7 +478,7 @@
 <p>That's it. No terminal, no configuration, no API keys to manage.</p>
 </div>
 
-<hr class="page-break">
+<hr>
 
 <!-- PATH B: MCP -->
 <div class="section">
@@ -552,7 +579,7 @@ echo %cd%\dist\index.js</code></pre>
 </table>
 </div>
 
-<hr class="page-break">
+<hr>
 
 <!-- THE PIPELINE -->
 <div class="section">
