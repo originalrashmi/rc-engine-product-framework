@@ -373,7 +373,7 @@
 <div class="section">
 <span class="watermark">01</span>
 <h2>What is RC Engine?</h2>
-<p>RC Engine takes a product idea -- even a single sentence -- and walks it through a structured development pipeline: research, architecture, build, validation, and traceability. It uses 35 orchestrated AI tools behind the scenes so you can focus on your product, not the process.</p>
+<p>RC Engine takes a product idea -- even a single sentence -- and walks it through a structured development pipeline: research, architecture, build, validation, and traceability. It uses 53 orchestrated AI tools behind the scenes so you can focus on your product, not the process.</p>
 <p>Up to 20 specialized AI analysts research your idea before a single line of code is written. They cover market fit, user needs, technical feasibility, security, UX, and more. Then the engine designs the architecture, builds task by task, and scans for security and legal issues before shipping.</p>
 <p>You approve every step. Nothing moves forward without your sign-off.</p>
 </div>
@@ -544,10 +544,11 @@ echo %cd%\dist\index.js</code></pre>
 
 <table>
   <tr><th>Domain</th><th>What It Does</th></tr>
-  <tr><td>Pre-RC (Research)</td><td>Up to 20 AI specialists analyze your idea from every angle</td></tr>
-  <tr><td>RC Method (Build)</td><td>8-phase structured development: discovery through production hardening</td></tr>
-  <tr><td>Post-RC (Validation)</td><td>Security scanning, monitoring readiness, and ship/no-ship gate</td></tr>
-  <tr><td>Traceability (Audit)</td><td>Tracks which requirements were built and verified</td></tr>
+  <tr><td><strong>Pre-RC (Research)</strong></td><td>7 tools -- up to 20 AI specialists analyze your idea from every angle</td></tr>
+  <tr><td><strong>RC Method (Build)</strong></td><td>34 tools -- 8-phase pipeline with design intelligence, copy engine, and UX system</td></tr>
+  <tr><td><strong>Post-RC (Validation)</strong></td><td>7 tools -- 6 parallel scan modules: security, app security, monitoring, edge case, legal, claims</td></tr>
+  <tr><td><strong>Traceability (Audit)</strong></td><td>3 tools -- requirements-to-code coverage with orphan detection</td></tr>
+  <tr><td><strong>Pipeline</strong></td><td>2 tools -- cross-domain status + unified entry point</td></tr>
 </table>
 </div>
 
@@ -648,20 +649,48 @@ echo %cd%\dist\index.js</code></pre>
     <span>19-section PRD covering market, users, technical, security, UX</span>
   </div>
   <div class="deliverable">
+    <strong>Go-to-Market Strategy</strong>
+    <span>Launch plan with channels, positioning, and growth tactics</span>
+  </div>
+  <div class="deliverable">
     <strong>Technical Architecture</strong>
     <span>Stack, data model, API design, infrastructure plan</span>
+  </div>
+  <div class="deliverable">
+    <strong>Architecture Diagrams</strong>
+    <span>Dependency graph, Gantt timeline, layer views (Mermaid)</span>
   </div>
   <div class="deliverable">
     <strong>Task Breakdown</strong>
     <span>Prioritized tasks with effort estimates and dependencies</span>
   </div>
   <div class="deliverable">
-    <strong>Architecture Diagrams</strong>
-    <span>Dependency, Gantt, and layer views</span>
+    <strong>Design Options</strong>
+    <span>Wireframes, brand identity, 5-lens design challenge</span>
+  </div>
+  <div class="deliverable">
+    <strong>Copy System</strong>
+    <span>Research-backed copy for headlines, CTAs, onboarding</span>
+  </div>
+  <div class="deliverable">
+    <strong>Implementation Playbook</strong>
+    <span>Consolidated architecture decision record</span>
   </div>
   <div class="deliverable">
     <strong>Security Report</strong>
-    <span>Vulnerability scan with plain-language findings</span>
+    <span>OWASP + app security audit with plain-language findings</span>
+  </div>
+  <div class="deliverable">
+    <strong>Edge Case Analysis</strong>
+    <span>Boundary conditions, error states, concurrency detection</span>
+  </div>
+  <div class="deliverable">
+    <strong>Legal Compliance Review</strong>
+    <span>GDPR, HIPAA, PCI-DSS, COPPA gap analysis</span>
+  </div>
+  <div class="deliverable">
+    <strong>Traceability Matrix</strong>
+    <span>Requirements-to-code coverage with orphan detection</span>
   </div>
   <div class="deliverable">
     <strong>Value Report</strong>
@@ -677,7 +706,7 @@ echo %cd%\dist\index.js</code></pre>
 <span class="watermark">07</span>
 <h2>Pricing</h2>
 
-<p><strong>RC Engine is free and open source.</strong> All 35 tools, all features, no limits.</p>
+<p><strong>RC Engine is free and open source.</strong> All 53 tools, all features, no limits.</p>
 
 <p style="font-size: 13px; color: #1B2A4A; opacity: 0.6;"><strong>BYOK model:</strong> RC Engine uses your own API keys (Anthropic, Perplexity, etc.) -- you pay providers directly at their rates. Typical total: $3-20 per project depending on complexity.</p>
 
@@ -700,10 +729,16 @@ echo %cd%\dist\index.js</code></pre>
 <p>Both paths store data locally. The Web UI and MCP server share the same project state files.</p>
 
 <h4>What if I only need the research phase?</h4>
-<p>Choose "Research Only" when starting a project. You get the full 20-analyst research pipeline and a complete requirements document without entering the build phase. This is available on all plans including Free.</p>
+<p>Choose "Research Only" when starting a project. You get the full 20-analyst research pipeline and a complete requirements document without entering the build phase.</p>
 
 <h4>How long does a full pipeline run take?</h4>
 <p>A typical full pipeline run takes 30-60 minutes of AI processing time. You can step away and come back -- your progress is saved at every checkpoint.</p>
+
+<h4>How is RC Engine different from Cursor, Windsurf, or Claude Code?</h4>
+<p>Those are AI coding assistants -- they help you write code faster. RC Engine is a structured development methodology that runs <em>inside</em> those tools. It adds research (20 specialists), requirements (19-section PRD), design (wireframes + copy), validation (security + legal + edge cases), and traceability (requirements-to-code coverage). RC Engine doesn't replace your IDE -- it adds the methodology layer that AI coding tools skip.</p>
+
+<h4>How is RC Engine different from v0, Lovable, or Bolt?</h4>
+<p>Those tools generate full applications from a prompt. RC Engine generates <em>research, requirements, architecture, and a build plan</em> first -- then generates code within that structure. It also runs security scans, legal compliance checks, and edge case analysis before shipping. Those tools are fast prototyping. RC Engine is structured product development with 12 human-approval checkpoints and 14 deliverables.</p>
 </div>
 
 <div class="footer">
