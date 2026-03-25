@@ -2,7 +2,7 @@
 
 **Results through Clarity** - an AI-native product development pipeline
 
-> **Version:** 1.0.0 | **Tools:** 52 | **Domains:** 4 | **Gates:** 12 | **License:** MIT
+> **Version:** 1.1.0 | **Tools:** 53 | **Domains:** 4 | **Gates:** 12 | **License:** MIT
 
 ---
 
@@ -24,7 +24,7 @@ Pick the way that fits how you work. Both paths use the same pipeline and produc
 
 **Setup time:** 2 minutes
 
-Run `npm run web:dev` locally. Open the dashboard in your browser. Describe your idea. Follow the guided steps.
+Run `npm run web` locally. Open the dashboard in your browser. Describe your idea. Follow the guided steps.
 
 - Visual pipeline with progress tracking
 - Download deliverables from the dashboard
@@ -48,7 +48,7 @@ Install RC Engine locally and connect it to your IDE. Chat naturally - the AI ca
 
 ### 1. Start the Web UI
 
-Run `npm run web:dev` from your RC Engine directory, then open **http://localhost:3100** in your browser.
+Run `npm run web` from your RC Engine directory, then open **http://localhost:3100** in your browser.
 
 ### 2. Sign In
 
@@ -195,7 +195,7 @@ Requirements Document (19-section PRD)
 Idea Stress Test (optional)
  |  VC-level viability challenge: GO / NO-GO / CONDITIONAL
  v
-RC Method Build (33 tools across 8 phases)
+RC Method Build (34 tools across 8 phases)
  |  Phase 1: Illuminate (discovery questions)
  |  Phase 2: Define (requirements + UX scoring)
  |    --> Design Intelligence: wireframes, brand, design challenge
@@ -242,7 +242,7 @@ SHIP (production-ready, full audit trail)
 | `prc_synthesize` | Combine all research into 19-section PRD |
 | `prc_stress_test` | VC-level idea viability challenge (GO/NO-GO) |
 
-### RC Method Build (33 tools)
+### RC Method Build (34 tools)
 
 **Phase Tools (12)**
 
@@ -261,7 +261,7 @@ SHIP (production-ready, full audit trail)
 | `rc_compound` | 8 | Production hardening assessment |
 | `rc_autopilot` | -- | Run remaining phases automatically with gate checks |
 
-**Gate and Status Tools (4)**
+**Gate and Status Tools (5)**
 
 | Tool | Purpose |
 |------|---------|
@@ -300,12 +300,13 @@ SHIP (production-ready, full audit trail)
 | `copy_iterate` | Refine copy based on feedback |
 | `copy_critique` | Review copy for clarity and effectiveness |
 
-**Export Tools (2)**
+**Export Tools (3)**
 
 | Tool | Purpose |
 |------|---------|
 | `playbook_generate` | Create consolidated implementation guide |
 | `pdf_export` | Export deliverables as formatted HTML/PDF |
+| `rc_generate_diagrams` | Generate dependency, Gantt, and layer diagrams from task list |
 
 ### Post-RC Validation (7 tools)
 
@@ -341,13 +342,16 @@ SHIP (production-ready, full audit trail)
 | Deliverable | Description |
 |-------------|-------------|
 | **Requirements Document** | 19-section PRD covering market, users, technical, security, UX |
+| **Go-to-Market Strategy** | Launch plan with distribution channels, competitive positioning, and growth tactics (PRD section 12) |
 | **Technical Architecture** | Stack, data model, API design, infrastructure plan |
 | **Task Breakdown** | Prioritized tasks with effort estimates and dependencies |
-| **Architecture Diagrams** | Dependency, Gantt, and layer views |
-| **Design Options** | Wireframes with brand identity and visual design directions |
+| **Architecture Diagrams** | Dependency graph, Gantt timeline, and architecture layer views (Mermaid) |
+| **Design Options** | Wireframes with brand identity, visual design directions, and 5-lens design challenge |
 | **Copy System** | Research-backed copy for headlines, CTAs, onboarding flows |
 | **Security Report** | Vulnerability scan with plain-language findings (OWASP/CWE) |
-| **Legal Review** | Regulatory compliance check (GDPR, HIPAA, PCI-DSS, COPPA, etc.) |
+| **Application Security Audit** | Auth, authorization, input validation, search safety, admin workflow checks |
+| **Edge Case Analysis** | Boundary conditions, error states, concurrency, data integrity, performance edge detection |
+| **Legal Compliance Review** | Regulatory gap analysis (GDPR, HIPAA, PCI-DSS, COPPA, and more) |
 | **Traceability Matrix** | Requirements-to-code coverage with orphan detection |
 | **Implementation Playbook** | Consolidated architecture decision record |
 | **Value Report** | Cost and time savings vs. a human consulting team |
@@ -359,26 +363,27 @@ All deliverables are saved as markdown and HTML - readable in any browser or tex
 ## 08 - Architecture Overview
 
 ```
-RC Engine MCP Server (52 tools)
+RC Engine MCP Server (53 tools)
     |
     +--> Pre-RC Research (7 tools) --> 20 AI specialists
     |         |
     |         v
-    +--> RC Method Build (33 tools) --> 8-phase gated pipeline
+    +--> RC Method Build (34 tools) --> 8-phase gated pipeline
     |         |
     |         +--> Design Intelligence (6 tools) --> wireframes, brand, critique
     |         +--> Copy Engine (4 tools) --> content strategy, generation
-    |         +--> UX System (5 tools) --> scoring, audit, design generation
-    |         +--> Export (2 tools) --> playbook, PDF
+    |         +--> UX System (6 tools) --> scoring, audit, design challenge
+    |         +--> Export (3 tools) --> playbook, PDF, diagrams
     |         |
     |         v
-    +--> Post-RC Validation (7 tools) --> Security + monitoring + legal scan
+    +--> Post-RC Validation (7 tools) --> 6 parallel scan modules
+    |         |  Security + app security + monitoring + edge case + legal + claims
     |         |
     |         v
     +--> Traceability (3 tools) --> Requirements-to-code audit
     |
     v
-Deliverables (PRD, architecture, tasks, code, designs, copy, scan report)
+Deliverables (PRD, GTM, architecture, diagrams, designs, copy, scans, playbook)
 ```
 
 ### Core Infrastructure
@@ -416,7 +421,7 @@ your-project/
 
 ## 09 - Pricing
 
-**RC Engine is free and open source.** All 52 tools, all features, no restrictions.
+**RC Engine is free and open source.** All 53 tools, all features, no restrictions.
 
 **BYOK model:** RC Engine uses your own API keys (Anthropic, Perplexity, etc.) - you pay providers directly at their rates.
 
@@ -451,9 +456,8 @@ your-project/
 - All LLM clients report input/output tokens separately for cost diagnostics
 - Added Haiku 4.5 and Opus 4.6 cost rates for accurate tracking
 
-**Tier Simplification**
-- Removed Starter tier (now Free/Pro/Enterprise only)
-- Fixed gating: rc_connect and rc_compound correctly gated behind Pro
+**Community Edition**
+- All tools and features available with no tier restrictions
 - Commercial use disclaimer added to LICENSE and README
 
 ---

@@ -197,7 +197,7 @@ You are in control at every checkpoint. Nothing moves forward without your appro
 
 ---
 
-## All 52 Tools
+## All 53 Tools
 
 | Domain | Tools | Count |
 |--------|-------|-------|
@@ -218,7 +218,7 @@ You are in control at every checkpoint. Nothing moves forward without your appro
 
 ## Pricing
 
-**RC Engine is free and open source.** All 52 tools, all features, no limits.
+**RC Engine is free and open source.** All 53 tools, all features, no limits.
 
 **BYOK model:** RC Engine uses your own API keys (Anthropic, Perplexity, etc.) -- you pay providers directly at their rates. Typical total: $3-20 per project depending on complexity.
 
