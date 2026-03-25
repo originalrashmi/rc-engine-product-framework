@@ -2,11 +2,13 @@
 
 **Results through Clarity** - an AI-native product development pipeline
 
+> **Version:** 1.0.0 | **Tools:** 52 | **Domains:** 4 | **Gates:** 12 | **License:** MIT
+
 ---
 
 ## 01 - What is RC Engine?
 
-RC Engine takes a product idea - even a single sentence - and walks it through a structured development pipeline: research, architecture, build, validation, and traceability. It uses 35 orchestrated AI tools behind the scenes so you can focus on your product, not the process.
+RC Engine takes a product idea - even a single sentence - and walks it through a structured development pipeline: research, architecture, build, validation, and traceability. It uses 52 orchestrated AI tools behind the scenes so you can focus on your product, not the process.
 
 Up to 20 specialized AI analysts research your idea before a single line of code is written. They cover market fit, user needs, technical feasibility, security, UX, and more. Then the engine designs the architecture, builds task by task, and scans for security and legal issues before shipping.
 
@@ -171,43 +173,169 @@ Open your IDE and describe what you want to build:
 
 The AI orchestrates the full pipeline - calling tools, presenting results, and pausing at checkpoints for your approval. You never need to call tools directly.
 
-| Domain | What It Does |
-|--------|-------------|
-| Pre-RC (Research) | Up to 20 AI specialists analyze your idea from every angle |
-| RC Method (Build) | 8-phase structured development: discovery through production hardening |
-| Post-RC (Validation) | Security scanning, monitoring readiness, and ship/no-ship gate |
-| Traceability (Audit) | Tracks which requirements were built and verified |
-
 ---
 
 ## 05 - The Pipeline
 
 Whichever path you choose, RC Engine runs your idea through this structured process:
 
-1. **Research** - Up to 20 AI specialists analyze your idea - market, users, security, UX, and more
-   - CHECKPOINT: APPROVE RESEARCH SCOPE
+```
+IDEA
+ |
+ v
+Pre-RC Research (7 tools)
+ |  Up to 20 AI specialists: market, users, security, UX, legal, technical
+ |  CHECKPOINT 1: Approve research scope
+ |  CHECKPOINT 2: Approve mid-research findings
+ |  CHECKPOINT 3: Approve final research
+ v
+Requirements Document (19-section PRD)
+ |
+ v
+Idea Stress Test (optional)
+ |  VC-level viability challenge: GO / NO-GO / CONDITIONAL
+ v
+RC Method Build (33 tools across 8 phases)
+ |  Phase 1: Illuminate (discovery questions)
+ |  Phase 2: Define (requirements + UX scoring)
+ |    --> Design Intelligence: wireframes, brand, design challenge
+ |    --> Copy Engine: content strategy, generation, critique
+ |  Phase 3: Architect (tech stack, data model, APIs)
+ |  Phase 4: Sequence (task ordering with dependencies)
+ |  Phase 5: Validate (quality checks before building)
+ |  Phase 6: Forge (build task by task with code generation)
+ |  Phase 7: Connect (integration verification)
+ |  Phase 8: Compound (production hardening assessment)
+ |  CHECKPOINTS 4-11: One gate between each phase
+ v
+Post-RC Validation (7 tools)
+ |  Security scan (OWASP patterns)
+ |  Application security audit
+ |  Monitoring readiness check
+ |  Edge case analysis
+ |  Legal compliance review
+ |  CHECKPOINT 12: Ship / Fix / Accept Risk
+ v
+Traceability (3 tools)
+ |  Requirements-to-code coverage mapping
+ |  Orphan detection
+ v
+SHIP (production-ready, full audit trail)
+```
 
-2. **Requirements Document** - 19-section PRD synthesized from all research findings
-   - CHECKPOINT: APPROVE REQUIREMENTS
-
-3. **Architecture** - Tech stack, data model, API design, infrastructure plan
-   - CHECKPOINT: APPROVE ARCHITECTURE
-
-4. **Task Plan** - Prioritized tasks with effort estimates and dependencies
-   - CHECKPOINT: APPROVE BUILD PLAN
-
-5. **Build** - Task by task with quality checks at each layer
-
-6. **Security + Legal Scan** - Vulnerability detection with plain-language explanations
-   - CHECKPOINT: SHIP / FIX / ACCEPT RISK
-
-7. **Ship** - Production-ready with full audit trail
-
-**You are in control at every checkpoint.** Nothing moves forward without your approval.
+**12 checkpoints total.** You are in control at every one. Nothing moves forward without your approval.
 
 ---
 
-## 06 - What You Get
+## 06 - Complete Tool Inventory
+
+### Pre-RC Research (7 tools)
+
+| Tool | Purpose |
+|------|---------|
+| `prc_start` | Initialize a new research project |
+| `prc_classify` | Assess product complexity (Cynefin framework) |
+| `prc_run_stage` | Run a research stage with activated specialists |
+| `prc_gate` | Research quality checkpoints (Gates 1-3) |
+| `prc_status` | View research progress and findings |
+| `prc_synthesize` | Combine all research into 19-section PRD |
+| `prc_stress_test` | VC-level idea viability challenge (GO/NO-GO) |
+
+### RC Method Build (33 tools)
+
+**Phase Tools (12)**
+
+| Tool | Phase | Purpose |
+|------|-------|---------|
+| `rc_start` | -- | Start build pipeline directly (skip Pre-RC) |
+| `rc_import_prerc` | -- | Import Pre-RC research into build pipeline |
+| `rc_illuminate` | 1 | Deep discovery questions about the problem space |
+| `rc_define` | 2 | Generate requirements document with UX scoring |
+| `rc_architect` | 3 | Design technical architecture |
+| `rc_sequence` | 4 | Create prioritized task plan with dependencies |
+| `rc_validate` | 5 | Run quality checks before building |
+| `rc_forge_task` | 6 | Build a single task (generates code files) |
+| `rc_forge_all` | 6 | Build all pending tasks in sequence |
+| `rc_connect` | 7 | Verify integration across all built components |
+| `rc_compound` | 8 | Production hardening assessment |
+| `rc_autopilot` | -- | Run remaining phases automatically with gate checks |
+
+**Gate and Status Tools (4)**
+
+| Tool | Purpose |
+|------|---------|
+| `rc_gate` | Phase approval checkpoint |
+| `rc_save` | Save generated artifacts |
+| `rc_status` | View build progress |
+| `rc_reset` | Reset pipeline state (with confirmation) |
+
+**UX Tools (5)**
+
+| Tool | Purpose |
+|------|---------|
+| `ux_score` | Score UX complexity of features |
+| `ux_audit` | Audit interface against UX best practices (42 rules) |
+| `ux_generate` | Generate detailed UX specifications |
+| `ux_design` | Generate visual design options with HTML wireframes |
+| `design_challenge` | Stress-test designs against edge cases (5-lens review) |
+
+**Design Intelligence (6)**
+
+| Tool | Purpose |
+|------|---------|
+| `design_research_brief` | Research design patterns for your product |
+| `design_intake` | Capture design preferences and constraints |
+| `brand_import` | Import existing brand assets (colors, fonts, logos) |
+| `design_iterate` | Refine designs with feedback |
+| `design_select` | Select from generated design options |
+| `design_pipeline` | Run the full design flow end-to-end |
+
+**Copy Engine (4)**
+
+| Tool | Purpose |
+|------|---------|
+| `copy_research_brief` | Research brand voice and content direction |
+| `copy_generate` | Generate copy (headlines, CTAs, onboarding) |
+| `copy_iterate` | Refine copy based on feedback |
+| `copy_critique` | Review copy for clarity and effectiveness |
+
+**Export Tools (2)**
+
+| Tool | Purpose |
+|------|---------|
+| `playbook_generate` | Create consolidated implementation guide |
+| `pdf_export` | Export deliverables as formatted HTML/PDF |
+
+### Post-RC Validation (7 tools)
+
+| Tool | Purpose |
+|------|---------|
+| `postrc_scan` | Run security, monitoring, and legal scans |
+| `postrc_configure` | Adjust scan policy (enable/disable modules) |
+| `postrc_override` | Accept a finding with recorded justification |
+| `postrc_report` | Generate validation report |
+| `postrc_gate` | Ship/no-ship decision checkpoint |
+| `postrc_status` | View scan results |
+| `postrc_generate_observability_spec` | Generate monitoring requirements from PRD |
+
+### Traceability (3 tools)
+
+| Tool | Purpose |
+|------|---------|
+| `trace_enhance_prd` | Assign tracking IDs to all requirements |
+| `trace_map_findings` | Map scan results back to requirements |
+| `trace_status` | View requirements coverage report |
+
+### Pipeline (2 tools)
+
+| Tool | Purpose |
+|------|---------|
+| `rc_pipeline_status` | Cross-domain status overview with token usage |
+| `rc_init` | Detect project state and route to correct entry point |
+
+---
+
+## 07 - What You Get
 
 | Deliverable | Description |
 |-------------|-------------|
@@ -215,24 +343,160 @@ Whichever path you choose, RC Engine runs your idea through this structured proc
 | **Technical Architecture** | Stack, data model, API design, infrastructure plan |
 | **Task Breakdown** | Prioritized tasks with effort estimates and dependencies |
 | **Architecture Diagrams** | Dependency, Gantt, and layer views |
-| **Security Report** | Vulnerability scan with plain-language findings |
+| **Design Options** | Wireframes with brand identity and visual design directions |
+| **Copy System** | Research-backed copy for headlines, CTAs, onboarding flows |
+| **Security Report** | Vulnerability scan with plain-language findings (OWASP/CWE) |
+| **Legal Review** | Regulatory compliance check (GDPR, HIPAA, PCI-DSS, COPPA, etc.) |
+| **Traceability Matrix** | Requirements-to-code coverage with orphan detection |
+| **Implementation Playbook** | Consolidated architecture decision record |
 | **Value Report** | Cost and time savings vs. a human consulting team |
 
-All deliverables are markdown and HTML - readable in any browser or text editor.
+All deliverables are saved as markdown and HTML - readable in any browser or text editor.
 
 ---
 
-## 07 - Pricing
+## 08 - Architecture Overview
 
-**RC Engine is free and open source.** All 52 tools, all features, no limits.
+```
+RC Engine MCP Server (52 tools)
+    |
+    +--> Pre-RC Research (7 tools) --> 20 AI specialists
+    |         |
+    |         v
+    +--> RC Method Build (33 tools) --> 8-phase gated pipeline
+    |         |
+    |         +--> Design Intelligence (6 tools) --> wireframes, brand, critique
+    |         +--> Copy Engine (4 tools) --> content strategy, generation
+    |         +--> UX System (5 tools) --> scoring, audit, design generation
+    |         +--> Export (2 tools) --> playbook, PDF
+    |         |
+    |         v
+    +--> Post-RC Validation (7 tools) --> Security + monitoring + legal scan
+    |         |
+    |         v
+    +--> Traceability (3 tools) --> Requirements-to-code audit
+    |
+    v
+Deliverables (PRD, architecture, tasks, code, designs, copy, scan report)
+```
 
-**BYOK model:** RC Engine uses your own API keys (Anthropic, Perplexity, etc.) - you pay providers directly at their rates. Typical total: $3-20 per project depending on complexity.
+### Core Infrastructure
+
+| Component | What It Does |
+|-----------|-------------|
+| **Graph Engine** | Topological sort, gate interrupts, fan-out/fan-in execution |
+| **Checkpoint Store** | SQLite with WAL mode, atomic writes, time-travel |
+| **Multi-LLM Router** | Routes tasks to optimal provider (Claude, Gemini, Perplexity, OpenAI) |
+| **Token Tracker** | Per-domain, per-provider token usage with persistent reporting |
+| **Sandbox** | Input validation, path safety, size limits on all tool inputs |
+| **Audit Trail** | Append-only log of every gate decision and state change |
+| **Budget Circuit Breaker** | Automatic pause when token usage exceeds thresholds |
+
+### State Management
+
+All project state is managed through Zod-validated schemas with corruption detection:
+
+```
+your-project/
+  pre-rc-research/       # Research outputs (PRDs, decks, tasks)
+  rc-method/             # Build outputs (architecture, tasks, code)
+    design/              # Design specs and wireframes
+    copy/                # Generated copy content
+    diagrams/            # Mermaid architecture diagrams
+    artifacts/           # Generated code and configs
+  post-rc/               # Security scan results
+  rc-traceability/       # Requirements coverage mapping
+  .rc-engine/            # Runtime state (audit logs, checkpoints)
+    audit/               # Append-only audit trail
+    PIPELINE.md          # Cross-domain token usage summary
+```
+
+---
+
+## 09 - Pricing
+
+**RC Engine is free and open source.** All 52 tools, all features, no restrictions.
+
+**BYOK model:** RC Engine uses your own API keys (Anthropic, Perplexity, etc.) - you pay providers directly at their rates.
+
+| Pipeline Phase | Typical AI Cost | What Happens |
+|---------------|----------------|--------------|
+| Pre-RC Research | $1-5 | 20 specialists across 6 stages |
+| RC Method Build | $2-10 | Architecture, task planning, code generation |
+| Post-RC Validation | $0.50-2 | Security scanning, monitoring, legal review |
+| **Total** | **$3-20** | **Varies by project complexity** |
 
 *Cost estimates are approximate, based on typical token usage and published API rates. Actual costs vary by project complexity, provider pricing changes, and usage patterns.*
 
 ---
 
-## 08 - Common Questions
+## 10 - Version History
+
+### v1.0.0 (2026-03-02) - Initial Release
+
+**Pipeline**
+- Complete 4-domain pipeline: Pre-RC, RC Method, Post-RC, Traceability
+- 52 MCP tools across all domains
+- Graph engine with topological sort, gate interrupts, fan-out/fan-in
+- 12 quality gates with human-in-the-loop approval
+- Cross-domain bridge: Pre-RC research imports into RC build pipeline
+
+**Pre-RC Research**
+- 20 AI research personas with per-persona LLM routing
+- Cynefin complexity classification (Clear, Complicated, Complex, Chaotic)
+- 6 research stages with 3 quality gates
+- Web-grounded market research via Perplexity (cited sources)
+- 19-section PRD synthesis with HTML deck export
+- Idea Stress Test with GO/NO-GO/CONDITIONAL verdict
+
+**RC Method Build**
+- 8-phase gated pipeline: Illuminate, Define, Architect, Sequence, Validate, Forge, Connect, Compound
+- Phase 6 (Forge): generates actual code files with test scaffolding
+- Phase 7 (Connect): integration verification across forge outputs
+- Phase 8 (Compound): production hardening assessment
+- UX sub-agent with 42 core rules and 8 specialist modules
+
+**Design Intelligence**
+- Design generation with HTML wireframes (lo-fi + hi-fi)
+- Brand asset import and validation (colors, fonts, logos)
+- Design Challenger: brutal 5-lens review protocol
+- Design intake assessment for user preference capture
+- Design research and pattern analysis
+- Full design pipeline orchestration
+
+**Copy Engine**
+- Content strategy research and brief generation
+- Copy generation for headlines, CTAs, onboarding flows
+- Copy iteration with feedback refinement
+- Copy critique for clarity and effectiveness
+
+**Post-RC Validation**
+- Security scanning against OWASP anti-patterns (CWE-referenced)
+- Application security auditor (OWASP scanning)
+- 7-check monitoring readiness assessment
+- Edge case analysis
+- Legal compliance review (GDPR, HIPAA, PCI-DSS, COPPA, and more)
+- Finding override with permanent audit trail
+- Ship/no-ship gate with severity-based blocking
+
+**Traceability**
+- NASA/DO-178C-inspired requirements traceability
+- Deterministic requirement IDs (PRD-FUNC-001, PRD-SEC-001)
+- Task-to-requirement and finding-to-requirement mapping
+- Coverage matrix with orphan detection
+
+**Infrastructure**
+- Multi-LLM orchestration: Claude, OpenAI, Gemini, Perplexity
+- Dual-mode execution: autonomous (API keys) and passthrough (structured prompts)
+- SQLite checkpoint store with WAL mode and atomic writes
+- Token tracking with persistent PIPELINE.md summary
+- Zod-validated state management with corruption detection
+- Web UI with guided wizard, magic link auth, and real-time updates
+- Security headers, CORS, rate limiting, CSRF protection
+
+---
+
+## 11 - Common Questions
 
 **Do I need to be technical to use RC Engine?**
 
@@ -248,11 +512,15 @@ Both paths store data locally. The Web UI and MCP server share the same project 
 
 **What if I only need the research phase?**
 
-Choose "Research Only" when starting a project. You get the full 20-analyst research pipeline and a complete requirements document without entering the build phase. This is available on all plans including Free.
+Choose "Research Only" when starting a project. You get the full 20-analyst research pipeline and a complete requirements document without entering the build phase.
 
 **How long does a full pipeline run take?**
 
 A typical full pipeline run takes 30-60 minutes of AI processing time. You can step away and come back - your progress is saved at every checkpoint.
+
+**Can I use RC Engine to build commercial products?**
+
+Yes. RC Engine is MIT-licensed. You can use it to build any product for personal or commercial use. You may not offer RC Engine itself (or a derivative) as a competing commercial service without written permission from Toerana.
 
 ---
 
@@ -261,11 +529,25 @@ A typical full pipeline run takes 30-60 minutes of AI processing time. You can s
 | Problem | Solution |
 |---------|----------|
 | `npm run build` fails | Make sure you have Node.js 18+ (`node --version`) |
-| Tools not showing in IDE | Verify the path in `.mcp.json` points to `dist/index.js` (not `src/`) |
+| Tools not showing in IDE | Verify the path in your MCP config points to `dist/index.js` (not `src/`) |
 | "No LLM provider" error | Check your `.env` file has at least `ANTHROPIC_API_KEY` set |
 | Research phase is slow | This is normal - each specialist makes multiple AI calls. Typical: 15-30 min |
 | Cost seems high | Check [Usage & Cost Guide](USAGE-AND-COST-GUIDE.md) for optimization tips |
+| Magic links not sending | Configure `RESEND_API_KEY` or SMTP vars. Without email config, links print to server console |
+| Design/copy tools not responding | These require at least one LLM API key configured |
 
 ---
 
-RC Engine by Toerana - MIT License - [GitHub](https://github.com/originalrashmi/rc-engine-product-framework)
+## Links
+
+- [GitHub Repository](https://github.com/originalrashmi/rc-engine-product-framework)
+- [Getting Started (detailed)](GETTING-STARTED.md)
+- [Architecture Reference](ARCHITECTURE.md)
+- [Usage & Cost Guide](USAGE-AND-COST-GUIDE.md)
+- [Contributing](../CONTRIBUTING.md)
+- [Security Policy](../SECURITY.md)
+- [Changelog](../CHANGELOG.md)
+
+---
+
+RC Engine by [Toerana](https://toerana.com) - MIT License
