@@ -52,7 +52,8 @@ export abstract class BaseLLMClient {
         errMsg.includes('resource_exhausted') ||
         errMsg.includes('credit balance') ||
         errMsg.includes('insufficient_quota') ||
-        errMsg.includes('billing');
+        errMsg.includes('billing') ||
+        errMsg.includes('circuit is open');
 
       if (isRetryableProviderError && this.fallbacks && this.fallbacks.length > 0) {
         for (const fb of this.fallbacks) {
