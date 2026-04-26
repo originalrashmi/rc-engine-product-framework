@@ -6,6 +6,14 @@ export abstract class BaseLLMClient {
   protected provider: LLMProvider;
   protected model: string;
 
+  /**
+   * Optional cross-provider fallback chain. Populated by ModelRouter based on
+   * tier preference. When the primary provider fails on a quota / rate-limit
+   * error after retries, chatWithRetry walks this list trying the next provider.
+   * Mutated per-call by the router; safe under single-threaded MCP request flow.
+   */
+  fallbacks: BaseLLMClient[] = [];
+
   constructor(provider: LLMProvider, model: string) {
     this.provider = provider;
     this.model = model;
@@ -26,11 +34,44 @@ export abstract class BaseLLMClient {
    * Execute chat with retry logic. Retries once on transient failures
    * (network errors, 429 rate limits, 5xx server errors).
    * Non-retryable errors (401, 403, 400) throw immediately.
+   * After exhausting retries on the primary provider, walks the fallback
+   * chain (if any) on quota / rate-limit errors only.
    *
    * Integrates: CircuitBreaker (provider failure handling),
    * EventBus (llm:start/complete/error events for Tracer).
    */
   async chatWithRetry(request: LLMRequest, maxRetries: number = 1): Promise<LLMResponse> {
+    try {
+      return await this._chatWithRetryInner(request, maxRetries);
+    } catch (err) {
+      const errMsg = String((err as Error)?.message || '').toLowerCase();
+      const isRetryableProviderError =
+        errMsg.includes('429') ||
+        errMsg.includes('quota') ||
+        errMsg.includes('rate limit') ||
+        errMsg.includes('resource_exhausted') ||
+        errMsg.includes('credit balance') ||
+        errMsg.includes('insufficient_quota') ||
+        errMsg.includes('billing');
+
+      if (isRetryableProviderError && this.fallbacks && this.fallbacks.length > 0) {
+        for (const fb of this.fallbacks) {
+          if (!fb.isAvailable()) continue;
+          try {
+            console.error(
+              `[${this.provider}] quota/billing error; falling back to ${fb.getProvider()}`,
+            );
+            return await fb._chatWithRetryInner(request, maxRetries);
+          } catch {
+            continue;
+          }
+        }
+      }
+      throw err;
+    }
+  }
+
+  private async _chatWithRetryInner(request: LLMRequest, maxRetries: number = 1): Promise<LLMResponse> {
     // Circuit breaker check - fail fast if provider is down
     if (!canRequest(this.provider)) {
       throw new Error(`${this.provider} circuit is open - provider temporarily unavailable`);

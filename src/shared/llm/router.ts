@@ -99,8 +99,39 @@ export class ModelRouter {
    * 2. If learning data exists for this task type -> use best historical model
    * 3. If budget is tight -> force cheap tier
    * 4. Fall back to default tier routing
+   *
+   * The returned client also has its `fallbacks` chain populated with the
+   * remaining tier providers (in tier-preference order). chatWithRetry uses
+   * this chain on quota / rate-limit errors so a 429 on Gemini transparently
+   * retries on OpenAI and then Claude before bubbling up.
    */
   route(request: RouteRequest): { client: BaseLLMClient; decision: RoutingDecision } {
+    const result = this._route(request);
+    this.attachFallbacks(result.client, result.decision.tier);
+    return result;
+  }
+
+  /**
+   * Populate the client's fallback chain with the remaining tier providers.
+   * Called by route() so all return paths get fallbacks consistently.
+   */
+  private attachFallbacks(client: BaseLLMClient, tier: CostTier): void {
+    const primaryProvider = client.getProvider();
+    const candidates = TIER_PROVIDERS[tier].filter((p) => p !== primaryProvider);
+    const fallbacks: BaseLLMClient[] = [];
+    for (const p of candidates) {
+      if (this.factory.isNativelyAvailable(p)) {
+        try {
+          fallbacks.push(this.factory.getClient(p));
+        } catch {
+          // Provider not configured / instantiable; skip
+        }
+      }
+    }
+    client.fallbacks = fallbacks;
+  }
+
+  private _route(request: RouteRequest): { client: BaseLLMClient; decision: RoutingDecision } {
     const tier = request.forceTier ?? this.determineTier(request);
 
     // Step 1: Check if preferred provider works

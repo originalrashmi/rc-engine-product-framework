@@ -15,6 +15,28 @@ export class LLMFactory {
     this.clients.set(LLMProvider.OpenAI, new OpenAIClient());
     this.clients.set(LLMProvider.Gemini, new GeminiClient());
     this.clients.set(LLMProvider.Perplexity, new PerplexityClient());
+    this.populateFallbacks();
+  }
+
+  /**
+   * Populate every client's `fallbacks` chain with the other available
+   * providers in a sensible default order. Many call sites bypass the
+   * ModelRouter and use factory.getClient() directly — this ensures they
+   * still get cross-provider fallback on quota / rate-limit errors.
+   */
+  private populateFallbacks(): void {
+    const fallbackOrder: LLMProvider[] = [
+      LLMProvider.Claude,
+      LLMProvider.OpenAI,
+      LLMProvider.Gemini,
+      LLMProvider.Perplexity,
+    ];
+    for (const [provider, client] of this.clients) {
+      client.fallbacks = fallbackOrder
+        .filter((p) => p !== provider)
+        .map((p) => this.clients.get(p))
+        .filter((c): c is BaseLLMClient => !!c && c.isAvailable());
+    }
   }
 
   /**

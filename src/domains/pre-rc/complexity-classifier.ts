@@ -86,6 +86,8 @@ Classify this product's complexity. Determine which domain it falls into:
 
 Also identify:
 - **Product class** (2-3 words): e.g., "enterprise SaaS", "consumer mobile app", "AI developer tool"
+- **Industry / vertical** (3-6 words): the specific domain this product operates in. Be precise. "B2B SaaS" is too generic; "multifamily real estate asset management" is right; "FDA-cleared dental imaging diagnostics" is right. Used to anchor competitive web research to the correct market and avoid brand-name collisions.
+- **Product function** (3-6 words): the specific capability the product delivers. e.g., "investor reporting automation", "claims adjudication", "code review assistance".
 - **Complexity factors**: What makes this product non-trivial?
 
 Return JSON:
@@ -95,6 +97,8 @@ Return JSON:
   "confidence": 0.0-1.0,
   "reasoning": "2-3 sentences explaining the classification",
   "productClass": "brief product category",
+  "industry": "vertical / domain",
+  "productFunction": "core capability delivered",
   "complexityFactors": ["factor 1", "factor 2", "factor 3"]
 }
 \`\`\``;
@@ -111,6 +115,8 @@ Return JSON:
         confidence: Number(parsed.confidence) || 0.5,
         reasoning: String(parsed.reasoning || ''),
         productClass: String(parsed.productClass || 'unknown'),
+        industry: String(parsed.industry || ''),
+        productFunction: String(parsed.productFunction || ''),
         complexityFactors: Array.isArray(parsed.complexityFactors) ? parsed.complexityFactors : [],
       };
     } catch {
@@ -121,6 +127,8 @@ Return JSON:
         confidence: 0.3,
         reasoning: 'Auto-extracted from non-JSON response: ' + content.slice(0, 200),
         productClass: 'unknown',
+        industry: '',
+        productFunction: '',
         complexityFactors: [],
       };
     }

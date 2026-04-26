@@ -2,6 +2,7 @@ import type { AgentContext } from './base-agent.js';
 import { BaseResearchAgent } from './base-agent.js';
 import type { PersonaConfig } from '../types.js';
 import { ResearchStage } from '../types.js';
+import { GateStatus } from '../../../shared/types.js';
 import type { LLMFactory } from '../../../shared/llm/factory.js';
 import type { ContextLoader } from '../context-loader.js';
 
@@ -28,6 +29,12 @@ export class PersonaAgent extends BaseResearchAgent {
       sections.push('\n\n# Complexity Classification\n');
       sections.push(`**Domain:** ${context.state.classification.domain}`);
       sections.push(`**Product Class:** ${context.state.classification.productClass}`);
+      if (context.state.classification.industry) {
+        sections.push(`**Industry / Vertical:** ${context.state.classification.industry}`);
+      }
+      if (context.state.classification.productFunction) {
+        sections.push(`**Product Function:** ${context.state.classification.productFunction}`);
+      }
       sections.push(`**Complexity Factors:** ${context.state.classification.complexityFactors.join(', ')}`);
       sections.push(`**Reasoning:** ${context.state.classification.reasoning}`);
     }
@@ -70,6 +77,66 @@ export class PersonaAgent extends BaseResearchAgent {
       sections.push(
         'Every factual claim should be traceable to a source. This prevents hallucination and gives the PRD reader confidence that recommendations are grounded in reality.',
       );
+
+      // Search-query construction discipline.
+      // Without this, generic project names ("Pearl AI", "Apex", "Nova", etc.) collide
+      // with established companies in unrelated industries and pollute the analysis.
+      sections.push('\n\n# CRITICAL: Search Query Construction\n');
+      sections.push(
+        '**Anchor your searches on the product CATEGORY (industry + function), NOT the project name.** The project name is internal vocabulary; using it as a standalone search query may surface unrelated products with similar names and corrupt the analysis.',
+      );
+      sections.push('');
+
+      const cls = context.state.classification;
+      const projName = context.state.brief.name;
+      if (cls?.industry || cls?.productFunction) {
+        const industry = cls.industry || '(not specified)';
+        const productFunction = cls.productFunction || '(not specified)';
+        const productClass = cls.productClass || '(not specified)';
+        sections.push('**For this project, build queries from these anchors (NOT the project name):**');
+        sections.push(`- **Industry / vertical:** ${industry}`);
+        sections.push(`- **Product function:** ${productFunction}`);
+        sections.push(`- **Product class:** ${productClass}`);
+        sections.push('');
+        sections.push('**Example query patterns to use:**');
+        sections.push(`- "${productClass} for ${industry} 2026"`);
+        sections.push(`- "${productFunction} ${industry} competitors"`);
+        sections.push(`- "${productFunction} platforms for [target user from brief]"`);
+        sections.push(`- "${industry} market sizing 2026"`);
+        sections.push('');
+        sections.push(`**DO NOT** use "${projName}" as a standalone search query.`);
+      } else {
+        sections.push(
+          '**For this project, build queries from the product class, target user (ICP), and problem space described in the brief.** Do NOT use the project name as a standalone search query.',
+        );
+      }
+      sections.push('');
+      sections.push('**Disambiguation discipline:**');
+      sections.push(
+        `- Before relying on any source, verify it matches this product's industry and function. If a search returns results about an unrelated product with a similar name (e.g., a dental-AI company when you are researching real-estate software), DISCARD those sources.`,
+      );
+      sections.push(
+        `- If your first query returns mostly off-domain results, immediately refine the query with industry/function modifiers and retry. Do not pad the analysis with off-domain citations.`,
+      );
+      sections.push(
+        `- If after 2-3 refinements you cannot find on-domain sources, mark relevant claims as "[UNVERIFIED - on-domain sources unavailable]" rather than fabricating or substituting off-domain data.`,
+      );
+    }
+
+    // Operator constraints from approved gate feedback.
+    // Without this, user-validated decisions made at gate checkpoints (e.g.,
+    // "MVP-first, no Kubernetes/RabbitMQ") evaporate after the gate is passed
+    // and downstream personas can re-introduce rejected approaches.
+    const approvedFeedback = (context.state.gates ?? [])
+      .filter((g) => g.status === GateStatus.Approved && g.feedback && g.feedback.trim() !== '')
+      .map((g) => `- (Gate ${g.gateNumber}) ${g.feedback.trim()}`);
+    if (approvedFeedback.length > 0) {
+      sections.push('\n\n# Operator Constraints (from approved gates)\n');
+      sections.push(
+        'The following directives have been explicitly approved by the operator at prior gates. They are NON-NEGOTIABLE in your output. Your recommendations must align with these constraints, not contradict them. If a constraint conflicts with what your specialist knowledge would otherwise suggest, the operator constraint wins; document the trade-off briefly but do not override it.',
+      );
+      sections.push('');
+      sections.push(...approvedFeedback);
     }
 
     return sections.join('\n');

@@ -67,9 +67,11 @@ export function guardedTool(handler: ToolHandler): ToolHandler {
 }
 
 function validatePath(projectPath: string): string | null {
-  // Must be an absolute path
-  if (!projectPath.startsWith('/')) {
-    return `Invalid project_path: "${projectPath}" - must be an absolute path starting with /.`;
+  // Must be an absolute path: POSIX (/...) or Windows drive-letter (C:/... or C:\...)
+  const isPosixAbsolute = projectPath.startsWith('/');
+  const isWindowsAbsolute = /^[a-zA-Z]:[\\/]/.test(projectPath);
+  if (!isPosixAbsolute && !isWindowsAbsolute) {
+    return `Invalid project_path: "${projectPath}" - must be an absolute path (POSIX /... or Windows C:/... / C:\\...).`;
   }
 
   // Must not point to system directories

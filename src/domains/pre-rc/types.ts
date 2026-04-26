@@ -71,6 +71,21 @@ export interface ComplexityClassification {
   reasoning: string;
   productClass: string;
   complexityFactors: string[];
+  /**
+   * Industry / vertical the product operates in
+   * (e.g. "multifamily real estate asset management", "dental imaging diagnostics").
+   * Used by web-grounded personas to anchor search queries to the correct market
+   * instead of the project's brand name. Empty string is acceptable for backward
+   * compatibility with prior runs.
+   */
+  industry: string;
+  /**
+   * Specific function / capability the product delivers
+   * (e.g. "investor reporting automation", "medical image analysis").
+   * Combined with `industry` to form category-led search queries that avoid
+   * brand-name collisions in competitive research.
+   */
+  productFunction: string;
 }
 
 export interface PersonaConfig {
