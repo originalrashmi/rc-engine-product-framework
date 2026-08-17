@@ -12,6 +12,14 @@ const STATE_DIR = 'rc-method/state';
 const STATE_FILE = 'RC-STATE.md';
 
 export class StateManager {
+  /**
+   * Version each pipeline's rc:state was at when this instance last loaded it.
+   * save() asserts against it (CAS tripwire, ADR-2): if another writer saved
+   * in between, CheckpointStore throws StaleStateError instead of silently
+   * appending a stale copy. Unset (e.g. first create) means unconditional save.
+   */
+  private loadedVersions = new Map<string, number>();
+
   /** Create a new project state file */
   create(projectPath: string, projectName: string): ProjectState {
     const stateDir = path.join(projectPath, STATE_DIR);
@@ -40,6 +48,7 @@ export class StateManager {
     const { store, pipelineId } = getProjectStore(projectPath);
     try {
       const checkpoint = store.load(pipelineId, NODE_IDS.RC_STATE, ProjectStateSchema);
+      this.loadedVersions.set(pipelineId, checkpoint.version);
       return checkpoint.state;
     } catch (err) {
       if ((err as Error).message.includes('No checkpoint found')) {
@@ -55,7 +64,14 @@ export class StateManager {
   /** Save project state to CheckpointStore (primary) + async markdown export (non-blocking). */
   save(projectPath: string, state: ProjectState): void {
     const { store, pipelineId } = getProjectStore(projectPath);
-    store.save(pipelineId, NODE_IDS.RC_STATE, state);
+    const { version } = store.save(
+      pipelineId,
+      NODE_IDS.RC_STATE,
+      state,
+      undefined,
+      this.loadedVersions.get(pipelineId),
+    );
+    this.loadedVersions.set(pipelineId, version);
     // Non-blocking markdown export -- fire and forget
     this.writeMarkdownExport(projectPath, state).catch(() => {
       // Already logged inside writeMarkdownExport

@@ -387,16 +387,9 @@ export function registerRcPhaseTools(server: McpServer): void {
             results.push({ taskId, status: 'complete' });
           } catch (err) {
             results.push({ taskId, status: 'failed', error: (err as Error).message });
-            // Mark the task as failed in state so it can be retried
-            const currentState = _stateManager.load(project_path);
-            if (!currentState.forgeTasks) currentState.forgeTasks = {};
-            currentState.forgeTasks[taskId] = {
-              taskId,
-              status: 'failed',
-              startedAt: new Date().toISOString(),
-              completedAt: new Date().toISOString(),
-            };
-            _stateManager.save(project_path, currentState);
+            // Mark the task as failed so it can be retried. The orchestrator
+            // owns all rc:state writes (ADR-1); tools never save directly.
+            orchestrator.markForgeTaskFailed(project_path, taskId);
           }
         }
 

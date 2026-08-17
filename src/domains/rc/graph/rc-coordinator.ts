@@ -26,6 +26,8 @@ export class RcCoordinator {
       NODE_IDS.RC_STATE,
       NODE_IDS.RC_INTERRUPT,
       ProjectStateSchema,
+      // The RC Orchestrator (via StateManager) is the sole writer of rc:state.
+      { domainOwnsState: true },
     );
     // RC graph is static - build once
     this.graph = buildRcGraph(handlers);

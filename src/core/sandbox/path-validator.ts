@@ -20,6 +20,9 @@ import path from 'node:path';
 /** The four domains that can write to disk. */
 export type Domain = 'pre-rc' | 'rc' | 'post-rc' | 'traceability' | 'runtime';
 
+/** Machine-readable denial reason. Tests assert on this, never on message phrasing. */
+export type DenialReason = 'blocked' | 'outside-root' | 'domain-write';
+
 /** Result of a path validation check. */
 export interface ValidationResult {
   valid: boolean;
@@ -27,6 +30,8 @@ export interface ValidationResult {
   resolvedPath?: string;
   /** Human-readable error message (only set when invalid). */
   error?: string;
+  /** Machine-readable reason for denial (only set when invalid). */
+  reason?: DenialReason;
 }
 
 // ── Configuration ───────────────────────────────────────────────────────────
@@ -74,6 +79,22 @@ function getHomeBlockedPaths(): string[] {
   ];
 }
 
+/**
+ * Windows-native system paths to block (resolved at runtime).
+ * The POSIX BLOCKED_PATHS are inert on win32 (they resolve under the drive
+ * root), so without these the blocklist protected nothing system-side.
+ */
+function getWindowsBlockedPaths(): string[] {
+  if (process.platform !== 'win32') return [];
+  const paths: string[] = [];
+  const systemRoot = process.env.SystemRoot ?? process.env.windir ?? 'C:\\Windows';
+  paths.push(systemRoot);
+  if (process.env.ProgramData) paths.push(process.env.ProgramData);
+  if (process.env.APPDATA) paths.push(path.join(process.env.APPDATA, 'Microsoft', 'Credentials'));
+  if (process.env.LOCALAPPDATA) paths.push(path.join(process.env.LOCALAPPDATA, 'Microsoft', 'Credentials'));
+  return paths;
+}
+
 // ── Validator ───────────────────────────────────────────────────────────────
 
 export class PathValidator {
@@ -88,7 +109,7 @@ export class PathValidator {
    */
   constructor(projectRoot: string) {
     this.projectRoot = path.resolve(projectRoot);
-    this.blockedPaths = [...BLOCKED_PATHS, ...getHomeBlockedPaths()];
+    this.blockedPaths = [...BLOCKED_PATHS, ...getHomeBlockedPaths(), ...getWindowsBlockedPaths()];
   }
 
   /**
@@ -106,6 +127,7 @@ export class PathValidator {
     if (blockedMatch) {
       return {
         valid: false,
+        reason: 'blocked',
         error: `Access denied: path "${inputPath}" resolves to blocked location "${blockedMatch}"`,
       };
     }
@@ -114,6 +136,7 @@ export class PathValidator {
     if (!this.isInsideProject(resolved)) {
       return {
         valid: false,
+        reason: 'outside-root',
         error: `Access denied: path "${inputPath}" resolves outside project root "${this.projectRoot}"`,
       };
     }
@@ -143,6 +166,7 @@ export class PathValidator {
     if (!allowedDirs.includes(topDir)) {
       return {
         valid: false,
+        reason: 'domain-write',
         error: `Domain "${domain}" cannot write to "${topDir}/". Allowed directories: ${allowedDirs.join(', ')}`,
       };
     }
@@ -178,8 +202,12 @@ export class PathValidator {
    * Returns the matching blocked prefix, or null if not blocked.
    */
   isBlocked(resolvedPath: string): string | null {
+    // NTFS is case-insensitive: C:\USERS\x\.SSH must match the blocklist entry.
+    const fold = (p: string): string => (process.platform === 'win32' ? p.toLowerCase() : p);
+    const candidate = fold(resolvedPath);
     for (const blocked of this.blockedPaths) {
-      if (resolvedPath === blocked || resolvedPath.startsWith(blocked + path.sep)) {
+      const b = fold(blocked);
+      if (candidate === b || candidate.startsWith(b + path.sep)) {
         return blocked;
       }
     }

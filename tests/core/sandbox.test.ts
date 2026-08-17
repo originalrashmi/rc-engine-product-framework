@@ -1,39 +1,57 @@
 /**
  * Tests for Sandbox -- Path validation, write restrictions, input limits.
- * Coverage target: 100%.
+ *
+ * Platform policy (ADR-3, 2026-08-17): fixtures are derived from the running
+ * platform (mkdtemp project roots, env-derived blocked paths), and assertions
+ * key on machine-readable outcomes (valid + reason code), never on error
+ * message phrasing. This suite must be green on Windows and POSIX alike;
+ * skipping a platform is not an accepted fix.
  */
 
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import path from 'node:path';
+import os from 'node:os';
+import { mkdtempSync, rmSync, realpathSync } from 'node:fs';
 import { PathValidator } from '../../src/core/sandbox/path-validator.js';
 import { checkInputSize, checkInputs, DEFAULT_LIMITS } from '../../src/core/sandbox/input-limits.js';
 import { guardedTool } from '../../src/shared/tool-guard.js';
 import type { Domain } from '../../src/core/sandbox/path-validator.js';
 import type { InputLimitConfig } from '../../src/core/sandbox/input-limits.js';
 
+const IS_WIN = process.platform === 'win32';
+const HOME = process.env.HOME ?? process.env.USERPROFILE ?? '';
+
+/** A real system path that must be denied with reason 'blocked' on this platform. */
+const SYSTEM_BLOCKED_FILE = IS_WIN
+  ? path.join(process.env.SystemRoot ?? 'C:\\Windows', 'System32', 'config', 'SAM')
+  : '/etc/passwd';
+
 // ── PathValidator ───────────────────────────────────────────────────────────
 
 describe('PathValidator', () => {
-  const PROJECT_ROOT = '/home/user/projects/my-app';
+  let projectRoot: string;
   let validator: PathValidator;
 
-  // Create a fresh validator before examples that need it
-  function createValidator(root = PROJECT_ROOT): PathValidator {
-    return new PathValidator(root);
-  }
+  beforeAll(() => {
+    // realpathSync so resolvedPath comparisons survive tmpdir symlinks (macOS
+    // /var -> /private/var) and Windows casing normalization.
+    projectRoot = realpathSync(mkdtempSync(path.join(os.tmpdir(), 'sandbox-')));
+    validator = new PathValidator(projectRoot);
+  });
+
+  afterAll(() => {
+    rmSync(projectRoot, { recursive: true, force: true });
+  });
 
   // ── Constructor ─────────────────────────────────────────────────────────
 
   describe('constructor', () => {
     it('resolves and stores the project root', () => {
-      validator = createValidator('/home/user/projects/my-app');
-      expect(validator.getProjectRoot()).toBe('/home/user/projects/my-app');
+      expect(new PathValidator(projectRoot).getProjectRoot()).toBe(path.resolve(projectRoot));
     });
 
     it('resolves relative project root to absolute', () => {
-      // path.resolve will join with cwd
-      validator = createValidator('relative/path');
-      expect(path.isAbsolute(validator.getProjectRoot())).toBe(true);
+      expect(path.isAbsolute(new PathValidator('relative/path').getProjectRoot())).toBe(true);
     });
   });
 
@@ -41,199 +59,115 @@ describe('PathValidator', () => {
 
   describe('validateRead', () => {
     it('allows reading files inside project root', () => {
-      validator = createValidator();
-      const result = validator.validateRead(path.join(PROJECT_ROOT, 'src/index.ts'));
-
+      const result = validator.validateRead(path.join(projectRoot, 'src', 'index.ts'));
       expect(result.valid).toBe(true);
-      expect(result.resolvedPath).toBe(path.join(PROJECT_ROOT, 'src/index.ts'));
+      expect(result.resolvedPath).toBe(path.join(projectRoot, 'src', 'index.ts'));
     });
 
     it('allows reading the project root itself', () => {
-      validator = createValidator();
-      const result = validator.validateRead(PROJECT_ROOT);
-
+      const result = validator.validateRead(projectRoot);
       expect(result.valid).toBe(true);
-      expect(result.resolvedPath).toBe(PROJECT_ROOT);
+      expect(result.resolvedPath).toBe(projectRoot);
     });
 
     it('allows reading with relative paths', () => {
-      validator = createValidator();
-      const result = validator.validateRead('src/index.ts');
-
+      const result = validator.validateRead(path.join('src', 'index.ts'));
       expect(result.valid).toBe(true);
-      expect(result.resolvedPath).toBe(path.join(PROJECT_ROOT, 'src/index.ts'));
+      expect(result.resolvedPath).toBe(path.join(projectRoot, 'src', 'index.ts'));
     });
 
-    it('blocks reading outside project root', () => {
-      validator = createValidator();
-      const result = validator.validateRead('/home/user/other-project/secret.txt');
-
+    it('denies reading outside project root with reason outside-root', () => {
+      const outside = path.join(path.dirname(projectRoot), 'other-project', 'secret.txt');
+      const result = validator.validateRead(outside);
       expect(result.valid).toBe(false);
-      expect(result.error).toContain('outside project root');
+      expect(result.reason).toBe('outside-root');
     });
 
-    it('blocks directory traversal via ..', () => {
-      validator = createValidator();
-      const result = validator.validateRead(path.join(PROJECT_ROOT, '..', '..', 'etc', 'passwd'));
-
+    it('denies directory traversal via ..', () => {
+      const result = validator.validateRead(path.join(projectRoot, '..', '..', 'etc', 'passwd'));
       expect(result.valid).toBe(false);
-      // Should fail either because it's outside project root or blocked
+      expect(result.reason).toBeDefined(); // outside-root or blocked, both are denials
     });
 
-    it('blocks reading /etc', () => {
-      // Use /etc as the traversal target
-      validator = createValidator();
-      const result = validator.validateRead('/etc/passwd');
-
+    it('denies the platform system path with reason blocked', () => {
+      const result = validator.validateRead(SYSTEM_BLOCKED_FILE);
       expect(result.valid).toBe(false);
-      expect(result.error).toContain('blocked');
+      expect(result.reason).toBe('blocked');
     });
 
-    it('blocks reading /proc', () => {
-      validator = createValidator();
-      const result = validator.validateRead('/proc/self/environ');
-
-      expect(result.valid).toBe(false);
-    });
-
-    it('blocks reading /sys', () => {
-      validator = createValidator();
-      const result = validator.validateRead('/sys/kernel/version');
-
-      expect(result.valid).toBe(false);
-    });
-
-    it('blocks reading ~/.ssh', () => {
-      validator = createValidator();
-      const result = validator.validateRead('/root/.ssh/id_rsa');
-
-      expect(result.valid).toBe(false);
-      expect(result.error).toContain('blocked');
-    });
-
-    it('blocks reading ~/.aws', () => {
-      validator = createValidator();
-      const result = validator.validateRead('/root/.aws/credentials');
-
-      expect(result.valid).toBe(false);
-    });
-
-    it('blocks reading ~/.gnupg', () => {
-      validator = createValidator();
-      const result = validator.validateRead('/root/.gnupg/secring.gpg');
-
-      expect(result.valid).toBe(false);
+    it('denies home credential stores with reason blocked', () => {
+      expect(HOME).toBeTruthy();
+      for (const p of [
+        path.join(HOME, '.ssh', 'id_rsa'),
+        path.join(HOME, '.aws', 'credentials'),
+        path.join(HOME, '.gnupg', 'secring.gpg'),
+        path.join(HOME, '.env'),
+      ]) {
+        const result = validator.validateRead(p);
+        expect(result.valid, p).toBe(false);
+        expect(result.reason, p).toBe('blocked');
+      }
     });
 
     it('canonicalizes paths with . segments', () => {
-      validator = createValidator();
-      const result = validator.validateRead(path.join(PROJECT_ROOT, '.', 'src', '.', 'index.ts'));
-
+      const result = validator.validateRead(path.join(projectRoot, '.', 'src', '.', 'index.ts'));
       expect(result.valid).toBe(true);
-      expect(result.resolvedPath).toBe(path.join(PROJECT_ROOT, 'src/index.ts'));
+      expect(result.resolvedPath).toBe(path.join(projectRoot, 'src', 'index.ts'));
     });
 
     it('rejects paths that resolve to just above project root', () => {
-      validator = createValidator();
-      const result = validator.validateRead(path.join(PROJECT_ROOT, '..'));
-
+      const result = validator.validateRead(path.join(projectRoot, '..'));
       expect(result.valid).toBe(false);
+      expect(result.reason).toBe('outside-root');
     });
   });
 
   // ── Write Validation ────────────────────────────────────────────────────
 
   describe('validateWrite', () => {
-    it('allows pre-rc domain to write to pre-rc-research/', () => {
-      validator = createValidator();
-      const result = validator.validateWrite(path.join(PROJECT_ROOT, 'pre-rc-research/prd-v1.md'), 'pre-rc');
+    const allowedByDomain: Array<[Domain, string]> = [
+      ['pre-rc', 'pre-rc-research'],
+      ['rc', 'rc-method'],
+      ['post-rc', 'post-rc'],
+      ['traceability', 'rc-traceability'],
+      ['runtime', '.rc-engine'],
+    ];
 
+    it.each(allowedByDomain)('allows %s domain to write to %s/', (domain, dir) => {
+      const result = validator.validateWrite(path.join(projectRoot, dir, 'file.md'), domain);
       expect(result.valid).toBe(true);
     });
 
-    it('allows rc domain to write to rc-method/', () => {
-      validator = createValidator();
-      const result = validator.validateWrite(path.join(PROJECT_ROOT, 'rc-method/prds/PRD-001.md'), 'rc');
-
-      expect(result.valid).toBe(true);
-    });
-
-    it('allows post-rc domain to write to post-rc/', () => {
-      validator = createValidator();
-      const result = validator.validateWrite(path.join(PROJECT_ROOT, 'post-rc/findings.json'), 'post-rc');
-
-      expect(result.valid).toBe(true);
-    });
-
-    it('allows traceability domain to write to rc-traceability/', () => {
-      validator = createValidator();
-      const result = validator.validateWrite(path.join(PROJECT_ROOT, 'rc-traceability/matrix.json'), 'traceability');
-
-      expect(result.valid).toBe(true);
-    });
-
-    it('allows runtime domain to write to .rc-engine/', () => {
-      validator = createValidator();
-      const result = validator.validateWrite(path.join(PROJECT_ROOT, '.rc-engine/cache/data.json'), 'runtime');
-
-      expect(result.valid).toBe(true);
-    });
-
-    it('blocks pre-rc domain from writing to rc-method/', () => {
-      validator = createValidator();
-      const result = validator.validateWrite(path.join(PROJECT_ROOT, 'rc-method/state.md'), 'pre-rc');
-
-      expect(result.valid).toBe(false);
-      expect(result.error).toContain('pre-rc');
-      expect(result.error).toContain('cannot write');
-    });
-
-    it('blocks rc domain from writing to pre-rc-research/', () => {
-      validator = createValidator();
-      const result = validator.validateWrite(path.join(PROJECT_ROOT, 'pre-rc-research/data.md'), 'rc');
-
-      expect(result.valid).toBe(false);
-    });
-
-    it('blocks post-rc domain from writing to rc-method/', () => {
-      validator = createValidator();
-      const result = validator.validateWrite(path.join(PROJECT_ROOT, 'rc-method/output.md'), 'post-rc');
-
-      expect(result.valid).toBe(false);
-    });
-
-    it('blocks writing to project root directly (no domain dir)', () => {
-      validator = createValidator();
-      const result = validator.validateWrite(path.join(PROJECT_ROOT, 'package.json'), 'rc');
-
-      expect(result.valid).toBe(false);
-    });
-
-    it('blocks writing outside project root', () => {
-      validator = createValidator();
-      const result = validator.validateWrite('/tmp/evil.sh', 'rc');
-
-      expect(result.valid).toBe(false);
-    });
-
-    it('blocks writing to blocked paths', () => {
-      validator = createValidator();
-      const result = validator.validateWrite('/etc/crontab', 'rc');
-
-      expect(result.valid).toBe(false);
-      expect(result.error).toContain('blocked');
-    });
-
-    it('validates all domains correctly', () => {
-      validator = createValidator();
-
-      const domains: Domain[] = ['pre-rc', 'rc', 'post-rc', 'traceability', 'runtime'];
-      const dirs = ['pre-rc-research', 'rc-method', 'post-rc', 'rc-traceability', '.rc-engine'];
-
-      for (let i = 0; i < domains.length; i++) {
-        const result = validator.validateWrite(path.join(PROJECT_ROOT, dirs[i], 'test.md'), domains[i]);
-        expect(result.valid).toBe(true);
+    it('denies cross-domain writes with reason domain-write', () => {
+      const cases: Array<[Domain, string]> = [
+        ['pre-rc', 'rc-method'],
+        ['rc', 'pre-rc-research'],
+        ['post-rc', 'rc-method'],
+      ];
+      for (const [domain, dir] of cases) {
+        const result = validator.validateWrite(path.join(projectRoot, dir, 'file.md'), domain);
+        expect(result.valid, `${domain} -> ${dir}`).toBe(false);
+        expect(result.reason, `${domain} -> ${dir}`).toBe('domain-write');
       }
+    });
+
+    it('denies writing to project root directly with reason domain-write', () => {
+      const result = validator.validateWrite(path.join(projectRoot, 'package.json'), 'rc');
+      expect(result.valid).toBe(false);
+      expect(result.reason).toBe('domain-write');
+    });
+
+    it('denies writing outside project root with reason outside-root', () => {
+      const outside = path.join(path.dirname(projectRoot), 'evil.sh');
+      const result = validator.validateWrite(outside, 'rc');
+      expect(result.valid).toBe(false);
+      expect(result.reason).toBe('outside-root');
+    });
+
+    it('denies writing to the platform system path with reason blocked', () => {
+      const result = validator.validateWrite(SYSTEM_BLOCKED_FILE, 'rc');
+      expect(result.valid).toBe(false);
+      expect(result.reason).toBe('blocked');
     });
   });
 
@@ -241,61 +175,61 @@ describe('PathValidator', () => {
 
   describe('resolve', () => {
     it('resolves absolute paths as-is', () => {
-      validator = createValidator();
-      const result = validator.resolve('/absolute/path');
-      expect(result).toBe('/absolute/path');
+      const abs = path.join(projectRoot, 'absolute', 'file.txt');
+      expect(validator.resolve(abs)).toBe(abs);
     });
 
     it('resolves relative paths against project root', () => {
-      validator = createValidator();
-      const result = validator.resolve('relative/path');
-      expect(result).toBe(path.join(PROJECT_ROOT, 'relative/path'));
+      expect(validator.resolve(path.join('relative', 'p'))).toBe(path.join(projectRoot, 'relative', 'p'));
     });
   });
 
   describe('isInsideProject', () => {
     it('returns true for paths inside project', () => {
-      validator = createValidator();
-      expect(validator.isInsideProject(path.join(PROJECT_ROOT, 'src'))).toBe(true);
+      expect(validator.isInsideProject(path.join(projectRoot, 'src'))).toBe(true);
     });
 
     it('returns true for exact project root', () => {
-      validator = createValidator();
-      expect(validator.isInsideProject(PROJECT_ROOT)).toBe(true);
+      expect(validator.isInsideProject(projectRoot)).toBe(true);
     });
 
     it('returns false for paths outside project', () => {
-      validator = createValidator();
-      expect(validator.isInsideProject('/other/path')).toBe(false);
+      expect(validator.isInsideProject(path.join(path.dirname(projectRoot), 'other'))).toBe(false);
     });
 
     it('returns false for paths that are prefixes of project root', () => {
-      validator = createValidator();
-      // /home/user/projects/my-app-other should NOT be inside /home/user/projects/my-app
-      expect(validator.isInsideProject(PROJECT_ROOT + '-other')).toBe(false);
+      // <root>-other must NOT count as inside <root>
+      expect(validator.isInsideProject(projectRoot + '-other')).toBe(false);
     });
   });
 
   describe('isBlocked', () => {
-    it('returns the blocked prefix for exact match', () => {
-      validator = createValidator();
-      expect(validator.isBlocked('/etc')).toBe('/etc');
+    it('returns the blocked prefix for an exact match', () => {
+      const sshDir = path.join(HOME, '.ssh');
+      expect(validator.isBlocked(sshDir)).toBe(sshDir);
     });
 
-    it('returns the blocked prefix for child path', () => {
-      validator = createValidator();
-      expect(validator.isBlocked('/etc/passwd')).toBe('/etc');
+    it('returns the blocked prefix for a child path', () => {
+      expect(validator.isBlocked(path.join(HOME, '.ssh', 'id_rsa'))).toBe(path.join(HOME, '.ssh'));
     });
 
-    it('returns null for non-blocked path', () => {
-      validator = createValidator();
-      expect(validator.isBlocked('/home/user/safe/file')).toBeNull();
+    it('returns null for a non-blocked path', () => {
+      expect(validator.isBlocked(path.join(projectRoot, 'safe', 'file'))).toBeNull();
     });
 
     it('does not false-positive on similar prefixes', () => {
-      validator = createValidator();
-      // /etcetera should NOT match /etc
-      expect(validator.isBlocked('/etcetera/file')).toBeNull();
+      // <home>/.ssh-backup must NOT match the <home>/.ssh entry
+      expect(validator.isBlocked(path.join(HOME, '.ssh-backup', 'file'))).toBeNull();
+    });
+
+    it.runIf(IS_WIN)('matches case-insensitively on win32 (NTFS)', () => {
+      const upper = path.join(HOME, '.SSH', 'ID_RSA').toUpperCase();
+      expect(validator.isBlocked(upper)).not.toBeNull();
+    });
+
+    it.runIf(IS_WIN)('blocks the Windows system root', () => {
+      const systemRoot = process.env.SystemRoot ?? 'C:\\Windows';
+      expect(validator.isBlocked(path.join(systemRoot, 'System32', 'cmd.exe'))).not.toBeNull();
     });
   });
 });
@@ -451,11 +385,27 @@ describe('guardedTool', () => {
     content: [{ type: 'text' as const, text: 'ok' }],
   });
 
+  let safeDir: string;
+
+  beforeAll(() => {
+    safeDir = mkdtempSync(path.join(os.tmpdir(), 'guard-'));
+  });
+
+  afterAll(() => {
+    rmSync(safeDir, { recursive: true, force: true });
+  });
+
   it('blocks system paths in project_path', async () => {
     const guarded = guardedTool(ok);
-    const result = await guarded({ project_path: '/etc/passwd' });
+    const result = await guarded({ project_path: SYSTEM_BLOCKED_FILE });
     expect(result.isError).toBe(true);
     expect(result.content[0].text).toContain('protected system directory');
+  });
+
+  it('blocks home credential paths in project_path', async () => {
+    const guarded = guardedTool(ok);
+    const result = await guarded({ project_path: path.join(HOME, '.ssh') });
+    expect(result.isError).toBe(true);
   });
 
   it('blocks relative project_path', async () => {
@@ -467,7 +417,7 @@ describe('guardedTool', () => {
 
   it('allows valid absolute project_path', async () => {
     const guarded = guardedTool(ok);
-    const result = await guarded({ project_path: '/home/user/project' });
+    const result = await guarded({ project_path: safeDir });
     expect(result.isError).toBeUndefined();
     expect(result.content[0].text).toBe('ok');
   });
@@ -475,7 +425,7 @@ describe('guardedTool', () => {
   it('blocks oversized known fields', async () => {
     const guarded = guardedTool(ok);
     const huge = 'x'.repeat(60_000);
-    const result = await guarded({ project_path: '/tmp/p', brief: huge });
+    const result = await guarded({ project_path: safeDir, brief: huge });
     expect(result.isError).toBe(true);
     expect(result.content[0].text).toContain('Input size limit exceeded');
   });

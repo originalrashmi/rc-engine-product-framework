@@ -157,6 +157,23 @@ export class Orchestrator {
   /** Track phase start time for benchmark recording */
   private phaseStartMs: number = 0;
 
+  /**
+   * Record a forge task failure so it can be retried. Lives here (not in the
+   * tool layer) because StateManager-via-Orchestrator is the sole writer of
+   * rc:state (ADR-1).
+   */
+  markForgeTaskFailed(projectPath: string, taskId: string): void {
+    const state = this.stateManager.load(projectPath);
+    if (!state.forgeTasks) state.forgeTasks = {};
+    state.forgeTasks[taskId] = {
+      taskId,
+      status: 'failed',
+      startedAt: new Date().toISOString(),
+      completedAt: new Date().toISOString(),
+    };
+    this.stateManager.save(projectPath, state);
+  }
+
   private async finalizePhase(
     projectPath: string,
     state: ProjectState,

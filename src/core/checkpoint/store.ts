@@ -67,6 +67,27 @@ const SCHEMA_DDL = `
 
 // ── Store ───────────────────────────────────────────────────────────────────
 
+/**
+ * Thrown when a save carries an expectedVersion that no longer matches the
+ * stored head: another writer saved in between. This should be exceptional
+ * (rc:state has a single writer per ADR-1); when it fires, a multi-writer
+ * regression or a second process is at work.
+ */
+export class StaleStateError extends Error {
+  constructor(
+    public readonly pipelineId: string,
+    public readonly nodeId: string,
+    public readonly expectedVersion: number,
+    public readonly actualVersion: number,
+  ) {
+    super(
+      `Stale state write rejected for node "${nodeId}": expected version ${expectedVersion} ` +
+        `but store is at ${actualVersion}. Another writer saved in between - reload before saving.`,
+    );
+    this.name = 'StaleStateError';
+  }
+}
+
 export class CheckpointStore {
   private db: Database.Database;
 
@@ -104,7 +125,17 @@ export class CheckpointStore {
     nodeId: string,
     state: T,
     metadata?: Record<string, unknown>,
+    expectedVersion?: number,
   ): { id: number; version: number } {
+    // Optimistic concurrency tripwire (ADR-2, 2026-08-17): when the caller
+    // passes the version it loaded, a mismatch means another writer saved in
+    // between - fail loudly instead of silently appending a stale copy.
+    if (expectedVersion !== undefined) {
+      const current = this.getNextVersion(pipelineId, nodeId) - 1;
+      if (current !== expectedVersion) {
+        throw new StaleStateError(pipelineId, nodeId, expectedVersion, current);
+      }
+    }
     const version = this.getNextVersion(pipelineId, nodeId);
     const stateJson = JSON.stringify(state);
     const metadataJson = metadata ? JSON.stringify(metadata) : null;

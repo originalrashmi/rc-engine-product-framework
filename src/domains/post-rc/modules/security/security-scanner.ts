@@ -303,9 +303,13 @@ async function runNpmAudit(projectPath: string, policy: SecurityPolicy): Promise
   if (!existsSync(lockPath)) return [];
 
   try {
-    const { stdout } = await execFileAsync('npm', ['audit', '--json', '--omit=dev'], {
+    // On Windows npm is npm.cmd, which Node refuses to spawn without a shell.
+    // Arguments are constant strings, so shell interpolation is not a risk.
+    const isWin = process.platform === 'win32';
+    const { stdout } = await execFileAsync(isWin ? 'npm.cmd' : 'npm', ['audit', '--json', '--omit=dev'], {
       cwd: projectPath,
       timeout: 30000,
+      shell: isWin,
     });
 
     return parseNpmAuditOutput(stdout, policy);
@@ -315,12 +319,13 @@ async function runNpmAudit(projectPath: string, policy: SecurityPolicy): Promise
     if (execError.stdout) {
       return parseNpmAuditOutput(execError.stdout, policy);
     }
-    // Actual execution failure
+    // Actual execution failure. Medium, not Info: a scan that silently never
+    // runs its dependency audit must not present as a near-clean result.
     return [
       {
         id: 'SEC-AUDIT-ERR',
         module: ValidationModule.Security,
-        severity: Severity.Info,
+        severity: Severity.Medium,
         title: 'npm audit could not run',
         description: `Error: ${execError.stderr || String(err)}`,
         remediation: 'Ensure npm is installed and package-lock.json exists.',
