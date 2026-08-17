@@ -61,6 +61,12 @@ export class GeminiClient extends BaseLLMClient {
     }
 
     const data = (await res.json()) as any;
+    // Truncation guard (E3): never return a silently cut-off result.
+    if (data.candidates?.[0]?.finishReason === 'MAX_TOKENS') {
+      throw new Error(
+        `Gemini output truncated at the token limit (finishReason=MAX_TOKENS). Raise maxTokens or split the request; refusing to return a silently truncated result.`,
+      );
+    }
     const content = data.candidates?.[0]?.content?.parts?.[0]?.text || '';
     const inputTokens = (data.usageMetadata?.promptTokenCount as number | undefined) ?? 0;
     const outputTokens = (data.usageMetadata?.candidatesTokenCount as number | undefined) ?? 0;

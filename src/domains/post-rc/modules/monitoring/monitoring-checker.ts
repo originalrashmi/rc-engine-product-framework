@@ -26,6 +26,15 @@ export async function runMonitoringModule(
   const taskContent = await loadTaskContent(projectPath);
   const allContent = [prdContent, taskContent, codeContext].filter(Boolean).join('\n');
 
+  // Context awareness (E4): a PRD that mandates offline operation cannot
+  // satisfy SaaS observability demands - flagging missing Sentry as CRITICAL
+  // for an offline CLI contradicts the product's own spec. Such findings are
+  // downgraded to Info with offline-appropriate remediation.
+  const isOfflineProduct =
+    /\boffline\b|no network access|no internet|air.?gapped|runs? (fully|entirely|completely) locally/i.test(
+      prdContent ?? '',
+    );
+
   // -------------------------------------------------------
   // Check 1: PRD has observability requirements (Section 6a)
   // -------------------------------------------------------
@@ -66,11 +75,14 @@ export async function runMonitoringModule(
       findings.push({
         id: nextId(),
         module: ValidationModule.Monitoring,
-        severity: Severity.Critical,
+        severity: isOfflineProduct ? Severity.Info : Severity.Critical,
         title: 'No error tracking tool specified',
-        description:
-          'No error tracking tool (Sentry, Datadog, etc.) is referenced in the PRD, tasks, or code. Production errors will be invisible.',
-        remediation: 'Add error tracking to PRD Section 6a and create an [OBSERVABILITY] task for SDK integration.',
+        description: isOfflineProduct
+          ? 'No error tracking tool referenced, and the PRD mandates offline operation, so SaaS error tracking (Sentry, Datadog) is not applicable. Verify errors surface through offline channels instead.'
+          : 'No error tracking tool (Sentry, Datadog, etc.) is referenced in the PRD, tasks, or code. Production errors will be invisible.',
+        remediation: isOfflineProduct
+          ? 'Confirm errors are observable offline: clear stderr diagnostics, exit codes, and/or local log files.'
+          : 'Add error tracking to PRD Section 6a and create an [OBSERVABILITY] task for SDK integration.',
         category: 'error-tracking',
       });
     }
@@ -87,12 +99,14 @@ export async function runMonitoringModule(
       findings.push({
         id: nextId(),
         module: ValidationModule.Monitoring,
-        severity: Severity.Medium,
+        severity: isOfflineProduct ? Severity.Info : Severity.Medium,
         title: 'No user behavior analytics specified',
-        description:
-          'No analytics or behavior tracking tool (PostHog, Hotjar, FullStory, etc.) is referenced. User behavior will be unobservable post-launch.',
-        remediation:
-          'Add analytics requirements to PRD Section 6a. Consider PostHog (product analytics) or Hotjar (session recordings).',
+        description: isOfflineProduct
+          ? 'No analytics tool referenced, and the PRD mandates offline operation, so SaaS analytics are not applicable to this product.'
+          : 'No analytics or behavior tracking tool (PostHog, Hotjar, FullStory, etc.) is referenced. User behavior will be unobservable post-launch.',
+        remediation: isOfflineProduct
+          ? 'No action required unless the product later gains a networked surface.'
+          : 'Add analytics requirements to PRD Section 6a. Consider PostHog (product analytics) or Hotjar (session recordings).',
         category: 'analytics',
       });
     }

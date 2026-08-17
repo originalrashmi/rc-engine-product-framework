@@ -106,7 +106,7 @@ export function registerPostRcTools(server: McpServer): void {
   // Tool 5: Ship/no-ship gate decision
   server.tool(
     'postrc_gate',
-    '[Pro] Final checkpoint - ship/no-ship decision. Call after postrc_scan completes and user has reviewed findings. NEVER auto-approve - always present findings summary first. Returns PASS (safe to ship), WARN (issues exist but not blocking), or BLOCK (critical issues must be fixed or overridden). If BLOCK: user must either fix issues and re-scan, or use postrc_override to accept risks. After PASS/approved: pipeline is complete for the build phase. Consider running trace_map_findings next for coverage metrics.',
+    '[Pro] Final checkpoint - the ship decision. Pass decision "approve" (ship), "reject [reason]" (do not ship), or "question [text]" - these are the only accepted values; "ship"/"no-ship" are NOT valid decision strings. Call after postrc_scan completes and user has reviewed findings. NEVER auto-approve - always present findings summary first. Returns PASS (safe to ship), WARN (issues exist but not blocking), or BLOCK (critical issues must be fixed or overridden). If BLOCK: user must either fix issues and re-scan, or use postrc_override to accept risks. After PASS/approved: pipeline is complete for the build phase. Consider running trace_map_findings next for coverage metrics.',
     PostRCGateInputSchema.shape,
     {
       title: 'Ship Decision Checkpoint',

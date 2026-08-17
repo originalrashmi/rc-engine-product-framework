@@ -20,7 +20,7 @@ import { registerPostRcTools } from './domains/post-rc/tools.js';
 import { registerTraceabilityTools } from './domains/traceability/tools.js';
 import { formatCostSummary } from './shared/cost-tracker.js';
 import { getCircuitStatuses } from './shared/circuit-breaker.js';
-import { getLearningSummary } from './shared/learning.js';
+import { getLearningSummary, getPersistentUsageSummary } from './shared/learning.js';
 import { getPluginSummary, loadPlugins } from './shared/plugins.js';
 import { getBenchmarkSummary } from './shared/benchmark.js';
 import { formatRecentActivity } from './shared/audit.js';
@@ -114,6 +114,10 @@ server.tool(
           ? `\n  PROVIDER HEALTH:\n${openCircuits.map(([p, s]) => `    ${p}: ${s.state} (${s.totalFailures} failures)`).join('\n')}`
           : '';
       const learnSection = getLearningSummary();
+      // All-time usage from the persistent learning store (E2): the
+      // in-memory trackers reset every MCP session, so this is the only
+      // figure that survives restarts.
+      const allTimeUsageSection = getPersistentUsageSummary();
       const pluginSection = getPluginSummary();
       const benchSection = getBenchmarkSummary();
       const activitySection = formatRecentActivity(projectPath);
@@ -186,7 +190,7 @@ ${summary}
     → rc_architect → rc_sequence → rc_validate
     → rc_forge_task → postrc_scan
     → trace_enhance_prd → trace_map_findings
-${costSection}${circuitSection}${learnSection}${pluginSection}${benchSection}${deploySection}${docsSection}${projectDocsSection}${traceSection}${valueSection}${activitySection}
+${costSection}${allTimeUsageSection}${circuitSection}${learnSection}${pluginSection}${benchSection}${deploySection}${docsSection}${projectDocsSection}${traceSection}${valueSection}${activitySection}
   Call domain-specific status tools for details:
     prc_status    - Pre-RC research progress
     rc_status     - RC phase progress

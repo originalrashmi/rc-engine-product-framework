@@ -32,16 +32,16 @@ Sequencing is binding: test signal first, then state ownership, then the defect 
 - [x] D3. SECURITY note stating honestly that the sandbox is currently advisory (domain write-fences unenforced) until the guardedFs refactor ships.
 - [x] D4. One state-ownership ADR shipped inside the Phase B PR. CONTRIBUTING line on platform-neutral test fixtures.
 
-## Backlog (from dogfood report, not superseded by the council plan)
+## Backlog (from dogfood report, not superseded by the council plan) - DONE 2026-08-17 (E7 resolved by C2: ghost states no longer exist to be counted)
 
-- [ ] E1. rc_forge_task validates task id in code before any LLM call; never renders "Complete" around a failure (also covers the passthrough junk-file bug where the prompt template's `path/to/file.ext` example is parsed as output).
-- [ ] E2. Persist token/cost accounting to the same store as the audit log so rc_pipeline_status survives restarts.
-- [ ] E3. Truncation guard for the OTHER three provider clients (Claude client done 2026-08-17; OpenAI/Gemini/Perplexity still unguarded).
-- [ ] E4. Post-RC monitoring policy reads the PRD's constraints (offline requirement) before demanding SaaS observability.
-- [ ] E5. Inject the real date into generation prompts (artifacts carry hallucinated dates).
-- [ ] E6. postrc_gate description says "ship/no-ship" but validator accepts approve/reject/question; align.
-- [ ] E7. Learning-intelligence project counter counts failed-start ghosts.
-- [ ] E8. Capture the Architect phase's chosen tech stack into state (rc_status shows "not set"; markdown export embeds a hardcoded nextjs/postgres default).
+- [x] E1. rc_forge_task validates task id in code before any LLM call; never renders "Complete" around a failure (also covers the passthrough junk-file bug where the prompt template's `path/to/file.ext` example is parsed as output).
+- [x] E2. Persist token/cost accounting to the same store as the audit log so rc_pipeline_status survives restarts.
+- [x] E3. Truncation guard for the OTHER three provider clients (Claude client done 2026-08-17; OpenAI/Gemini/Perplexity still unguarded).
+- [x] E4. Post-RC monitoring policy reads the PRD's constraints (offline requirement) before demanding SaaS observability.
+- [x] E5. Inject the real date into generation prompts (artifacts carry hallucinated dates).
+- [x] E6. postrc_gate description says "ship/no-ship" but validator accepts approve/reject/question; align.
+- [x] E7. Learning-intelligence project counter counts failed-start ghosts.
+- [x] E8. Capture the Architect phase's chosen tech stack into state (rc_status shows "not set"; markdown export embeds a hardcoded nextjs/postgres default).
 
 ## Explicitly killed by the council (do not resurrect without new evidence)
 

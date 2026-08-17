@@ -105,6 +105,11 @@ export class Orchestrator {
    */
   private async execute(knowledgeContent: string, agentInstructions: string, userMessage: string): Promise<string> {
     this.phaseStartMs = Date.now();
+    // Ground the date (E5): without this, generated artifacts carried
+    // hallucinated dates from the model's training prior. Appended to the
+    // instructions so both autonomous and passthrough paths inherit it.
+    const today = new Date().toISOString().split('T')[0];
+    agentInstructions += `\n\nToday's date is ${today}. Use it for any dates in generated documents; never invent a date.`;
     const systemPrompt = `${knowledgeContent}\n\n---\n\n${agentInstructions}`;
 
     if (hasApiKey) {
@@ -120,7 +125,7 @@ export class Orchestrator {
         maxTokens: 4096,
       });
       tokenTracker.record('rc', 'Orchestrator', response.tokensUsed, response.provider);
-      recordCost({
+      const costUsd = recordCost({
         pipelineId: 'rc-session',
         domain: 'rc',
         tool: 'Orchestrator',
@@ -135,6 +140,9 @@ export class Orchestrator {
         taskType: 'rc-orchestrator',
         latencyMs: Date.now() - startMs,
         tokensUsed: response.tokensUsed,
+        // Persist cost with the record so all-time usage totals (E2) carry
+        // dollars, not just tokens.
+        costUsd,
         success: true,
       });
       return response.content;
@@ -156,6 +164,34 @@ export class Orchestrator {
    */
   /** Track phase start time for benchmark recording */
   private phaseStartMs: number = 0;
+
+  /** Parse all TASK-XXX ids from the saved task list files (sorted). */
+  private readTaskIdsFromFiles(projectPath: string): string[] {
+    const tasksDir = path.join(projectPath, 'rc-method', 'tasks');
+    const ids = new Set<string>();
+    try {
+      for (const file of fs.readdirSync(tasksDir).filter((f) => f.endsWith('.md'))) {
+        const content = fs.readFileSync(path.join(tasksDir, file), 'utf-8');
+        for (const m of content.matchAll(/^###\s+(TASK-\d+)\s+/gm)) ids.add(m[1]);
+      }
+    } catch {
+      return [];
+    }
+    return Array.from(ids).sort();
+  }
+
+  /**
+   * Record the chosen tech stack (E8). Called by rc_start / rc_architect
+   * when the operator supplies a structured stack; orchestrator-owned write
+   * per ADR-1. The captured stack feeds Architect context, Forge prompts,
+   * and rc_status.
+   */
+  setTechStack(projectPath: string, techStack: TechStack): void {
+    const state = this.stateManager.load(projectPath);
+    state.techStack = techStack;
+    this.stateManager.save(projectPath, state);
+    audit('config.change', 'rc', projectPath, { techStack: { ...techStack } }, String(state.currentPhase));
+  }
 
   /** True when the build phase produced real outputs: engine-forged files in state, or files on disk under rc-method/forge/ (passthrough host writes). */
   private hasForgeOutputs(projectPath: string, state: ProjectState): boolean {
@@ -250,14 +286,11 @@ export class Orchestrator {
     // so a failed start cannot leave ghost "project already exists" state.
     const state = this.stateManager.buildState(projectPath, projectName);
 
-    // Store tech stack selection (defaults applied if not specified)
-    state.techStack = techStack ?? {
-      language: 'typescript',
-      framework: 'nextjs',
-      uiFramework: 'react',
-      database: 'postgresql',
-      orm: 'prisma',
-    };
+    // Store tech stack only when the operator actually chose one (E8).
+    // The old silent nextjs/react/postgresql/prisma default leaked into
+    // forge prompts even for CLI projects; unset now means "decided during
+    // Architect", and forge falls back to the architecture document.
+    state.techStack = techStack;
 
     const masterKnowledge = this.contextLoader.loadFile('skills/rc-master.md');
 
@@ -552,6 +585,16 @@ ${result.text.substring(0, 500)}...`;
   async forgeTask(projectPath: string, taskId: string): Promise<AgentResult> {
     const state = this.stateManager.load(projectPath);
     this.enforcePhase(state, 6, 'rc_forge_task');
+
+    // Guarantee, not judgment (E1): validate the task id against the task
+    // list in code BEFORE any LLM call. Previously a bogus id burned a paid
+    // call letting the model discover the task didn't exist.
+    const knownTaskIds = this.readTaskIdsFromFiles(projectPath);
+    if (knownTaskIds.length > 0 && !knownTaskIds.includes(taskId)) {
+      return {
+        text: `Error: ${taskId} not found in the task list. Known tasks: ${knownTaskIds[0]} through ${knownTaskIds[knownTaskIds.length - 1]} (${knownTaskIds.length} total).\n\nCheck rc-method/tasks/ or run rc_sequence if the task list is missing.`,
+      };
+    }
 
     // Initialize forgeTasks tracking if missing
     if (!state.forgeTasks) state.forgeTasks = {};
