@@ -29,8 +29,10 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Type check (core)
-        run: npx tsc --noEmit
+      - name: Build (core)
+        # Full build, not --noEmit: the web server type-check below imports
+        # from dist/, so dist must exist first.
+        run: npx tsc
 
       - name: Type check (web server)
         run: npx tsc --noEmit -p web/tsconfig.json
