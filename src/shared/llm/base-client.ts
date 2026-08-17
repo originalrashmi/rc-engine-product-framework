@@ -59,9 +59,7 @@ export abstract class BaseLLMClient {
         for (const fb of this.fallbacks) {
           if (!fb.isAvailable()) continue;
           try {
-            console.error(
-              `[${this.provider}] quota/billing error; falling back to ${fb.getProvider()}`,
-            );
+            console.error(`[${this.provider}] quota/billing error; falling back to ${fb.getProvider()}`);
             return await fb._chatWithRetryInner(request, maxRetries);
           } catch {
             continue;

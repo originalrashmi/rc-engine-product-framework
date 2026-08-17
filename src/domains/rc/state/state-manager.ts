@@ -12,16 +12,22 @@ const STATE_DIR = 'rc-method/state';
 const STATE_FILE = 'RC-STATE.md';
 
 export class StateManager {
-  /** Create a new project state file */
-  create(projectPath: string, projectName: string): ProjectState {
-    const stateDir = path.join(projectPath, STATE_DIR);
-    fs.mkdirSync(stateDir, { recursive: true });
+  /**
+   * Version each pipeline's rc:state was at when this instance last loaded it.
+   * save() asserts against it (CAS tripwire, ADR-2): if another writer saved
+   * in between, CheckpointStore throws StaleStateError instead of silently
+   * appending a stale copy. Unset (e.g. first create) means unconditional save.
+   */
+  private loadedVersions = new Map<string, number>();
 
-    for (const dir of ['prds', 'tasks', 'gates', 'logs']) {
-      fs.mkdirSync(path.join(projectPath, 'rc-method', dir), { recursive: true });
-    }
-
-    const state: ProjectState = {
+  /**
+   * Build a fresh in-memory project state WITHOUT persisting anything.
+   * Callers run the fallible part of project startup (LLM call, Pre-RC
+   * bridge) first and only then persist(), so a failed start leaves no ghost
+   * "project already exists" state behind.
+   */
+  buildState(projectPath: string, projectName: string): ProjectState {
+    return {
       projectName,
       projectPath,
       currentPhase: 1,
@@ -30,8 +36,21 @@ export class StateManager {
       uxScore: null,
       uxMode: null,
     };
+  }
 
+  /** Create project directories and persist the state (the durable half of create). */
+  persist(projectPath: string, state: ProjectState): void {
+    fs.mkdirSync(path.join(projectPath, STATE_DIR), { recursive: true });
+    for (const dir of ['prds', 'tasks', 'gates', 'logs']) {
+      fs.mkdirSync(path.join(projectPath, 'rc-method', dir), { recursive: true });
+    }
     this.save(projectPath, state);
+  }
+
+  /** Create a new project state file (build + persist in one step). */
+  create(projectPath: string, projectName: string): ProjectState {
+    const state = this.buildState(projectPath, projectName);
+    this.persist(projectPath, state);
     return state;
   }
 
@@ -40,6 +59,7 @@ export class StateManager {
     const { store, pipelineId } = getProjectStore(projectPath);
     try {
       const checkpoint = store.load(pipelineId, NODE_IDS.RC_STATE, ProjectStateSchema);
+      this.loadedVersions.set(pipelineId, checkpoint.version);
       return checkpoint.state;
     } catch (err) {
       if ((err as Error).message.includes('No checkpoint found')) {
@@ -55,11 +75,18 @@ export class StateManager {
   /** Save project state to CheckpointStore (primary) + async markdown export (non-blocking). */
   save(projectPath: string, state: ProjectState): void {
     const { store, pipelineId } = getProjectStore(projectPath);
-    store.save(pipelineId, NODE_IDS.RC_STATE, state);
-    // Non-blocking markdown export -- fire and forget
-    this.writeMarkdownExport(projectPath, state).catch(() => {
-      // Already logged inside writeMarkdownExport
-    });
+    const { version } = store.save(
+      pipelineId,
+      NODE_IDS.RC_STATE,
+      state,
+      undefined,
+      this.loadedVersions.get(pipelineId),
+    );
+    this.loadedVersions.set(pipelineId, version);
+    // NOTE: no markdown side effect here (ADR-6). The fire-and-forget export
+    // raced its own rename on rapid saves (stale RC-STATE.md, orphaned .tmp
+    // files on OneDrive-synced filesystems). RC-STATE.md is now an on-demand
+    // export - see exportMarkdown(), called from rc_status.
   }
 
   /** Check if a project state exists */
@@ -74,17 +101,27 @@ export class StateManager {
     }
   }
 
-  // ── Async markdown export (non-blocking side effect) ───────────────────
+  // ── On-demand markdown export (ADR-6) ──────────────────────────────────
 
-  private async writeMarkdownExport(projectPath: string, state: ProjectState): Promise<void> {
+  /**
+   * Export the current state as human-readable RC-STATE.md, stamped with the
+   * checkpoint version and timestamp it was generated from. Called on demand
+   * (rc_status), never as a save side effect. Cleans up its .tmp on failure.
+   */
+  async exportMarkdown(projectPath: string, state?: ProjectState): Promise<void> {
+    const filePath = path.join(projectPath, STATE_DIR, STATE_FILE);
+    const tmpPath = `${filePath}.${randomBytes(4).toString('hex')}.tmp`;
     try {
-      const filePath = path.join(projectPath, STATE_DIR, STATE_FILE);
+      const current = state ?? this.load(projectPath);
+      const { pipelineId } = getProjectStore(projectPath);
+      const version = this.loadedVersions.get(pipelineId);
+      const stamp = `<!-- exported from checkpoint v${version ?? 'unknown'} at ${new Date().toISOString()} - read model only, source of truth is .rc-engine/state.db -->\n`;
       await fsAsync.mkdir(path.dirname(filePath), { recursive: true });
-      const tmpPath = `${filePath}.${randomBytes(4).toString('hex')}.tmp`;
-      await fsAsync.writeFile(tmpPath, this.serialize(state), 'utf-8');
+      await fsAsync.writeFile(tmpPath, stamp + this.serialize(current), 'utf-8');
       await fsAsync.rename(tmpPath, filePath);
     } catch (err) {
       console.error('[rc] Warning: failed to write markdown export:', (err as Error).message);
+      await fsAsync.rm(tmpPath, { force: true }).catch(() => {});
     }
   }
 
@@ -96,6 +133,14 @@ export class StateManager {
       throw new Error(`No RC Method project found at ${projectPath}. Use rc_start to begin a new project.`);
     }
     const content = fs.readFileSync(filePath, 'utf-8');
+    // Guarded migration (ADR-6): this path only runs when NO checkpoint
+    // exists in state.db. Log loudly which export stamp is being resurrected
+    // so a stale markdown can never silently reintroduce old state.
+    const stampMatch = content.match(/<!-- exported from checkpoint (v\S+) at (\S+) /);
+    console.error(
+      `[rc] MIGRATION: no checkpoint found in .rc-engine/state.db; bootstrapping state from legacy ` +
+        `${STATE_FILE}${stampMatch ? ` (export stamp ${stampMatch[1]} @ ${stampMatch[2]})` : ' (no export stamp)'}.`,
+    );
     const state = this.parse(content, projectPath);
     // Bootstrap into CheckpointStore
     const { store, pipelineId } = getProjectStore(projectPath);

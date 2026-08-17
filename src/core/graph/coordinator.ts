@@ -51,6 +51,17 @@ export class GraphCoordinator<S> {
     private stateNodeId: string,
     private interruptNodeId: string,
     private stateSchema: z.ZodType<S>,
+    private options: {
+      /**
+       * When true, the DOMAIN (e.g. the RC Orchestrator via its StateManager)
+       * is the sole writer of the shared state record and this coordinator
+       * must not save it. Prevents the double-write race where the
+       * coordinator's stale post-run save wiped fields (state.artifacts) the
+       * domain had just persisted. Per-node checkpoints and interrupt
+       * metadata are unaffected. See ADR-1 (2026-08-17).
+       */
+      domainOwnsState?: boolean;
+    } = {},
   ) {
     this.runner = new GraphRunner<S>();
   }
@@ -222,8 +233,11 @@ export class GraphCoordinator<S> {
   private persistResult(projectPath: string, graphId: string, result: RunResult<S>): void {
     const { store, pipelineId } = this.storeFactory(projectPath);
 
-    // Always save the latest state
-    store.save(pipelineId, this.stateNodeId, result.state);
+    // Save the latest state - unless the domain owns the shared record
+    // (single-writer rule; see constructor doc).
+    if (!this.options.domainOwnsState) {
+      store.save(pipelineId, this.stateNodeId, result.state);
+    }
 
     if (result.gateInterrupt) {
       // Save interrupt metadata for resume

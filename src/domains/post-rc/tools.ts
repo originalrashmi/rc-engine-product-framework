@@ -14,6 +14,7 @@ import { postrcReport } from './tools/postrc-report.js';
 import { postrcConfigure } from './tools/postrc-configure.js';
 import { postrcGate } from './tools/postrc-gate.js';
 import { postrcStatus } from './tools/postrc-status.js';
+import { exportMarkdown as exportPostRcMarkdown } from './state/state-manager.js';
 import { postrcObservabilitySpec } from './tools/postrc-observability-spec.js';
 
 /**
@@ -133,6 +134,8 @@ export function registerPostRcTools(server: McpServer): void {
     async (args) => {
       try {
         const result = await postrcStatus(args);
+        // On-demand POSTRC-STATE.md refresh (ADR-6) - read model, non-fatal.
+        await exportPostRcMarkdown(args.project_path);
         return { content: [{ type: 'text' as const, text: result }] };
       } catch (err) {
         return { content: [{ type: 'text' as const, text: `Error: ${(err as Error).message}` }], isError: true };

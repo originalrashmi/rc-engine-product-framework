@@ -7,7 +7,9 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 const envPath = resolve(__dirname, '..', '..', '.env');
 
-dotenv.config({ path: envPath, override: true });
+// No `override` flag: real environment variables must win over .env so
+// per-session and CI overrides (e.g. CLAUDE_MODEL) actually work.
+dotenv.config({ path: envPath });
 
 export const config = {
   anthropicApiKey: process.env.ANTHROPIC_API_KEY || '',
@@ -19,7 +21,8 @@ export const config = {
   // Tier 1 (fast/cheap): extraction, classification, summarization
   // Tier 2 (balanced): complex reasoning, multi-step analysis
   // Tier 3 (premium): novel generation, architectural decisions
-  claudeModel: process.env.CLAUDE_MODEL || 'claude-sonnet-4-5-20250929',
+  // Alias id (not a dated snapshot) so model retirements don't brick the engine.
+  claudeModel: process.env.CLAUDE_MODEL || 'claude-sonnet-4-5',
   openaiModel: process.env.OPENAI_MODEL || 'gpt-4o',
   geminiModel: process.env.GEMINI_MODEL || 'gemini-2.0-flash',
   perplexityModel: process.env.PERPLEXITY_MODEL || 'sonar-pro',

@@ -56,3 +56,7 @@ RC Engine includes built-in security scanning (Post-RC domain) that checks gener
 ## Dependencies
 
 We monitor dependencies for known vulnerabilities. If you discover a vulnerability in one of our dependencies, please report it to us so we can assess the impact.
+
+## Current sandbox posture (honest statement)
+
+The path sandbox (`src/core/sandbox/path-validator.ts`) is currently **advisory at the tool boundary**: `project_path` arguments are canonicalized and checked against the system blocklist, and PathValidator supports project-root containment and per-domain write fences, but not every internal filesystem call is routed through `validateRead`/`validateWrite` yet. The full choke-point refactor (guardedFs) is scheduled debt (see FIXLIST.md, deferred section). Do not describe the sandbox as a complete containment boundary until that lands.

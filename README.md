@@ -209,3 +209,14 @@ Try it out and let us know what you think. [Open an issue](https://github.com/or
 ---
 
 Built by [Toerana](https://toerana.com)
+
+## Execution modes
+
+The engine runs in one of two modes, decided at startup by whether API keys are configured (the startup log names the active mode):
+
+- **Passthrough (supported, daily driver):** no API keys configured. The engine performs all deterministic work (state, gates, phase ordering, scans, audit) and returns generation briefings for the host model (e.g. Claude Code) to execute. This is the recommended and best-tested mode.
+- **Autonomous (experimental, frozen):** API keys configured; the engine calls LLM providers itself. This mode is currently frozen: it works but receives no new investment until a keyed user needs it, and its gate-agent path is less exercised than passthrough. Treat unexpected behavior here as unsurprising.
+
+## Data safety note
+
+Exclude `.rc-engine/` from OneDrive, Dropbox, or any file-sync tool for both this repo and your project directories. The state store is SQLite in WAL mode, and file-sync tools interacting with WAL files are a known corruption vector.

@@ -10,7 +10,7 @@ import { z } from 'zod';
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { StateManager } from '../domains/rc/state/state-manager.js';
 import { StatePersistence } from '../domains/pre-rc/state/state-persistence.js';
-import { loadState as loadPostRcState } from '../domains/post-rc/state/state-manager.js';
+import { hasState as hasPostRcState } from '../domains/post-rc/state/state-manager.js';
 import { ContextLoader } from '../domains/rc/context-loader.js';
 import { PHASE_NAMES, type Phase } from '../domains/rc/types.js';
 
@@ -72,13 +72,10 @@ export function registerInitTool(server: McpServer): void {
 
 async function detectAndRoute(projectPath: string, brief?: string, skipResearch: boolean = false): Promise<string> {
   // ── 1. Check Post-RC state (highest priority - project is in validation/shipping) ──
-  let hasPostRc = false;
-  try {
-    await loadPostRcState(projectPath);
-    hasPostRc = true;
-  } catch {
-    // No Post-RC state - continue detection
-  }
+  // Side-effect-free existence check: loadState() falls back to a default state
+  // when nothing is persisted, which made every fresh directory look like a
+  // project mid-validation and misrouted rc_init to postrc_status.
+  const hasPostRc = hasPostRcState(projectPath);
 
   // ── 2. Check RC state ──
   const rcStateManager = new StateManager();

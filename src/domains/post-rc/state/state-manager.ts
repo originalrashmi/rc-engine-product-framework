@@ -1,4 +1,4 @@
-import { writeFile, rename, mkdir } from 'fs/promises';
+import { writeFile, rename, mkdir, rm } from 'fs/promises';
 import { existsSync } from 'fs';
 import { randomBytes } from 'crypto';
 import { join } from 'path';
@@ -63,6 +63,27 @@ export function createDefaultState(projectPath: string, projectName: string): Po
   };
 }
 
+/**
+ * Check whether Post-RC state actually exists for this project, with NO side
+ * effects. Unlike loadState (which falls back to createDefaultState when
+ * nothing is persisted), this never fabricates state and never creates the
+ * .rc-engine store - so rc_init can probe a brand-new directory without
+ * misdetecting "Post-RC in progress" or leaving a state.db behind.
+ */
+export function hasState(projectPath: string): boolean {
+  // Legacy markdown state counts as existing state.
+  if (existsSync(join(projectPath, STATE_DIR, STATE_FILE))) return true;
+  // Opening the store CREATES the db file, so only probe when it already exists.
+  if (!existsSync(join(projectPath, '.rc-engine', 'state.db'))) return false;
+  try {
+    const { store, pipelineId } = getProjectStore(projectPath);
+    store.load(pipelineId, NODE_IDS.POST_RC_STATE, PostRCStateSchema);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 export async function loadState(projectPath: string): Promise<PostRCState> {
   const { store, pipelineId } = getProjectStore(projectPath);
   try {
@@ -82,8 +103,19 @@ export async function saveState(projectPath: string, state: PostRCState): Promis
   state.updatedAt = new Date().toISOString();
   const { store, pipelineId } = getProjectStore(projectPath);
   store.save(pipelineId, NODE_IDS.POST_RC_STATE, state);
-  // Best-effort markdown export for human readability
-  void writeMarkdownExport(projectPath, state);
+  // NOTE: no markdown side effect here (ADR-6) - POSTRC-STATE.md is an
+  // on-demand export; see exportMarkdown(), called from postrc_status.
+}
+
+/** On-demand POSTRC-STATE.md export (ADR-6). Never a save side effect. */
+export async function exportMarkdown(projectPath: string): Promise<void> {
+  try {
+    const state = await loadState(projectPath);
+    await ensureDirectories(projectPath);
+    await writeMarkdownExport(projectPath, state);
+  } catch (err) {
+    console.error('[post-rc] Warning: markdown export skipped:', (err as Error).message);
+  }
 }
 
 // ── Migration ──────────────────────────────────────────────────────────────
@@ -116,14 +148,16 @@ async function migrateFromMarkdown(projectPath: string): Promise<PostRCState> {
 // ── Markdown export (write-only) ───────────────────────────────────────────
 
 async function writeMarkdownExport(projectPath: string, state: PostRCState): Promise<void> {
+  const statePath = join(projectPath, STATE_DIR, STATE_FILE);
+  const tmpPath = `${statePath}.${randomBytes(4).toString('hex')}.tmp`;
   try {
-    const statePath = join(projectPath, STATE_DIR, STATE_FILE);
-    const tmpPath = `${statePath}.${randomBytes(4).toString('hex')}.tmp`;
-    const markdown = serializeState(state);
+    const stamp = `<!-- exported at ${new Date().toISOString()} - read model only, source of truth is .rc-engine/state.db -->\n`;
+    const markdown = stamp + serializeState(state);
     await writeFile(tmpPath, markdown, 'utf-8');
     await rename(tmpPath, statePath);
   } catch (err) {
     console.error('[post-rc] Warning: failed to write markdown export:', (err as Error).message);
+    await rm(tmpPath, { force: true }).catch(() => {});
   }
 }
 

@@ -167,9 +167,10 @@ export function registerExportTools(server: McpServer): void {
           };
         }
 
-        const summary = results
-          .map((r) => `  - ${r.diagramType}: ${path.relative(project_path, r.htmlPath)}`)
-          .join('\n');
+        // htmlPath is already project-relative; running it through
+        // path.relative(project_path, ...) resolved it against the server cwd
+        // and printed a bogus location inside the engine repo.
+        const summary = results.map((r) => `  - ${r.diagramType}: ${r.htmlPath}`).join('\n');
 
         return {
           content: [

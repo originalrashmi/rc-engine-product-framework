@@ -14,9 +14,10 @@ import { checkInputs, DEFAULT_LIMITS } from '../core/sandbox/input-limits.js';
 import type { InputLimitConfig } from '../core/sandbox/input-limits.js';
 import { recordToolCall } from './usage-meter.js';
 
-// Shared PathValidator instance - root "/" means basic safety checks only.
-// Domain-specific write restrictions are enforced separately.
-const validator = new PathValidator('/');
+// PathValidator is constructed per call, rooted at the supplied project_path,
+// so canonicalization and the blocklist run against the caller's real root.
+// (The previous shared instance was rooted at "/", which on Windows resolved
+// to the current drive root and made containment meaningless.)
 
 /** Input field names mapped to their limit presets. */
 const FIELD_LIMITS: Record<string, InputLimitConfig> = {
@@ -74,8 +75,10 @@ function validatePath(projectPath: string): string | null {
     return `Invalid project_path: "${projectPath}" - must be an absolute path (POSIX /... or Windows C:/... / C:\\...).`;
   }
 
-  // Must not point to system directories
-  if (validator.isBlocked(projectPath)) {
+  // Must not point to system directories. Canonicalize first so casing,
+  // trailing separators, and .. segments cannot dodge the blocklist.
+  const validator = new PathValidator(projectPath);
+  if (validator.isBlocked(validator.resolve(projectPath))) {
     return `Invalid project_path: "${projectPath}" - points to a protected system directory.`;
   }
 

@@ -67,6 +67,27 @@ const SCHEMA_DDL = `
 
 // ── Store ───────────────────────────────────────────────────────────────────
 
+/**
+ * Thrown when a save carries an expectedVersion that no longer matches the
+ * stored head: another writer saved in between. This should be exceptional
+ * (rc:state has a single writer per ADR-1); when it fires, a multi-writer
+ * regression or a second process is at work.
+ */
+export class StaleStateError extends Error {
+  constructor(
+    public readonly pipelineId: string,
+    public readonly nodeId: string,
+    public readonly expectedVersion: number,
+    public readonly actualVersion: number,
+  ) {
+    super(
+      `Stale state write rejected for node "${nodeId}": expected version ${expectedVersion} ` +
+        `but store is at ${actualVersion}. Another writer saved in between - reload before saving.`,
+    );
+    this.name = 'StaleStateError';
+  }
+}
+
 export class CheckpointStore {
   private db: Database.Database;
 
@@ -99,12 +120,55 @@ export class CheckpointStore {
    * @param metadata - Optional metadata (e.g. duration, token usage).
    * @returns The checkpoint ID and version.
    */
+  /**
+   * One-time forward migration for the pipeline-id normalization (ADR-8).
+   *
+   * Each project has its own state.db, so every row in this database belongs
+   * to this project; rows under any OTHER pipeline id were written by a
+   * legacy raw-path hash (e.g. different Windows path casing). When the
+   * canonical id has no rows yet, adopt the most recently written legacy
+   * variant so existing projects don't orphan their state. If several
+   * variants exist, only the newest is adopted (loudly), never merged -
+   * merging would collide version numbers.
+   */
+  adoptLegacyPipelineIds(canonicalId: string): void {
+    const canonicalRows = this.db
+      .prepare('SELECT COUNT(*) AS n FROM checkpoints WHERE pipeline_id = ?')
+      .get(canonicalId) as { n: number };
+    if (canonicalRows.n > 0) return;
+
+    const newestLegacy = this.db
+      .prepare(
+        `SELECT pipeline_id, MAX(created_at) AS latest FROM checkpoints
+         WHERE pipeline_id != ? GROUP BY pipeline_id ORDER BY latest DESC LIMIT 1`,
+      )
+      .get(canonicalId) as { pipeline_id: string; latest: string } | undefined;
+    if (!newestLegacy) return;
+
+    this.db
+      .prepare('UPDATE checkpoints SET pipeline_id = ? WHERE pipeline_id = ?')
+      .run(canonicalId, newestLegacy.pipeline_id);
+    console.error(
+      `[state] Migrated legacy pipeline id "${newestLegacy.pipeline_id}" -> "${canonicalId}" (path normalization, ADR-8).`,
+    );
+  }
+
   save<T>(
     pipelineId: string,
     nodeId: string,
     state: T,
     metadata?: Record<string, unknown>,
+    expectedVersion?: number,
   ): { id: number; version: number } {
+    // Optimistic concurrency tripwire (ADR-2, 2026-08-17): when the caller
+    // passes the version it loaded, a mismatch means another writer saved in
+    // between - fail loudly instead of silently appending a stale copy.
+    if (expectedVersion !== undefined) {
+      const current = this.getNextVersion(pipelineId, nodeId) - 1;
+      if (current !== expectedVersion) {
+        throw new StaleStateError(pipelineId, nodeId, expectedVersion, current);
+      }
+    }
     const version = this.getNextVersion(pipelineId, nodeId);
     const stateJson = JSON.stringify(state);
     const metadataJson = metadata ? JSON.stringify(metadata) : null;

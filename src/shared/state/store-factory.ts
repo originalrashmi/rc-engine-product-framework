@@ -11,7 +11,7 @@
 
 import path from 'node:path';
 import { CheckpointStore } from '../../core/checkpoint/store.js';
-import { derivePipelineId } from './pipeline-id.js';
+import { derivePipelineId, normalizeProjectPath } from './pipeline-id.js';
 
 const STATE_DB_NAME = 'state.db';
 
@@ -28,16 +28,25 @@ export function getProjectStore(projectPath: string): {
   store: CheckpointStore;
   pipelineId: string;
 } {
-  const existing = storeCache.get(projectPath);
+  // Cache key and pipeline id both use the normalized path (ADR-8) so
+  // differently-cased Windows paths share one connection and one identity.
+  const cacheKey = normalizeProjectPath(projectPath);
+  const pipelineId = derivePipelineId(projectPath);
+
+  const existing = storeCache.get(cacheKey);
   if (existing) {
-    return { store: existing, pipelineId: derivePipelineId(projectPath) };
+    return { store: existing, pipelineId };
   }
 
   const dbPath = path.join(projectPath, '.rc-engine', STATE_DB_NAME);
   const store = new CheckpointStore(dbPath);
-  storeCache.set(projectPath, store);
+  // One-time forward migration: rows written under a legacy (raw-path-hash)
+  // pipeline id are adopted under the normalized id, so existing projects
+  // don't orphan their state.
+  store.adoptLegacyPipelineIds(pipelineId);
+  storeCache.set(cacheKey, store);
 
-  return { store, pipelineId: derivePipelineId(projectPath) };
+  return { store, pipelineId };
 }
 
 /**
@@ -45,10 +54,11 @@ export function getProjectStore(projectPath: string): {
  * Used in tests and for project cleanup.
  */
 export function closeProjectStore(projectPath: string): void {
-  const store = storeCache.get(projectPath);
+  const cacheKey = normalizeProjectPath(projectPath);
+  const store = storeCache.get(cacheKey);
   if (store) {
     store.close();
-    storeCache.delete(projectPath);
+    storeCache.delete(cacheKey);
   }
 }
 

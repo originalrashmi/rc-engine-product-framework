@@ -111,3 +111,7 @@ test: add integration tests for graph coordinator
 ## License
 
 By contributing, you agree that your contributions will be licensed under the [MIT License](LICENSE).
+
+## Test fixtures are platform-neutral
+
+Never hardcode POSIX (or Windows) absolute paths in test fixtures. Derive project roots with `fs.mkdtempSync(path.join(os.tmpdir(), ...))`, derive blocked-path fixtures from the environment (`HOME`/`USERPROFILE`, `SystemRoot`), and assert on machine-readable outcomes (e.g. `ValidationResult.reason`), never on error-message phrasing. The suite must be green on Windows and Linux alike.
