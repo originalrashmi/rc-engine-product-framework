@@ -38,9 +38,14 @@ jobs:
         run: npx tsc --noEmit -p web/tsconfig.json
 
       - name: Lint
+        # ESLint 10 requires util.styleText (Node 20.12+); Node 18 stays in
+        # the matrix to test the RUNTIME claim (build + tests), but the lint
+        # toolchain itself only runs on the newest Node.
+        if: matrix.node-version == 22
         run: npm run lint
 
       - name: Format check
+        if: matrix.node-version == 22
         run: npm run format:check
 
       - name: Test
