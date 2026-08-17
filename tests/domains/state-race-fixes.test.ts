@@ -26,11 +26,7 @@ import { StaleStateError } from '../../src/core/checkpoint/store.js';
 import { getProjectStore, closeProjectStore } from '../../src/shared/state/store-factory.js';
 import { NODE_IDS } from '../../src/shared/state/pipeline-id.js';
 import { ProjectStateSchema } from '../../src/domains/rc/state/schemas.js';
-import {
-  hasState,
-  saveState,
-  createDefaultState,
-} from '../../src/domains/post-rc/state/state-manager.js';
+import { hasState, saveState, createDefaultState } from '../../src/domains/post-rc/state/state-manager.js';
 import type { ProjectState } from '../../src/domains/rc/types.js';
 
 function makeState(projectPath: string, artifacts: string[]): ProjectState {
@@ -128,9 +124,7 @@ describe('ADR-2: CAS tripwire (StaleStateError on concurrent writes)', () => {
     const { version: v2 } = store.save(pipelineId, NODE_IDS.RC_STATE, makeState(dir, ['a.md']), undefined, v1);
     expect(v2).toBe(v1 + 1);
     // Re-using the old expectation fails loudly
-    expect(() => store.save(pipelineId, NODE_IDS.RC_STATE, makeState(dir, []), undefined, v1)).toThrow(
-      StaleStateError,
-    );
+    expect(() => store.save(pipelineId, NODE_IDS.RC_STATE, makeState(dir, []), undefined, v1)).toThrow(StaleStateError);
   });
 
   it('a deliberate second writer makes StateManager.save fail loudly', () => {

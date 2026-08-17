@@ -63,7 +63,8 @@ export class ClaudeClient extends BaseLLMClient {
       messages.push({ role: 'assistant', content: text });
       messages.push({
         role: 'user',
-        content: 'Your previous message was cut off by the output limit. Continue EXACTLY where you stopped. Do not repeat anything already written, do not add a preamble.',
+        content:
+          'Your previous message was cut off by the output limit. Continue EXACTLY where you stopped. Do not repeat anything already written, do not add a preamble.',
       });
       try {
         const stream = this.client.messages.stream({ ...params, messages });
