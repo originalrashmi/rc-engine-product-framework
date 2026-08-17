@@ -63,6 +63,27 @@ export function createDefaultState(projectPath: string, projectName: string): Po
   };
 }
 
+/**
+ * Check whether Post-RC state actually exists for this project, with NO side
+ * effects. Unlike loadState (which falls back to createDefaultState when
+ * nothing is persisted), this never fabricates state and never creates the
+ * .rc-engine store - so rc_init can probe a brand-new directory without
+ * misdetecting "Post-RC in progress" or leaving a state.db behind.
+ */
+export function hasState(projectPath: string): boolean {
+  // Legacy markdown state counts as existing state.
+  if (existsSync(join(projectPath, STATE_DIR, STATE_FILE))) return true;
+  // Opening the store CREATES the db file, so only probe when it already exists.
+  if (!existsSync(join(projectPath, '.rc-engine', 'state.db'))) return false;
+  try {
+    const { store, pipelineId } = getProjectStore(projectPath);
+    store.load(pipelineId, NODE_IDS.POST_RC_STATE, PostRCStateSchema);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 export async function loadState(projectPath: string): Promise<PostRCState> {
   const { store, pipelineId } = getProjectStore(projectPath);
   try {
