@@ -1,6 +1,7 @@
 import { z } from 'zod';
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { Orchestrator } from '../orchestrator.js';
+import { StateManager } from '../state/state-manager.js';
 import { createRcCoordinator } from './rc-coordinator-factory.js';
 import type { RcCoordinator } from '../graph/rc-coordinator.js';
 import type { GateResume } from '../../../core/graph/types.js';
@@ -99,6 +100,8 @@ export function registerRcGateTools(server: McpServer): void {
     },
   );
 
+  const _stateManager = new StateManager();
+
   // rc_status - Get project status
   server.registerTool(
     'rc_status',
@@ -112,6 +115,9 @@ export function registerRcGateTools(server: McpServer): void {
     async ({ project_path }) => {
       try {
         const result = getOrchestrator().status(project_path);
+        // On-demand RC-STATE.md refresh (ADR-6): the markdown is a read model
+        // regenerated here, not a side effect of every save. Non-fatal.
+        await _stateManager.exportMarkdown(project_path);
         return { content: [{ type: 'text' as const, text: result.text }] };
       } catch (err) {
         return {

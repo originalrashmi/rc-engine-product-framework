@@ -158,6 +158,20 @@ describe('ADR-2: CAS tripwire (StaleStateError on concurrent writes)', () => {
   });
 });
 
+describe('ADR-8: pipeline identity is path-casing-invariant on win32', () => {
+  it.runIf(process.platform === 'win32')('same project in different casing gets one pipeline id', async () => {
+    const { derivePipelineId } = await import('../../src/shared/state/pipeline-id.js');
+    expect(derivePipelineId('C:\\Tmp\\Proj-X')).toBe(derivePipelineId('c:\\tmp\\proj-x'));
+    expect(derivePipelineId('C:\\Tmp\\Proj-X')).not.toBe(derivePipelineId('C:\\Tmp\\Proj-Y'));
+  });
+
+  it('trailing separators and dot segments do not change identity', async () => {
+    const { derivePipelineId } = await import('../../src/shared/state/pipeline-id.js');
+    const base = join(tmpdir(), 'pid-proj');
+    expect(derivePipelineId(join(base, '.', 'sub', '..'))).toBe(derivePipelineId(base));
+  });
+});
+
 describe('post-rc hasState (rc_init misroute fix)', () => {
   let dir: string;
 

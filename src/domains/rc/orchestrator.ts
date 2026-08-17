@@ -157,6 +157,21 @@ export class Orchestrator {
   /** Track phase start time for benchmark recording */
   private phaseStartMs: number = 0;
 
+  /** True when the build phase produced real outputs: engine-forged files in state, or files on disk under rc-method/forge/ (passthrough host writes). */
+  private hasForgeOutputs(projectPath: string, state: ProjectState): boolean {
+    const engineForged = Object.values(state.forgeTasks ?? {}).some(
+      (t) => t.status === 'complete' && (t.generatedFiles?.length ?? 0) > 0,
+    );
+    if (engineForged) return true;
+    const forgeDir = path.join(projectPath, 'rc-method', 'forge');
+    try {
+      const taskDirs = fs.readdirSync(forgeDir, { withFileTypes: true }).filter((d) => d.isDirectory());
+      return taskDirs.some((d) => fs.readdirSync(path.join(forgeDir, d.name)).length > 0);
+    } catch {
+      return false;
+    }
+  }
+
   /**
    * Record a forge task failure so it can be retried. Lives here (not in the
    * tool layer) because StateManager-via-Orchestrator is the sole writer of
@@ -231,7 +246,9 @@ export class Orchestrator {
       };
     }
 
-    const state = this.stateManager.create(projectPath, projectName);
+    // Build in memory only; persist AFTER the discovery generation succeeds,
+    // so a failed start cannot leave ghost "project already exists" state.
+    const state = this.stateManager.buildState(projectPath, projectName);
 
     // Store tech stack selection (defaults applied if not specified)
     state.techStack = techStack ?? {
@@ -252,7 +269,7 @@ export class Orchestrator {
       `New project: "${projectName}"\n\nDescription: ${description}\n\nBegin the Illuminate phase by asking discovery questions about this project.`,
     );
 
-    this.stateManager.save(projectPath, state);
+    this.stateManager.persist(projectPath, state);
     audit('project.create', 'rc', projectPath, { projectName });
     recordProjectUsage('operator', projectPath, projectName);
 
@@ -311,10 +328,12 @@ export class Orchestrator {
         };
       }
     } else {
-      // Extract project name from the Pre-RC PRD filename
+      // Extract project name from the Pre-RC PRD filename. Build in memory
+      // only; the save below (after the bridge conversion succeeds) persists,
+      // so a failed import cannot leave ghost state.
       const prdFilename = path.basename(detection.prdPath, '.md');
       const projectName = prdFilename.replace(/^prd-/, '').replace(/-/g, ' ');
-      state = this.stateManager.create(projectPath, projectName);
+      state = this.stateManager.buildState(projectPath, projectName);
     }
 
     // Run the bridge agent to convert 19-section -> 11-section
@@ -341,7 +360,7 @@ export class Orchestrator {
     // Advance to Phase 3 (Architect)
     state.currentPhase = 3;
 
-    this.stateManager.save(projectPath, state);
+    this.stateManager.persist(projectPath, state);
     audit(
       'artifact.create',
       'rc',
@@ -641,12 +660,16 @@ ${testScriptKnowledge}`;
     // Parse generated files from the response and write them to disk
     const generatedFiles = this.extractAndWriteFiles(projectPath, taskId, text);
 
-    // Mark task as complete and register forge artifacts in state
+    // Mark the task honestly: 'complete' only when files actually exist.
+    // Zero extracted files means the response was guidance or a passthrough
+    // briefing - the host still has to write the code, so the task stays
+    // in_progress (gate 6 validates this postcondition before approval).
+    const taskCompleted = generatedFiles.length > 0;
     state.forgeTasks[taskId] = {
       taskId,
-      status: 'complete',
+      status: taskCompleted ? 'complete' : 'in_progress',
       startedAt: state.forgeTasks[taskId]?.startedAt,
-      completedAt: new Date().toISOString(),
+      ...(taskCompleted ? { completedAt: new Date().toISOString() } : {}),
       generatedFiles,
     };
     const forgeArtifactPaths = generatedFiles.map((f) => `rc-method/forge/${taskId}/${f}`);
@@ -656,7 +679,13 @@ ${testScriptKnowledge}`;
       }
     }
     this.stateManager.save(projectPath, state);
-    audit('task.complete', 'rc', projectPath, { taskId, filesGenerated: generatedFiles.length }, 'forge');
+    audit(
+      taskCompleted ? 'task.complete' : 'task.briefing',
+      'rc',
+      projectPath,
+      { taskId, filesGenerated: generatedFiles.length },
+      'forge',
+    );
 
     // Build output summary
     const filesSummary =
@@ -669,7 +698,7 @@ ${testScriptKnowledge}`;
     const completedTasks = Object.values(state.forgeTasks).filter((t) => t.status === 'complete').length;
 
     return {
-      text: `## Forge: ${taskId} - Complete\n\nProgress: ${completedTasks}/${totalTasks} tasks executed${filesSummary}\n\n---\n\n${text}`,
+      text: `## Forge: ${taskId} - ${taskCompleted ? 'Complete' : 'Briefing returned (awaiting host implementation)'}\n\nProgress: ${completedTasks}/${totalTasks} tasks executed${filesSummary}\n\n---\n\n${text}`,
       artifacts: generatedFiles.map((f) => `rc-method/forge/${taskId}/${f}`),
     };
   }
@@ -686,6 +715,12 @@ ${testScriptKnowledge}`;
     while ((match = fileRegex.exec(text)) !== null) {
       const filePath = match[1].trim();
       const content = match[2];
+
+      // Skip the OUTPUT FORMAT example from the prompt template itself: in
+      // passthrough mode the briefing (which contains the example) is the
+      // response text, and the example used to be written to disk as a junk
+      // file literally named path/to/file.ext containing "<file contents>".
+      if (filePath === 'path/to/file.ext' || content.trim() === '<file contents>') continue;
 
       // Sanitize: prevent path traversal
       const sanitized = filePath.replace(/\.\.\//g, '').replace(/^\//g, '');
@@ -737,6 +772,31 @@ This project has high UX complexity (score: ${state.uxScore}/5). Before proceedi
 Recommended next steps:
 - Run ux_design to generate visual design options
 - Run design_intake to capture design preferences
+
+To proceed anyway, re-approve with force=true.`,
+          };
+        }
+      }
+    }
+
+    // Forge postcondition (ADR-7): gate 6 closes the build phase, so it must
+    // not approve while no build outputs exist. Accepts either engine-forged
+    // files (forgeTasks complete with generatedFiles) or evidence on disk
+    // under rc-method/forge/ (the passthrough-legitimate path, where the host
+    // model writes the code). force=true bypasses, mirroring the design gate.
+    if (normalizedDec === 'approve' && state.currentPhase === 6) {
+      if (!this.hasForgeOutputs(projectPath, state)) {
+        if (force) {
+          audit('gate.forge-bypass', 'rc', projectPath, { phase: 6 }, 'gate-6');
+        } else {
+          return {
+            text: `**Checkpoint 6 - No forge outputs found**
+
+No completed forge tasks and no files under \`rc-method/forge/\`. Approving the build gate now would let the pipeline advance to integration (Connect) with nothing built, which fails later in a more confusing place.
+
+Next steps:
+- Run rc_forge_task for the pending tasks, or
+- In passthrough mode: implement the briefed tasks and place the files under \`rc-method/forge/<TASK-ID>/\`
 
 To proceed anyway, re-approve with force=true.`,
           };

@@ -6,16 +6,28 @@
  */
 
 import { createHash } from 'node:crypto';
+import path from 'node:path';
+
+/**
+ * Canonical form of a project path for identity purposes: resolved, and
+ * case-folded with forward slashes on win32 (NTFS is case-insensitive, so
+ * "C:\\Users\\X" and "c:\\users\\x" are the SAME project and must not get
+ * two disjoint pipeline ids - the split-brain defect, ADR-8).
+ */
+export function normalizeProjectPath(projectPath: string): string {
+  const resolved = path.resolve(projectPath);
+  return process.platform === 'win32' ? resolved.toLowerCase().replace(/\\/g, '/') : resolved;
+}
 
 /**
  * Derive a stable, short pipeline ID from a project path.
- * Same path always produces the same ID across sessions.
+ * Same path (in any casing on win32) always produces the same ID.
  *
  * Uses SHA-256 first 16 bytes -> base64url (22 chars). Short enough
  * for readable SQLite rows, unique enough for practical purposes.
  */
 export function derivePipelineId(projectPath: string): string {
-  return createHash('sha256').update(projectPath).digest('base64url').slice(0, 22);
+  return createHash('sha256').update(normalizeProjectPath(projectPath)).digest('base64url').slice(0, 22);
 }
 
 /**
