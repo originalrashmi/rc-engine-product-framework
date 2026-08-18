@@ -6,6 +6,15 @@ import type { RcCoordinator } from '../graph/rc-coordinator.js';
 import { StateManager } from '../state/state-manager.js';
 import { PHASE_NAMES, GateStatus } from '../types.js';
 import type { ProjectState, Phase } from '../types.js';
+
+/** Structured tech stack input (E8) - captured into state, drives Forge prompts. */
+const TechStackSchema = z.object({
+  language: z.enum(['typescript', 'python', 'ruby', 'go', 'java']).describe('Primary implementation language'),
+  framework: z.string().describe('Application framework, e.g. "nextjs", "fastapi", "commander" for a CLI'),
+  uiFramework: z.string().optional().describe('UI framework if any, e.g. "react"'),
+  database: z.string().describe('Database, e.g. "postgresql", "sqlite", or "none"'),
+  orm: z.string().optional().describe('ORM or data layer if any, e.g. "prisma"'),
+});
 import { audit } from '../../../shared/audit.js';
 import fs from 'node:fs';
 import path from 'node:path';
@@ -113,11 +122,14 @@ export function registerRcPhaseTools(server: McpServer): void {
         project_path: z.string().describe('Absolute path to the project directory'),
         project_name: z.string().describe('Name of the project'),
         description: z.string().describe('Brief description of what the project is and what problem it solves'),
+        tech_stack: TechStackSchema.optional().describe(
+          'Structured tech stack when the operator already knows it. Omit to decide during Architect (Phase 3).',
+        ),
       },
     },
-    async ({ project_path, project_name, description }) => {
+    async ({ project_path, project_name, description, tech_stack }) => {
       try {
-        const result = await getOrchestrator().start(project_path, project_name, description);
+        const result = await getOrchestrator().start(project_path, project_name, description, tech_stack);
         return { content: [{ type: 'text' as const, text: result.text }] };
       } catch (err) {
         return {
@@ -187,10 +199,18 @@ export function registerRcPhaseTools(server: McpServer): void {
         architecture_notes: z
           .string()
           .describe('Technical preferences, constraints, or existing infrastructure notes from the operator'),
+        tech_stack: TechStackSchema.optional().describe(
+          'The chosen tech stack as a structured object (E8). When provided it is captured into project state and drives Forge code-generation prompts and rc_status. Strongly recommended: derive it from the architecture decision and pass it here.',
+        ),
       },
     },
-    async ({ project_path, architecture_notes }) => {
+    async ({ project_path, architecture_notes, tech_stack }) => {
       try {
+        // Capture the chosen stack BEFORE the phase runs so the Architect
+        // context and everything downstream (Forge, rc_status) sees it (E8).
+        if (tech_stack) {
+          getOrchestrator().setTechStack(project_path, tech_stack);
+        }
         const text = await runPhaseViaCoordinator(project_path, 'architect', architecture_notes);
         return { content: [{ type: 'text' as const, text }] };
       } catch (err) {

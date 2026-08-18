@@ -44,6 +44,24 @@ export function recordModelPerformance(params: {
   }
 }
 
+/** All-time usage totals (persisted across sessions). Returns '' if no data. */
+export function getPersistentUsageSummary(): string {
+  try {
+    const store = safeStore();
+    if (!store) return '';
+    const u = store.getUsageTotals();
+    if (u.totalCalls === 0) return '';
+    const byProvider = u.byProvider
+      .map((p) => `    ${p.provider}: $${p.costUsd.toFixed(4)} (${p.calls} calls, ${p.tokens.toLocaleString()} tokens)`)
+      .join('\n');
+    return `\n  ALL-TIME USAGE (persisted):
+    Total: $${u.totalCostUsd.toFixed(4)} across ${u.totalCalls} LLM calls (${u.totalTokens.toLocaleString()} tokens)
+${byProvider}`;
+  } catch {
+    return '';
+  }
+}
+
 /** Get learning store summary for status display. Returns '' if no data. */
 export function getLearningSummary(): string {
   try {

@@ -54,6 +54,12 @@ export class OpenAIClient extends BaseLLMClient {
     }
 
     const data = (await res.json()) as any;
+    // Truncation guard (E3): never return a silently cut-off result.
+    if (data.choices?.[0]?.finish_reason === 'length') {
+      throw new Error(
+        `OpenAI output truncated at the token limit (finish_reason=length). Raise maxTokens or split the request; refusing to return a silently truncated result.`,
+      );
+    }
     const content = data.choices[0].message.content;
     const inputTokens = (data.usage?.prompt_tokens as number | undefined) ?? 0;
     const outputTokens = (data.usage?.completion_tokens as number | undefined) ?? 0;

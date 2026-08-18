@@ -459,6 +459,43 @@ export class LearningStore {
     return insights;
   }
 
+  /**
+   * All-time usage totals aggregated from persisted model_performance rows.
+   * This is the cross-session source rc_pipeline_status reads (E2): the
+   * in-memory tokenTracker/costTracker reset with every MCP process, which
+   * made the pipeline status report zero after five LLM phases.
+   */
+  getUsageTotals(): {
+    totalCalls: number;
+    totalTokens: number;
+    totalCostUsd: number;
+    byProvider: Array<{ provider: string; calls: number; tokens: number; costUsd: number }>;
+  } {
+    const totals = this.db
+      .prepare(
+        `SELECT COUNT(*) AS calls, COALESCE(SUM(tokens_used), 0) AS tokens, COALESCE(SUM(cost_usd), 0) AS cost
+         FROM model_performance`,
+      )
+      .get() as { calls: number; tokens: number; cost: number };
+    const byProvider = this.db
+      .prepare(
+        `SELECT provider, COUNT(*) AS calls, COALESCE(SUM(tokens_used), 0) AS tokens, COALESCE(SUM(cost_usd), 0) AS cost
+         FROM model_performance GROUP BY provider ORDER BY cost DESC`,
+      )
+      .all() as Array<{ provider: string; calls: number; tokens: number; cost: number }>;
+    return {
+      totalCalls: totals.calls,
+      totalTokens: totals.tokens,
+      totalCostUsd: totals.cost,
+      byProvider: byProvider.map((p) => ({
+        provider: p.provider,
+        calls: p.calls,
+        tokens: p.tokens,
+        costUsd: p.cost,
+      })),
+    };
+  }
+
   /** Get a summary of the learning database for status displays. */
   getSummary(): {
     totalProjects: number;
